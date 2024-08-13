@@ -11,7 +11,7 @@ interface RecivedMessage {
   userName: string;
 }
 
-const socket: Socket = io("http://localhost:3000"); // Replace with your server's URL
+const socket: Socket = io("https://paint-game.onrender.com"); // Replace with your server's URL
 
 const ChatRoom: React.FC = () => {
   const [roomId, setRoomId] = useState<string>("");

@@ -31,6 +31,8 @@ const ChatRoom: React.FC = () => {
   const [isRoomJoined, setIsRoomJoined] = useState<boolean>(false);
   const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
   const [roomName, setRoomName] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [canDraw, setCanDraw] = useState<boolean>(false);
   // Refs for the DOM elements
   const colRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLInputElement>(null);
@@ -55,6 +57,7 @@ const ChatRoom: React.FC = () => {
 
       socket.on("userJoined", (data) => {
         console.log(data);
+        setUserId(data.id);
         setRoomName(data.roomName);
         setIsRoomJoined(true);
       });
@@ -64,6 +67,7 @@ const ChatRoom: React.FC = () => {
       // setIsRoomJoined(true);
     }
   };
+
   const createRoom = () => {
     socket.emit("create_room", { ...roomData });
     // console.log(roomData);
@@ -77,6 +81,8 @@ const ChatRoom: React.FC = () => {
       socket.emit("message", messageData);
       setMessage("");
     }
+
+    socket.emit("guess", { roomId: roomData.id, guess: message });
   };
   const sendCanvasMessage = () => {
     console.log("sendCanvasMessage called");
@@ -168,7 +174,6 @@ const ChatRoom: React.FC = () => {
 
       for (let i = 0; i < Number(col.value); i++) {
         let clonedRowDiv = container.appendChild(rowDiv.cloneNode(true));
-
         clonedRowDiv.addEventListener("mouseover", (event: Event) => {
           event.preventDefault();
           const mouseEvent = event as MouseEvent;
@@ -399,6 +404,45 @@ const ChatRoom: React.FC = () => {
 
         console.log(data);
       });
+      socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
+        alert(`${currentDrawer} is now drawing!`);
+        if (currentDrawerId != userId) {
+          setCanDraw(true);
+          if (container) {
+            container.style.pointerEvents = "none";
+          }
+        } else {
+          if (container) {
+            container.style.pointerEvents = "auto";
+          }
+        }
+        // console.log(canDraw);
+
+        // if (currentDrawerId === userId) {
+        //   console.log("shemovedit if shi");
+        //   setCanDraw(true);
+        //   console.log("Setting canDraw to true");
+        //   console.log(canDraw);
+        // }
+        // console.log(canDraw);
+
+        // Update UI to show the current drawer
+      });
+
+      socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
+        alert(`${currentDrawer} is now drawing!`);
+        if (currentDrawerId != userId) {
+          setCanDraw(true);
+          if (container) {
+            container.style.pointerEvents = "none";
+          }
+        } else {
+          if (container) {
+            container.style.pointerEvents = "auto";
+          }
+        }
+        // Update UI to show the current drawer
+      });
       // Clean up when the component unmounts
       return () => {
         socket.off("message");
@@ -432,6 +476,11 @@ const ChatRoom: React.FC = () => {
         ?.removeEventListener("click", downloadImage);
     };
   }, [isRoomJoined]);
+  function startGame() {
+    console.log(roomData.id);
+
+    socket.emit("startGame", { roomId: roomData.id });
+  }
 
   return (
     <div>
@@ -535,7 +584,7 @@ const ChatRoom: React.FC = () => {
                 ))}
               </div>
             </div>
-
+            <button onClick={startGame}>start the game</button>
             <div>
               <div>
                 <div>

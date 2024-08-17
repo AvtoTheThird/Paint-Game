@@ -148,6 +148,39 @@ io.on("connection", (socket) => {
     // console.log(rooms);
   });
 
+  socket.on("startGame", ({ roomId }) => {
+    console.log(roomId, "aaaaa");
+
+    const room = rooms[roomId];
+
+    if (!room) return;
+
+    room.currentDrawerIndex = 0; // Start with the first player
+    room.currentDrawer = Object.keys(room.users)[room.currentDrawerIndex];
+
+    io.to(roomId).emit("gameStarted", {
+      currentDrawer: room.users[room.currentDrawer].name,
+      currentDrawerId: room.users[room.currentDrawer].id,
+    });
+  });
+
+  socket.on("guess", ({ roomId, guess }) => {
+    const room = rooms[roomId];
+
+    if (!room) return;
+
+    // Check if the guess is correct (logic for correct guess goes here)
+    // Assuming a correct guess, we move to the next drawer
+
+    room.currentDrawerIndex =
+      (room.currentDrawerIndex + 1) % Object.keys(room.users).length;
+    room.currentDrawer = Object.keys(room.users)[room.currentDrawerIndex];
+
+    io.to(roomId).emit("newDrawer", {
+      currentDrawer: room.users[room.currentDrawer].name,
+      currentDrawerId: room.users[room.currentDrawer].id,
+    });
+  });
   socket.on("message", (data) => {
     const { roomId, message, userName } = data;
     io.to(roomId).emit("message", { message, userName });

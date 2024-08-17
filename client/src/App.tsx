@@ -10,16 +10,27 @@ interface RecivedMessage {
   message: string;
   userName: string;
 }
-
-const socket: Socket = io("https://paint-game.onrender.com"); // Replace with your server's URL
+interface JoinedUsers {
+  id: string;
+  name: string;
+}
+interface RoomData {
+  id: string;
+  name: string;
+  maxPlayers: number;
+  owner: string;
+}
+const socket: Socket = io("http://localhost:3000"); // Replace with your server's URL
 
 const ChatRoom: React.FC = () => {
+  const [roomData, setRoomData] = useState<any>({});
   const [roomId, setRoomId] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [messages, setMessages] = useState<RecivedMessage[]>([]);
   const [isRoomJoined, setIsRoomJoined] = useState<boolean>(false);
-
+  const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
+  const [roomName, setRoomName] = useState<string>("");
   // Refs for the DOM elements
   const colRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLInputElement>(null);
@@ -30,34 +41,36 @@ const ChatRoom: React.FC = () => {
   const colorWheelRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // useEffect(() => {
-  //   if (isRoomJoined) {
-  //     // Listen for messages
-  //     socket.on("message", (message: RecivedMessage) => {
-  //       setMessages((prevMessages) => [...prevMessages, message]);
-  //     });
-  //     socket.on("canvas", (data: { rows: number; cols: number }) => {
-  //       if (rowRef.current && colRef.current) {
-  //         rowRef.current.value = String(data.rows);
-  //         colRef.current.value = String(data.cols);
-  //         generateCanvas(); // Call the canvas generation function
-  //       }
-  //     });
-  //     // Clean up when the component unmounts
-  //     return () => {
-  //       socket.off("message");
-  //       socket.off("canvas");
-  //     };
-  //   }
-  // }, [isRoomJoined]);
-
   const joinRoom = () => {
     if (roomId.trim()) {
-      socket.emit("join_room", roomId);
-      setIsRoomJoined(true);
+      let dataToBeSent = { roomId, name: userName };
+      // console.log("data to be sent", dataToBeSent);
+
+      socket.emit("join_room", dataToBeSent);
+      socket.on("roomError", (data) => {
+        alert(data.error);
+        setIsRoomJoined(false);
+        return;
+      });
+
+      socket.on("userJoined", (data) => {
+        console.log(data);
+        setRoomName(data.roomName);
+        setIsRoomJoined(true);
+      });
+
+      // setIsRoomJoined(true);
+      // Optionally, you can add some user feedback here
+      // setIsRoomJoined(true);
     }
   };
-
+  const createRoom = () => {
+    socket.emit("create_room", { ...roomData });
+    // console.log(roomData);
+  };
+  // socket.on("roomCreated", (data) => {
+  //   console.log(data);
+  // });
   const sendMessage = () => {
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
@@ -372,13 +385,30 @@ const ChatRoom: React.FC = () => {
         if (pixelElement) {
           pixelElement.style.backgroundColor = "";
         }
+        socket.on("room_not_found", (data: { roomId: string }) => {
+          alert(`room with id ${data.roomId} not found`);
+          console.log(`room with id ${data.roomId} not found`);
+        });
+        socket.on("room_not_exist", (data: { message: string }) => {
+          alert(`room with id ${data.message} not found`);
+          console.log(`room with id ${data.message} not found`);
+        });
+      });
+      socket.on("updateUserList", (data) => {
+        setJoinedUsers(data);
+
+        console.log(data);
       });
       // Clean up when the component unmounts
       return () => {
         socket.off("message");
         socket.off("canvas");
+        socket.off("draw");
+        socket.off("erace");
+        socket.off("room_not_found");
       };
     }
+
     return () => {
       document.removeEventListener("mousedown", () => {
         isMouseDown = true;
@@ -405,18 +435,19 @@ const ChatRoom: React.FC = () => {
 
   return (
     <div>
-      <h2>Chat Room</h2>
       {!isRoomJoined ? (
-        <div>
+        <div className=" border-black border-2 border-solid">
+          <h2>join or crate room</h2>
           <p>enter your name</p>
           <input
             type="text"
             placeholder="Enter your name"
             value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            onChange={(e) => {
+              setUserName(e.target.value);
+            }}
           />
           <p>enter room id</p>
-
           <input
             type="text"
             placeholder="Enter Room ID"
@@ -424,66 +455,129 @@ const ChatRoom: React.FC = () => {
             onChange={(e) => setRoomId(e.target.value)}
           />
           <button onClick={joinRoom}>Join Room</button>
+          <div>
+            <p>room name</p>
+            <input
+              type="text"
+              name=""
+              id=""
+              onChange={(e) => {
+                setRoomData({ ...roomData, name: e.target.value });
+              }}
+            />
+            <p>room ID/password</p>
+            <input
+              type="text"
+              name=""
+              id=""
+              onChange={(e) => {
+                setRoomData({ ...roomData, id: e.target.value });
+              }}
+            />
+            <p>max players</p>
+            <input
+              type="text"
+              name=""
+              id=""
+              onChange={(e) => {
+                setRoomData({
+                  ...roomData,
+                  maxPlayers: Number(e.target.value),
+                });
+              }}
+            />
+
+            <button onClick={createRoom}>create room</button>
+            <button
+              onClick={() => {
+                console.log(roomData);
+              }}
+            >
+              log
+            </button>
+          </div>
         </div>
       ) : (
         <div>
-          <div>
-            <input
-              type="text"
-              placeholder="Enter message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <button onClick={sendMessage}>Send Message</button>
+          <div style={{ display: "flex" }}>
+            {" "}
+            <h1>{roomName}</h1>{" "}
+            <div
+              style={{
+                border: "1px solid black",
+                padding: "10px",
+                display: "flex",
+              }}
+            >
+              sastavi:
+              {joinedUsers.length > 0
+                ? joinedUsers.map((user: any) => <p> {user}; </p>)
+                : null}
+            </div>
           </div>
-          <div>
-            {messages.map((msg, index) => (
-              <p key={index}>
-                {msg.userName}: {msg.message}
-              </p>
-            ))}
-          </div>
-          <div>
+
+          <div className="flex" style={{ display: "flex" }}>
             <div>
               <div>
-                <label>Columns:</label>
-                <input ref={colRef} type="number" id="col-input" min="1" />
-              </div>
-              <div>
-                <label>Rows:</label>
-                <input ref={rowRef} type="number" id="row-input" min="1" />
-              </div>
-              <div>
-                <label>Pixel Size:</label>
                 <input
-                  ref={displayedPixelSizeRef}
-                  type="range"
-                  id="pixel-size"
-                  min="1"
-                  max="50"
+                  type="text"
+                  placeholder="Enter message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                 />
+                <button onClick={sendMessage}>Send Message</button>
               </div>
               <div>
-                <label>Final Pixel Size:</label>
-                <input
-                  ref={finalPixelSizeRef}
-                  type="number"
-                  id="final-pixel-size"
-                  min="1"
-                />
+                {messages.map((msg, index) => (
+                  <p key={index}>
+                    {msg.userName}: {msg.message}
+                  </p>
+                ))}
               </div>
-              <button ref={drawingButtonRef} id="drawing-button">
-                Drawing
-              </button>
-              <button id="but" onClick={sendCanvasMessage}>
-                Generate Canvas
-              </button>
-              <button id="download-btn">Download Image</button>
-              <input ref={colorWheelRef} type="color" id="color-wheel" />
-              <div id="history"></div>
             </div>
-            <div ref={containerRef} id="container"></div>
-            <canvas ref={canvasRef}></canvas>
+
+            <div>
+              <div>
+                <div>
+                  <label>Columns:</label>
+                  <input ref={colRef} type="number" id="col-input" min="1" />
+                </div>
+                <div>
+                  <label>Rows:</label>
+                  <input ref={rowRef} type="number" id="row-input" min="1" />
+                </div>
+                <div>
+                  <label>Pixel Size:</label>
+                  <input
+                    ref={displayedPixelSizeRef}
+                    type="range"
+                    id="pixel-size"
+                    min="1"
+                    max="50"
+                  />
+                </div>
+                <div>
+                  <label>Final Pixel Size:</label>
+                  <input
+                    ref={finalPixelSizeRef}
+                    type="number"
+                    id="final-pixel-size"
+                    min="1"
+                  />
+                </div>
+                <button ref={drawingButtonRef} id="drawing-button">
+                  Drawing
+                </button>
+                <button id="but" onClick={sendCanvasMessage}>
+                  Generate Canvas
+                </button>
+                <button id="download-btn">Download Image</button>
+                <input ref={colorWheelRef} type="color" id="color-wheel" />
+                <div id="history"></div>
+              </div>
+              <div ref={containerRef} id="container"></div>
+              <canvas ref={canvasRef}></canvas>
+            </div>
           </div>
         </div>
       )}

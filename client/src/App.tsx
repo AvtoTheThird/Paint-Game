@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-
+import "./index.css";
 interface Message {
   roomId: string;
   message: string;
@@ -31,8 +31,10 @@ const ChatRoom: React.FC = () => {
   const [isRoomJoined, setIsRoomJoined] = useState<boolean>(false);
   const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
   const [roomName, setRoomName] = useState<string>("");
+  const [drawWord, setDrawWord] = useState<any>();
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);
+  const [currentDrawer, setCurrentDrawer] = useState<any>();
   // Refs for the DOM elements
   const colRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,8 @@ const ChatRoom: React.FC = () => {
       socket.on("userJoined", (data) => {
         console.log(data);
         setUserId(data.id);
+        setRoomData({ ...roomData, id: data.roomId });
+        // setJoinedUsers(data.userNames);
         setRoomName(data.roomName);
         setIsRoomJoined(true);
       });
@@ -79,10 +83,12 @@ const ChatRoom: React.FC = () => {
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
       socket.emit("message", messageData);
+
       setMessage("");
     }
 
     socket.emit("guess", { roomId: roomData.id, guess: message });
+    console.log(roomData);
   };
   const sendCanvasMessage = () => {
     console.log("sendCanvasMessage called");
@@ -244,6 +250,8 @@ const ChatRoom: React.FC = () => {
 
       if (toggleLines) {
         toggleLines.addEventListener("click", () => {
+          console.log("togle moxda");
+
           let children = document.querySelectorAll(".pixel");
           children.forEach((element) => {
             (element as HTMLElement).style.border = (element as HTMLElement)
@@ -317,6 +325,7 @@ const ChatRoom: React.FC = () => {
         historyCube.style.width = "40px";
         historyCube.style.height = "40px";
         historyCube.style.cursor = "pointer";
+
         historyCube.style.backgroundColor = curentColor;
         historyCube.addEventListener("click", (event) => {
           curentColor = rgbToHex(
@@ -325,22 +334,23 @@ const ChatRoom: React.FC = () => {
           colorWheel.value = curentColor;
         });
         historyDiv.appendChild(historyCube);
-      } else {
-        let lastColorDiv = historyDiv.lastChild as HTMLElement;
-        lastColorDiv.remove();
-        let historyCube = document.createElement("div");
-        historyCube.style.width = "40px";
-        historyCube.style.height = "40px";
-        historyCube.style.cursor = "pointer";
-        historyCube.style.backgroundColor = curentColor;
-        historyCube.addEventListener("click", (event) => {
-          curentColor = rgbToHex(
-            (event.target as HTMLElement).style.backgroundColor
-          )!;
-          colorWheel.value = curentColor;
-        });
-        historyDiv.insertBefore(historyCube, historyDiv.firstChild);
       }
+      // else {
+      //   let lastColorDiv = historyDiv.lastChild as HTMLElement;
+      //   lastColorDiv.remove();
+      //   let historyCube = document.createElement("div");
+      //   historyCube.style.width = "40px";
+      //   historyCube.style.height = "40px";
+      //   historyCube.style.cursor = "pointer";
+      //   historyCube.style.backgroundColor = curentColor;
+      //   historyCube.addEventListener("click", (event) => {
+      //     curentColor = rgbToHex(
+      //       (event.target as HTMLElement).style.backgroundColor
+      //     )!;
+      //     colorWheel.value = curentColor;
+      //   });
+      //   historyDiv.insertBefore(historyCube, historyDiv.firstChild);
+      // }
     });
     if (isRoomJoined) {
       // Listen for messages
@@ -406,6 +416,7 @@ const ChatRoom: React.FC = () => {
       });
       socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
         alert(`${currentDrawer} is now drawing!`);
+        setCurrentDrawer(currentDrawer);
         if (currentDrawerId != userId) {
           setCanDraw(true);
           if (container) {
@@ -431,6 +442,8 @@ const ChatRoom: React.FC = () => {
 
       socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
         alert(`${currentDrawer} is now drawing!`);
+        setCurrentDrawer(currentDrawer);
+
         if (currentDrawerId != userId) {
           setCanDraw(true);
           if (container) {
@@ -442,6 +455,19 @@ const ChatRoom: React.FC = () => {
           }
         }
         // Update UI to show the current drawer
+      });
+      socket.on("newWord", (word) => {
+        console.log("Your word to draw:", word);
+        setDrawWord(word);
+        // Start drawing based on the received word
+      });
+      socket.on("correctGuess", ({ guesser }) => {
+        alert(`${guesser} guessed the word correctly!`);
+        setDrawWord(null);
+      });
+
+      socket.on("incorrectGuess", ({ guesser, guess }) => {
+        console.log(`${guesser} guessed incorrectly: ${guess}`);
       });
       // Clean up when the component unmounts
       return () => {
@@ -483,60 +509,111 @@ const ChatRoom: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="bg-main-bg bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
       {!isRoomJoined ? (
-        <div className=" border-black border-2 border-solid">
-          <h2>join or crate room</h2>
-          <p>enter your name</p>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-            }}
-          />
-          <p>enter room id</p>
-          <input
-            type="text"
-            placeholder="Enter Room ID"
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-          />
-          <button onClick={joinRoom}>Join Room</button>
-          <div>
-            <p>room name</p>
-            <input
-              type="text"
-              name=""
-              id=""
-              onChange={(e) => {
-                setRoomData({ ...roomData, name: e.target.value });
-              }}
-            />
-            <p>room ID/password</p>
-            <input
-              type="text"
-              name=""
-              id=""
-              onChange={(e) => {
-                setRoomData({ ...roomData, id: e.target.value });
-              }}
-            />
-            <p>max players</p>
-            <input
-              type="text"
-              name=""
-              id=""
-              onChange={(e) => {
-                setRoomData({
-                  ...roomData,
-                  maxPlayers: Number(e.target.value),
-                });
-              }}
-            />
+        <div className="border-black border-2 border-solid w-[90vw] h-[95vh] flex flex-col justify-center items-center gap-5 bg-bg-white  rounded-[5rem]">
+          <h2 className=" text-[40px] font-extrabold text-white">
+            firo$ Money
+          </h2>
 
-            <button onClick={createRoom}>create room</button>
+          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+            {" "}
+            <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
+              შედი უკვე შექმნილ ოთახში{" "}
+            </p>
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                შეიყვანე სახელი
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                // placeholder="Enter your name"
+                value={userName}
+                onChange={(e) => {
+                  setUserName(e.target.value);
+                }}
+              />
+            </div>
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                ოთახის პაროლი
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                // placeholder="Enter Room ID"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+              />
+            </div>
+            <button
+              className="border-2 border-solid border-blue-900 bg-blue-700 w-[180px] h-[80px] text-2xl text-white rounded-[30px]"
+              onClick={joinRoom}
+            >
+              შედი ოთახში
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+            <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
+              შექმენი ოთახი{" "}
+            </p>
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                room name
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                name=""
+                id=""
+                onChange={(e) => {
+                  setRoomData({ ...roomData, name: e.target.value });
+                }}
+              />
+            </div>
+
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              {" "}
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                room ID
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                name=""
+                id=""
+                onChange={(e) => {
+                  setRoomData({ ...roomData, id: e.target.value });
+                }}
+              />
+            </div>
+
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                max players
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                name=""
+                id=""
+                onChange={(e) => {
+                  setRoomData({
+                    ...roomData,
+                    maxPlayers: Number(e.target.value),
+                  });
+                }}
+              />
+            </div>
+
+            <button
+              onClick={createRoom}
+              className="border-2 border-solid border-blue-900 bg-blue-700 w-[180px] h-[80px] text-2xl text-white rounded-[30px]"
+            >
+              შექმენი ოთახი
+            </button>
             <button
               onClick={() => {
                 console.log(roomData);
@@ -547,44 +624,38 @@ const ChatRoom: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div>
-          <div style={{ display: "flex" }}>
-            {" "}
-            <h1>{roomName}</h1>{" "}
-            <div
-              style={{
-                border: "1px solid black",
-                padding: "10px",
-                display: "flex",
-              }}
-            >
-              sastavi:
+        <div className="flex justify-between items-start bg-bg-white w-[90vw] h-[95vh] rounded-[5rem] px-[50px]">
+          <div className="flex">
+            {/* <h1>{roomName}</h1>{" "} */}
+            <div className="border borde-2 border-black bg-bg-white">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-black inline-block">
+                სასტავი:
+              </p>
               {joinedUsers.length > 0
-                ? joinedUsers.map((user: any) => <p> {user}; </p>)
+                ? joinedUsers.map((user: any) => (
+                    <p
+                      className={`${
+                        user == currentDrawer ? "text-red-700" : null
+                      }`}
+                    >
+                      {" "}
+                      {user}{" "}
+                    </p>
+                  ))
                 : null}
             </div>
+            <button
+              onClick={startGame}
+              className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+            >
+              start the game
+            </button>
+            {drawWord ? (
+              <span className="text-white font-bold text-lg"> {drawWord}</span>
+            ) : null}
           </div>
 
-          <div className="flex" style={{ display: "flex" }}>
-            <div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Enter message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-                <button onClick={sendMessage}>Send Message</button>
-              </div>
-              <div>
-                {messages.map((msg, index) => (
-                  <p key={index}>
-                    {msg.userName}: {msg.message}
-                  </p>
-                ))}
-              </div>
-            </div>
-            <button onClick={startGame}>start the game</button>
+          <div className="flex">
             <div>
               <div>
                 <div>
@@ -614,18 +685,51 @@ const ChatRoom: React.FC = () => {
                     min="1"
                   />
                 </div>
-                <button ref={drawingButtonRef} id="drawing-button">
+                <button
+                  className=" px-3 py-1 border-2 border-black"
+                  ref={drawingButtonRef}
+                  id="drawing-button"
+                >
                   Drawing
                 </button>
-                <button id="but" onClick={sendCanvasMessage}>
+                <button
+                  id="but"
+                  onClick={sendCanvasMessage}
+                  className=" px-3 py-1 border-2 border-black"
+                >
                   Generate Canvas
                 </button>
-                <button id="download-btn">Download Image</button>
+                <button
+                  id="download-btn"
+                  className=" px-3 py-1 border-2 border-black"
+                >
+                  Download Image
+                </button>
+                {/* <button id="toggle-lines">toggle-lines</button> */}
+
                 <input ref={colorWheelRef} type="color" id="color-wheel" />
-                <div id="history"></div>
+                <div className="flex" id="history"></div>
               </div>
               <div ref={containerRef} id="container"></div>
               <canvas ref={canvasRef}></canvas>
+            </div>
+          </div>
+          <div className="flex flex-col h-full justify-end">
+            <div>
+              {messages.map((msg, index) => (
+                <p key={index}>
+                  {msg.userName}: {msg.message}
+                </p>
+              ))}
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Enter message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button onClick={sendMessage}>Send Message</button>
             </div>
           </div>
         </div>

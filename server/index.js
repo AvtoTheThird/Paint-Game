@@ -269,12 +269,17 @@ function changeDrawer(roomId) {
 
   // Select a new word for the new drawer
   room.currentWord = selectRandomWord(); // Implement this function to select a word
-
   io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
+  console.log(room.currentDrawer);
 
   io.to(roomId).emit("newDrawer", {
     currentDrawer: room.users[room.currentDrawer].name,
+    currentDrawerId: room.users[room.currentDrawer].id,
   });
+  // console.log(
+  //   room.users[room.currentDrawer].id,
+  //   room.users[room.currentDrawer].name
+  // );
 
   startTurnTimer(roomId);
 }

@@ -417,8 +417,10 @@ const ChatRoom: React.FC = () => {
       socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
         alert(`${currentDrawer} is now drawing!`);
         setCurrentDrawer(currentDrawer);
+        console.log(currentDrawer, currentDrawerId);
+
         if (currentDrawerId != userId) {
-          setCanDraw(true);
+          // setCanDraw(true);
           if (container) {
             container.style.pointerEvents = "none";
           }
@@ -443,9 +445,11 @@ const ChatRoom: React.FC = () => {
       socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
         alert(`${currentDrawer} is now drawing!`);
         setCurrentDrawer(currentDrawer);
+        console.log(currentDrawer, currentDrawerId);
+        console.log(userId);
 
         if (currentDrawerId != userId) {
-          setCanDraw(true);
+          // setCanDraw(true);
           if (container) {
             container.style.pointerEvents = "none";
           }

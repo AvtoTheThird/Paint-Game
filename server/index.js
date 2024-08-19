@@ -7,6 +7,7 @@ const { log } = require("console");
 const words = ["one", "two"];
 // import { Room } from "./classes";
 const app = express();
+app.options("*", cors());
 const server = http.createServer(app);
 const ActiveRooms = [];
 const rooms = {};
@@ -37,7 +38,7 @@ const io = new Server(server, {
   cors: {
     origin: "*", // Allow any origin
     methods: ["GET", "POST"],
-    credentials: true,
+    credentials: false,
   },
 });
 
@@ -286,7 +287,7 @@ function startTurnTimer(roomId) {
 
   room.turnTimer = setTimeout(() => {
     changeDrawer(roomId);
-  }, 90000); // 90 seconds
+  }, 90000000); // 90 seconds
 }
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

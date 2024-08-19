@@ -14,12 +14,12 @@ interface JoinedUsers {
   id: string;
   name: string;
 }
-interface RoomData {
-  id: string;
-  name: string;
-  maxPlayers: number;
-  owner: string;
-}
+// interface RoomData {
+//   id: string;
+//   name: string;
+//   maxPlayers: number;
+//   owner: string;
+// }
 const socket: Socket = io("http://localhost:3000"); // Replace with your server's URL
 
 const ChatRoom: React.FC = () => {
@@ -509,7 +509,7 @@ const ChatRoom: React.FC = () => {
   }
 
   return (
-    <div className="bg-main-bg bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
+    <main className=" bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
       {!isRoomJoined ? (
         <div className="border-black border-2 border-solid w-[90vw] h-[95vh] flex flex-col justify-center items-center gap-5 bg-bg-white  rounded-[5rem]">
           <h2 className=" text-[40px] font-extrabold text-white">
@@ -734,7 +734,7 @@ const ChatRoom: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

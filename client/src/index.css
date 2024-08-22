@@ -3,4 +3,20 @@
 @tailwind utilities;
 main {
   background-image: url("/bg.png");
+  /* font-family: "GEFontBlack", sans-serif; */
+}
+@font-face {
+  font-family: "GEFontBlack";
+  src: url("/GE_FONT_BLACK.TTF") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "GEFontBOLD";
+  src: url("/GE_FONT_BOLD.TTF") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+.font-ge-black {
+  font-family: "GEFontBlack", sans-serif;
 }

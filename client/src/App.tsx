@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import confetti from "canvas-confetti";
+
 import { io, Socket } from "socket.io-client";
 import "./index.css";
+
 interface Message {
   roomId: string;
   message: string;
@@ -13,6 +16,9 @@ interface RecivedMessage {
 interface JoinedUsers {
   id: string;
   name: string;
+  roomId: string;
+  roomName: string;
+  score: number;
 }
 // interface RoomData {
 //   id: string;
@@ -21,7 +27,7 @@ interface JoinedUsers {
 //   owner: string;
 // }
 const socket: Socket = io("http://localhost:3000"); // Replace with your server's URL
-
+// https://paint-game.onrender.com
 const ChatRoom: React.FC = () => {
   const [roomData, setRoomData] = useState<any>({});
   const [roomId, setRoomId] = useState<string>("");
@@ -35,6 +41,8 @@ const ChatRoom: React.FC = () => {
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);
   const [currentDrawer, setCurrentDrawer] = useState<any>();
+  // const [timeLeft, setTimeLeft] = useState<number>(5); // Initialize with 90 seconds
+
   // Refs for the DOM elements
   const colRef = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLInputElement>(null);
@@ -45,6 +53,17 @@ const ChatRoom: React.FC = () => {
   const colorWheelRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // useEffect(() => {
+  //   if (timeLeft === 0) {
+  //     setTimeLeft(5); // Restart the timer when it reaches 0
+  //   }
+
+  //   const timer = setInterval(() => {
+  //     setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+  //   }, 1000);
+
+  //   return () => clearInterval(timer); // Clean up the interval on component unmount
+  // }, [timeLeft]);
   const joinRoom = () => {
     if (roomId.trim()) {
       let dataToBeSent = { roomId, name: userName };
@@ -61,7 +80,6 @@ const ChatRoom: React.FC = () => {
         console.log(data);
         setUserId(data.id);
         setRoomData({ ...roomData, id: data.roomId });
-        // setJoinedUsers(data.userNames);
         setRoomName(data.roomName);
         setIsRoomJoined(true);
       });
@@ -79,7 +97,8 @@ const ChatRoom: React.FC = () => {
   // socket.on("roomCreated", (data) => {
   //   console.log(data);
   // });
-  const sendMessage = () => {
+  const sendMessage = (e: any) => {
+    e.preventDefault();
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
       socket.emit("message", messageData);
@@ -165,11 +184,12 @@ const ChatRoom: React.FC = () => {
       let rowDivChild = document.createElement("div");
       rowDiv.style.display = "flex";
       rowDiv.draggable = false;
+
       rowDivChild.style.height = `${displayedPixelSize.value}px`;
       rowDivChild.draggable = false;
       rowDivChild.classList.add("pixel");
       rowDivChild.style.width = `${displayedPixelSize.value}px`;
-      rowDivChild.style.border = "1px solid black";
+      container.style.border = "1px solid black";
       container.style.width = `${
         Number(row.value) * Number(displayedPixelSize.value)
       }px`;
@@ -413,9 +433,11 @@ const ChatRoom: React.FC = () => {
         setJoinedUsers(data);
 
         console.log(data);
+        const usersArray = Object.values(joinedUsers);
+        console.log(usersArray);
       });
       socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
-        alert(`${currentDrawer} is now drawing!`);
+        // alert(`${currentDrawer} is now drawing!`);
         setCurrentDrawer(currentDrawer);
         console.log(currentDrawer, currentDrawerId);
 
@@ -443,14 +465,17 @@ const ChatRoom: React.FC = () => {
       });
 
       socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
-        alert(`${currentDrawer} is now drawing!`);
+        // alert(`${currentDrawer} is now drawing!`);
         setCurrentDrawer(currentDrawer);
-        console.log(currentDrawer, currentDrawerId);
-        console.log(userId);
+
+        // console.log(currentDrawer, currentDrawerId);
+        // console.log(userId);
 
         if (currentDrawerId != userId) {
           // setCanDraw(true);
           if (container) {
+            setDrawWord(null);
+
             container.style.pointerEvents = "none";
           }
         } else {
@@ -462,17 +487,25 @@ const ChatRoom: React.FC = () => {
       });
       socket.on("newWord", (word) => {
         console.log("Your word to draw:", word);
+
         setDrawWord(word);
         // Start drawing based on the received word
       });
-      socket.on("correctGuess", ({ guesser }) => {
-        alert(`${guesser} guessed the word correctly!`);
-        setDrawWord(null);
-      });
+      socket.on("conffeti", () => {
+        console.log("recived conffeti");
 
-      socket.on("incorrectGuess", ({ guesser, guess }) => {
-        console.log(`${guesser} guessed incorrectly: ${guess}`);
+        handleButtonClick();
       });
+      // socket.on("correctGuess", ({ guesser, guesserId }) => {
+      //   console.log(guesser, guesserId);
+
+      //   // alert(`${guesser} guessed the word correctly!`);
+      //   setDrawWord(null);
+      // });
+
+      // socket.on("incorrectGuess", ({ guesser, guess }) => {
+      //   console.log(`${guesser} guessed incorrectly: ${guess}`);
+      // });
       // Clean up when the component unmounts
       return () => {
         socket.off("message");
@@ -511,9 +544,19 @@ const ChatRoom: React.FC = () => {
 
     socket.emit("startGame", { roomId: roomData.id });
   }
+  const handleButtonClick = () => {
+    console.log("bus");
+
+    // Trigger confetti on button click
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  };
 
   return (
-    <main className=" bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
+    <main className="font-ge-bold bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
       {!isRoomJoined ? (
         <div className="border-black border-2 border-solid w-[90vw] h-[95vh] flex flex-col justify-center items-center gap-5 bg-bg-white  rounded-[5rem]">
           <h2 className=" text-[40px] font-extrabold text-white">
@@ -618,32 +661,30 @@ const ChatRoom: React.FC = () => {
             >
               შექმენი ოთახი
             </button>
-            <button
-              onClick={() => {
-                console.log(roomData);
-              }}
-            >
+            <button id="celebrateBtn" onClick={handleButtonClick}>
               log
             </button>
           </div>
         </div>
       ) : (
-        <div className="flex justify-between items-start bg-bg-white w-[90vw] h-[95vh] rounded-[5rem] px-[50px]">
+        <div className="flex justify-between items-start bg-bg-white w-[90vw] h-[95vh] rounded-[5rem] ">
           <div className="flex">
             {/* <h1>{roomName}</h1>{" "} */}
-            <div className="border borde-2 border-black bg-bg-white">
+            <div className="border borde-2 border-black bg-bg-white rounded-tl-[5rem] rounded-bl-[5rem] h-[95vh] w-[200px] text-center">
               <p className="text-2xl whitespace-nowrap font-extrabold text-black inline-block">
                 სასტავი:
               </p>
               {joinedUsers.length > 0
-                ? joinedUsers.map((user: any) => (
+                ? // Object.values(usersObject);
+
+                  Object.values(joinedUsers).map((user: any) => (
                     <p
                       className={`${
-                        user == currentDrawer ? "text-red-700" : null
+                        user.name == currentDrawer ? "text-red-700" : null
                       }`}
                     >
-                      {" "}
-                      {user}{" "}
+                      {user.name}:{user.score}
+                      {user.name == userName ? "(შენ)" : null}
                     </p>
                   ))
                 : null}
@@ -654,6 +695,7 @@ const ChatRoom: React.FC = () => {
             >
               start the game
             </button>
+            {/* <p>{timeLeft}</p> */}
             {drawWord ? (
               <span className="text-white font-bold text-lg"> {drawWord}</span>
             ) : null}
@@ -718,23 +760,25 @@ const ChatRoom: React.FC = () => {
               <canvas ref={canvasRef}></canvas>
             </div>
           </div>
-          <div className="flex flex-col h-full justify-end">
+          <div className="flex flex-col h-full justify-end bg-bg-white rounded-tr-[5rem] rounded-br-[5rem] w-[250px] overflow-hidden">
             <div>
               {messages.map((msg, index) => (
-                <p key={index}>
+                <p className="break-all" key={index}>
                   {msg.userName}: {msg.message}
                 </p>
               ))}
             </div>
-            <div>
+            <form onSubmit={sendMessage}>
               <input
                 type="text"
                 placeholder="Enter message"
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                }}
               />
-              <button onClick={sendMessage}>Send Message</button>
-            </div>
+              <button type="submit">Send</button>
+            </form>
           </div>
         </div>
       )}

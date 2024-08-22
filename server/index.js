@@ -11,24 +11,12 @@ app.options("*", cors());
 const server = http.createServer(app);
 const ActiveRooms = [];
 const rooms = {};
-class Room {
-  constructor(name, id, owner, maxPlayers) {
-    this.name = name;
-    this.id = id;
-    this.owner = owner;
-    this.maxPlayers = maxPlayers;
-    this.players = [];
-  }
-  addPlayer = (player) => {
-    this.players.push(player);
-  };
-}
 
 // Enable CORS
 
 app.use(
   cors({
-    origin: "*", // Allow any origin
+    origin: "http://localhost:5173", // Allow any origin
     methods: ["GET", "POST"],
     credentials: true,
   })
@@ -36,7 +24,7 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow any origin
+    origin: "http://localhost:5173", // Allow any origin
     methods: ["GET", "POST"],
     credentials: false,
   },
@@ -75,6 +63,7 @@ io.on("connection", (socket) => {
       name,
       roomName: room.name,
       roomId: roomId,
+      score: 0,
     };
     room.users[socket.id] = userData;
 
@@ -82,56 +71,7 @@ io.on("connection", (socket) => {
 
     io.to(roomId).emit("userJoined", userData);
   });
-  //old join room where we checked in a major ohio L way
-  // socket.on("check_room", (data) => {
-  //   const { roomId, userName } = data;
-  //   console.log(ActiveRooms);
 
-  //   const existingRoom = ActiveRooms.find((room) => room.id === roomId);
-  //   if (existingRoom) {
-  //     // console.log(`Room with id ${roomId} already exists, joining that room`);
-
-  //     if (existingRoom.players.length < existingRoom.maxPlayers) {
-  //       socket.join(roomId);
-  //       existingRoom.addPlayer(userName);
-  //       // console.log(`User joined room: ${roomId}`);
-  //       socket.emit("room_exist", {
-  //         code: 1,
-  //         message: `Room with id ${roomId} exist... joining`,
-  //         name: existingRoom.name,
-  //       });
-  //     } else {
-  //       socket.emit("room_not_exist", {
-  //         code: 0,
-  //         message: `Room with id ${roomId} is full`,
-  //       });
-  //     }
-
-  //     // You can add additional logic here, such as joining the existing room
-  //   } else {
-  //     // console.log(`Room with id ${roomId} does not exist, cant join`);
-  //     // You can add logic here to handle the case when the room doesn't exist
-  //     socket.emit("room_not_exist", {
-  //       code: 0,
-  //       message: `Room with id ${roomId} does not exist`,
-  //     });
-  //   }
-  // });
-  // idk what dis iz
-  // socket.on("join_room", (roomId) => {
-  //   socket.join(roomId);
-  //   console.log(`User joined room: ${roomId}`);
-  // });
-
-  // old room create
-  // socket.on("create_room", (data) => {
-  //   const { roomName, id, owner, maxPlayers } = data;
-  //   const room = new Room(roomName, id, owner, maxPlayers);
-  //   // console.log(roomName, id, owner, maxPlayers);
-
-  //   ActiveRooms.push(room);
-  //   io.to(id).emit("room_created", room);
-  // });
   socket.on("create_room", (data) => {
     const { name, id, maxPlayers } = data;
     // console.log(data);
@@ -153,6 +93,7 @@ io.on("connection", (socket) => {
 
   socket.on("startGame", ({ roomId }) => {
     // console.log(roomId, "aaaaa");
+    startTurnTimer(roomId);
 
     const room = rooms[roomId];
 
@@ -164,9 +105,10 @@ io.on("connection", (socket) => {
     room.currentWord = selectRandomWord(); // Select a random word from the array
 
     io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
-    const userNames = Object.values(room.users).map((user) => user.name);
 
-    io.to(roomId).emit("updateUserList", userNames);
+    // const userNames = Object.values(room.users).map((user) => user.name);
+
+    io.to(roomId).emit("updateUserList", Object.values(room.users));
     io.to(roomId).emit("gameStarted", {
       currentDrawer: room.users[room.currentDrawer].name,
       currentDrawerId: room.users[room.currentDrawer].id,
@@ -178,30 +120,29 @@ io.on("connection", (socket) => {
 
     if (!room) return;
 
-    // Check if the guess is correct (logic for correct guess goes here)
-    // Assuming a correct guess, we move to the next drawer
-    console.log(`guesser is ${room.users[socket.id].name}`);
+    // console.log(`guesser is ${room.users[socket.id].name}`);
 
-    if (guess.toLowerCase() === room.currentWord.toLowerCase()) {
+    if (guess.toLowerCase() === room?.currentWord?.toLowerCase()) {
       io.to(roomId).emit("correctGuess", {
-        guesser: room.users[socket.id].name,
+        guesser: room.users[socket.id]?.name,
+        guesserId: room.users[socket.id].id,
       });
-      changeDrawer(roomId); // Move to the next drawer if the guess is correct
+      room.users[socket.id].score += 100;
+      io.to(roomId).emit("updateUserList", Object.values(room.users));
+
+      // changeDrawer(roomId); // Move to the next drawer if the guess is correct
+      console.log(room.currentDrawer);
+      console.log(socket.id);
+
+      io.to(socket.id).emit("conffeti", {
+        message: "Correct!",
+      });
     } else {
       io.to(roomId).emit("incorrectGuess", {
         guesser: room.users[socket.id].name,
         guess,
       });
     }
-
-    // room.currentDrawerIndex =
-    //   (room.currentDrawerIndex + 1) % Object.keys(room.users).length;
-    // room.currentDrawer = Object.keys(room.users)[room.currentDrawerIndex];
-
-    // io.to(roomId).emit("newDrawer", {
-    //   currentDrawer: room.users[room.currentDrawer]?.name,
-    //   currentDrawerId: room.users[room.currentDrawer]?.id,
-    // });
   });
   socket.on("message", (data) => {
     const { roomId, message, userName } = data;
@@ -228,10 +169,10 @@ io.on("connection", (socket) => {
         delete rooms[roomId].users[socket.id];
         io.to(roomId).emit("userDisconnected", userData);
 
-        const userNames = Object.values(rooms[roomId].users).map(
-          (user) => user.name
+        io.to(roomId).emit(
+          "updateUserList",
+          Object.values(rooms[roomId].users)
         );
-        io.to(roomId).emit("updateUserList", userNames);
 
         // Remove the room if empty
         if (Object.keys(rooms[roomId].users).length === 0) {
@@ -276,13 +217,10 @@ function changeDrawer(roomId) {
     currentDrawer: room.users[room.currentDrawer].name,
     currentDrawerId: room.users[room.currentDrawer].id,
   });
-  // console.log(
-  //   room.users[room.currentDrawer].id,
-  //   room.users[room.currentDrawer].name
-  // );
 
   startTurnTimer(roomId);
 }
+
 function startTurnTimer(roomId) {
   const room = rooms[roomId];
 
@@ -292,7 +230,7 @@ function startTurnTimer(roomId) {
 
   room.turnTimer = setTimeout(() => {
     changeDrawer(roomId);
-  }, 90000000); // 90 seconds
+  }, 10000); // 90 seconds
 }
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

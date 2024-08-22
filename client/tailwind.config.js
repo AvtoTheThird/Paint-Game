@@ -10,6 +10,10 @@ export default {
         "bg-pink": "#FF70F5",
         "bg-white": "rgb(249, 248, 253,0.5)",
       },
+      fontFamily: {
+        "ge-black": ["GEFontBlack", "sans-serif"],
+        "ge-bold": ["GEFontBold", "sans-serif"],
+      },
     },
   },
   plugins: [],

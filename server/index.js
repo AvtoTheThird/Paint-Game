@@ -103,11 +103,13 @@ io.on("connection", (socket) => {
     room.currentDrawer = Object.keys(room.users)[room.currentDrawerIndex];
 
     room.currentWord = selectRandomWord(); // Select a random word from the array
-
     io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
 
     // const userNames = Object.values(room.users).map((user) => user.name);
-
+    io.to(roomId).emit("newDrawer", {
+      currentDrawer: room.users[room.currentDrawer]?.name,
+      currentDrawerId: room.users[room.currentDrawer]?.id,
+    });
     io.to(roomId).emit("updateUserList", Object.values(room.users));
     io.to(roomId).emit("gameStarted", {
       currentDrawer: room.users[room.currentDrawer].name,
@@ -155,8 +157,21 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("canvas", { col, row });
   });
   socket.on("draw", (data) => {
-    const { roomId, pixel, color } = data;
-    io.to(roomId).emit("draw", { pixel, color });
+    const { roomId, x0, y0, x1, y1, color } = data;
+    // console.log(data);
+
+    // socket.broadcast.emit("draw", data);
+
+    io.to(roomId).emit("draw", { x0, y0, x1, y1, color });
+  });
+  socket.on("lineWidthChange", (data) => {
+    // console.log("line width changed to", data);
+
+    const { newLineWidth, roomId } = data;
+    io.to(roomId).emit("newLineWidth", { newLineWidth });
+  });
+  socket.on("clear", (roomId) => {
+    io.to(roomId).emit("clear"); // Broadcast clear event
   });
   socket.on("erace", (data) => {
     const { roomId, pixel } = data;

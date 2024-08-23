@@ -40,8 +40,11 @@ const ChatRoom: React.FC = () => {
   const [drawWord, setDrawWord] = useState<any>();
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);
+  const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
+
   const [currentDrawer, setCurrentDrawer] = useState<any>();
-  // const [timeLeft, setTimeLeft] = useState<number>(5); // Initialize with 90 seconds
+  const [timeLeft, setTimeLeft] = useState(10); // Initialize with 90 seconds
+  // const [isActive, setIsActive] = useState(false); // Timer activity state
 
   // Refs for the DOM elements
   const colRef = useRef<HTMLInputElement>(null);
@@ -53,17 +56,25 @@ const ChatRoom: React.FC = () => {
   const colorWheelRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // useEffect(() => {
-  //   if (timeLeft === 0) {
-  //     setTimeLeft(5); // Restart the timer when it reaches 0
-  //   }
+  useEffect(() => {
+    let timer: any;
 
-  //   const timer = setInterval(() => {
-  //     setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-  //   }, 1000);
+    if (isGameStarted && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      // setIsActive(false); // Stop the timer when it reaches 0
+      setTimeLeft(10); // Optionally reset the timer to 90 seconds
+    }
 
-  //   return () => clearInterval(timer); // Clean up the interval on component unmount
-  // }, [timeLeft]);
+    return () => clearInterval(timer); // Clean up the interval on component unmount
+  }, [isGameStarted, timeLeft]);
+  // const startTimer = () => {
+  //   console.log("AAAAAAAAAAAAAAAAAAAA");
+
+  //   setIsActive(true);
+  // };
   const joinRoom = () => {
     if (roomId.trim()) {
       let dataToBeSent = { roomId, name: userName };
@@ -438,6 +449,7 @@ const ChatRoom: React.FC = () => {
       });
       socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
         // alert(`${currentDrawer} is now drawing!`);
+        setIsGameStarted(true);
         setCurrentDrawer(currentDrawer);
         console.log(currentDrawer, currentDrawerId);
 
@@ -489,6 +501,7 @@ const ChatRoom: React.FC = () => {
         console.log("Your word to draw:", word);
 
         setDrawWord(word);
+        setTimeLeft(10);
         // Start drawing based on the received word
       });
       socket.on("conffeti", () => {
@@ -689,13 +702,20 @@ const ChatRoom: React.FC = () => {
                   ))
                 : null}
             </div>
-            <button
-              onClick={startGame}
-              className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
-            >
-              start the game
-            </button>
-            {/* <p>{timeLeft}</p> */}
+            {isGameStarted ? null : (
+              <button
+                onClick={() => {
+                  startGame();
+                  // setIsGameStarted(true);
+                  // startTimer();
+                }}
+                className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+              >
+                start the game
+              </button>
+            )}
+
+            <p>{timeLeft}</p>
             {drawWord ? (
               <span className="text-white font-bold text-lg"> {drawWord}</span>
             ) : null}

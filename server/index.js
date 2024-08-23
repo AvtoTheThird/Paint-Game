@@ -214,8 +214,8 @@ function changeDrawer(roomId) {
   console.log(room.currentDrawer);
 
   io.to(roomId).emit("newDrawer", {
-    currentDrawer: room.users[room.currentDrawer].name,
-    currentDrawerId: room.users[room.currentDrawer].id,
+    currentDrawer: room.users[room.currentDrawer]?.name,
+    currentDrawerId: room.users[room.currentDrawer]?.id,
   });
 
   startTurnTimer(roomId);

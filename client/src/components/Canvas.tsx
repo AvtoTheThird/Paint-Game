@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState, MouseEvent } from "react";
 import socket from "./socket"; // Use the same socket instance
 
-const Canvas: React.FC = ({ canvasData }: any) => {
+const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
+  canvasData,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const drawing = useRef<boolean>(false);
@@ -9,7 +11,13 @@ const Canvas: React.FC = ({ canvasData }: any) => {
   const [color, setColor] = useState<string>("#000000"); // Default color is black
   const [lineWidth, setLineWidth] = useState<number>(5);
   const [canDraw, setCanDraw] = useState<boolean>(false);
-  console.log(canvasData);
+  const [history, setHistory] = useState<string[]>([]); // To keep track of canvas states for undo
+  const [tool, setTool] = useState<"draw" | "fill">("draw"); // 'draw' or 'fill'
+
+  interface CanvasData {
+    data: { roomId: string; userId: string };
+  }
+  // console.log(canvasData);
   const roomId = canvasData.roomId;
   const userId = canvasData.userId;
   useEffect(() => {
@@ -32,6 +40,7 @@ const Canvas: React.FC = ({ canvasData }: any) => {
         canvasRef.current.width,
         canvasRef.current.height
       );
+      // console.log(savedImage);
 
       // Resize the canvas to the new window size
       canvasRef.current.width = 800;
@@ -102,6 +111,12 @@ const Canvas: React.FC = ({ canvasData }: any) => {
       //   console.log(data);
     });
     socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
+      setHistory([]);
+      console.log("Aqa");
+
+      if (ctxRef.current) {
+        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
+      }
       console.log(currentDrawer, currentDrawerId);
       console.log(userId);
 
@@ -111,10 +126,14 @@ const Canvas: React.FC = ({ canvasData }: any) => {
         setCanDraw(true);
       }
     });
-
+    socket.on("undo", (updatedHistory) => {
+      setHistory(updatedHistory); // Update the local history state
+      redrawCanvas(updatedHistory); // Redraw the canvas
+    });
     return () => {
       socket.off("draw");
       socket.off("clear");
+      socket.off("undo");
     };
   }, []);
 
@@ -133,6 +152,8 @@ const Canvas: React.FC = ({ canvasData }: any) => {
     if (ctxRef.current) {
       ctxRef.current.closePath();
     }
+    saveCanvasState(); // Save state after drawing ends.
+    console.log(history);
   };
 
   const draw = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -181,29 +202,74 @@ const Canvas: React.FC = ({ canvasData }: any) => {
     socket.emit("lineWidthChange", data); // Notify other clients
     // console.log("emited shit");
   };
+  const saveCanvasState = () => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const canvasData = canvas.toDataURL();
+      setHistory((prevHistory) => [...prevHistory, canvasData]);
+    }
+  };
+  const undoLastAction = () => {
+    if (history.length === 0) return; // No history to undo
+
+    const newHistory = [...history];
+    newHistory.pop(); // Remove the last saved state
+    setHistory(newHistory);
+
+    // Emit undo event to server with the updated history
+    socket.emit("undo", { newHistory, roomId });
+
+    redrawCanvas(newHistory);
+  };
+
+  const redrawCanvas = (history: string[]) => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+
+    if (ctx && canvas && history.length > 0) {
+      const lastImage = new Image();
+      lastImage.src = history[history.length - 1];
+      lastImage.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+        ctx.drawImage(lastImage, 0, 0); // Draw the previous state
+      };
+    } else if (ctx && canvas) {
+      // Clear canvas if no history left
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  };
+
   return (
     <div>
-      {canDraw ? <button onClick={clearCanvas}>Clear Canvas</button> : null}
-      <input
-        type="color"
-        value={color}
-        onChange={(e) => setColor(e.target.value)}
-        style={{ margin: "10px" }}
-      />
-      <input
-        type="range"
-        min="1"
-        max="10"
-        value={lineWidth}
-        onChange={handleLineWithChange}
-      />
       <canvas
-        className="border-2 border-black"
+        className="border-2 border-black bg-white"
         ref={canvasRef}
         onMouseDown={canDraw ? startDrawing : undefined}
         onMouseUp={canDraw ? stopDrawing : undefined}
         onMouseMove={canDraw ? draw : undefined}
       />
+      <div className="flex flex-row gap-4 border-2 border-black justify-center">
+        {" "}
+        {canDraw ? <button onClick={clearCanvas}>Clear Canvas</button> : null}
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          style={{ margin: "10px" }}
+        />
+        <button onClick={undoLastAction} disabled={history.length === 0}>
+          Undo
+        </button>
+        <button onClick={() => setTool("draw")}>Draw Tool</button>
+        <button onClick={() => setTool("fill")}>Fill Tool</button>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={lineWidth}
+          onChange={handleLineWithChange}
+        />
+      </div>
     </div>
   );
 };

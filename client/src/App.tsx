@@ -38,9 +38,10 @@ const ChatRoom: React.FC = () => {
   const [canDraw, setCanDraw] = useState<boolean>(false);
   const [hasGuesed, setHasGuesed] = useState<boolean>(false);
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
-
+  const [secretWord, setSecretWord] = useState<string>("");
   const [currentDrawer, setCurrentDrawer] = useState<any>();
-  const [timeLeft, setTimeLeft] = useState(10); // Initialize with 90 seconds
+
+  const [timeLeft, setTimeLeft] = useState<number>(0);
   // const [isActive, setIsActive] = useState(false); // Timer activity state
 
   useEffect(() => {
@@ -50,13 +51,10 @@ const ChatRoom: React.FC = () => {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
-      // setIsActive(false); // Stop the timer when it reaches 0
-      setTimeLeft(10); // Optionally reset the timer to 90 seconds
     }
 
     return () => clearInterval(timer); // Clean up the interval on component unmount
-  }, [isGameStarted, timeLeft]);
+  }, [isGameStarted]);
   // const startTimer = () => {
   //   console.log("AAAAAAAAAAAAAAAAAAAA");
 
@@ -153,36 +151,32 @@ const ChatRoom: React.FC = () => {
         const usersArray = Object.values(joinedUsers);
         console.log(usersArray);
       });
-      socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
+      socket.on("gameStarted", ({ currentDrawer, currentDrawerId, time }) => {
+        console.log(currentDrawerId, time);
+
         // alert(`${currentDrawer} is now drawing!`);
         setIsGameStarted(true);
+
         setCurrentDrawer(currentDrawer);
         // console.log(currentDrawer, currentDrawerId);
       });
 
-      socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
-        // alert(`${currentDrawer} is now drawing!`);
-        setCurrentDrawer(currentDrawer);
+      socket.on(
+        "newDrawer",
+        ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+          setTimeLeft(time);
+          setCurrentDrawer(currentDrawer);
+          setSecretWord(secretWord);
 
-        // console.log(currentDrawer, currentDrawerId);
-        // console.log(userId);
-
-        if (currentDrawerId != userId) {
-          // setCanDraw(true);
-          setDrawWord(null);
+          if (currentDrawerId != userId) {
+            setDrawWord(null);
+          }
         }
-        // else {
-        //   setCanDraw(false);
-        // }
-        // Update UI to show the current drawer
-      });
+      );
       socket.on("newWord", (word) => {
-        console.log("Your word to draw:", word);
-
         setDrawWord(word);
-        setTimeLeft(10);
-        // Start drawing based on the received word
       });
+
       socket.on("conffeti", () => {
         console.log("recived conffeti");
 
@@ -223,6 +217,9 @@ const ChatRoom: React.FC = () => {
       origin: { y: 0.6 },
     });
   };
+  interface CanvasData {
+    data: { roomId: string; userId: string };
+  }
   // console.log(roomId, userId);
   const canvasData = { roomId, userId };
   return (
@@ -272,7 +269,7 @@ const ChatRoom: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
             <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
               შექმენი ოთახი{" "}
             </p>
@@ -324,6 +321,23 @@ const ChatRoom: React.FC = () => {
                 }}
               />
             </div>
+            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                time
+              </p>
+              <input
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+                type="text"
+                name=""
+                id=""
+                onChange={(e) => {
+                  setRoomData({
+                    ...roomData,
+                    time: Number(e.target.value),
+                  });
+                }}
+              />
+            </div>
 
             <button
               onClick={createRoom}
@@ -331,17 +345,17 @@ const ChatRoom: React.FC = () => {
             >
               შექმენი ოთახი
             </button>
-            <button id="celebrateBtn" onClick={handleButtonClick}>
+            {/* <button id="celebrateBtn" onClick={handleButtonClick}>
               log
-            </button>
+            </button> */}
           </div>
         </div>
       ) : (
         <div className="flex justify-between items-start bg-bg-white w-[90vw] h-[95vh] rounded-[5rem] ">
           <div className="flex">
             {/* <h1>{roomName}</h1>{" "} */}
-            <div className="border borde-2 border-black bg-bg-white rounded-tl-[5rem] rounded-bl-[5rem] h-[95vh] w-[200px] text-center">
-              <p className="text-2xl whitespace-nowrap font-extrabold text-black inline-block">
+            <div className="border borde-2 border-black bg-bg-white rounded-tl-[5rem] rounded-bl-[5rem] h-[95vh] w-[350px] text-center">
+              <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
                 სასტავი:
               </p>
               {joinedUsers.length > 0
@@ -351,7 +365,7 @@ const ChatRoom: React.FC = () => {
                     <p
                       className={`${
                         user.name == currentDrawer ? "text-red-700" : null
-                      }`}
+                      } text-lg `}
                     >
                       {user.name}:{user.score}
                       {user.name == userName ? "(შენ)" : null}
@@ -361,26 +375,36 @@ const ChatRoom: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-[800px]">
-            {isGameStarted ? null : (
-              <button
-                onClick={() => {
-                  startGame();
-                  // setIsGameStarted(true);
-                  // startTimer();
-                }}
-                className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
-              >
-                start the game
-              </button>
-            )}
-            <p>{timeLeft}</p>
-            {drawWord ? (
-              <span className="text-white font-bold text-lg"> {drawWord}</span>
-            ) : null}
+          <div className="pt-10">
+            <div className="flex bg-white h-[70px] rounded-xl justify-between items-center px-5 ">
+              {isGameStarted ? null : (
+                <button
+                  onClick={() => {
+                    startGame();
+                    // setIsGameStarted(true);
+                    // startTimer();
+                  }}
+                  className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                >
+                  start the game
+                </button>
+              )}
+              <p>{timeLeft}</p>
+              {drawWord ? (
+                <span className="text-black font-bold text-2xl">
+                  {drawWord}
+                </span>
+              ) : (
+                <span className="text-black tracking-[0.2rem] font-bold">
+                  {secretWord}
+                </span>
+              )}
+              <div>.</div>
+            </div>
+
             <Canvas canvasData={canvasData} />
           </div>
-          <div className="flex flex-col h-full justify-end bg-bg-white rounded-tr-[5rem] rounded-br-[5rem] w-[250px] overflow-hidden">
+          <div className="flex flex-col h-full justify-end bg-bg-white rounded-tr-[5rem] rounded-br-[5rem] w-[350px] overflow-hidden">
             <div>
               {messages.map((msg, index) => (
                 <p className="break-all" key={index}>

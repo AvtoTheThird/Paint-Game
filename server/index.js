@@ -73,7 +73,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("create_room", (data) => {
-    const { name, id, maxPlayers } = data;
+    const { name, id, maxPlayers, time } = data;
     // console.log(data);
 
     if (rooms[id]) {
@@ -85,9 +85,10 @@ io.on("connection", (socket) => {
       name,
       maxPlayers,
       users: {},
+      time,
     };
 
-    socket.emit("roomCreated", { id, name, maxPlayers });
+    socket.emit("roomCreated", { id, name, maxPlayers, time });
     // console.log(rooms);
   });
 
@@ -104,13 +105,18 @@ io.on("connection", (socket) => {
 
     room.currentWord = selectRandomWord(); // Select a random word from the array
     io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
+    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+    // console.log(secretWord);
 
     // const userNames = Object.values(room.users).map((user) => user.name);
     io.to(roomId).emit("newDrawer", {
       currentDrawer: room.users[room.currentDrawer]?.name,
       currentDrawerId: room.users[room.currentDrawer]?.id,
+      secretWord: secretWord,
+      time: room.time,
     });
     io.to(roomId).emit("updateUserList", Object.values(room.users));
+
     io.to(roomId).emit("gameStarted", {
       currentDrawer: room.users[room.currentDrawer].name,
       currentDrawerId: room.users[room.currentDrawer].id,
@@ -163,6 +169,14 @@ io.on("connection", (socket) => {
     // socket.broadcast.emit("draw", data);
 
     io.to(roomId).emit("draw", { x0, y0, x1, y1, color });
+  });
+  socket.on("undo", (data) => {
+    const { newHistory, roomId } = data;
+    // Broadcast the undo event to all other clients
+    console.log("recived undo");
+
+    io.to(roomId).emit("undo", newHistory);
+    console.log("emited undo");
   });
   socket.on("lineWidthChange", (data) => {
     // console.log("line width changed to", data);
@@ -226,11 +240,16 @@ function changeDrawer(roomId) {
   // Select a new word for the new drawer
   room.currentWord = selectRandomWord(); // Implement this function to select a word
   io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
-  console.log(room.currentDrawer);
+  // console.log(room.currentDrawer);
+
+  const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+  console.log(secretWord);
 
   io.to(roomId).emit("newDrawer", {
     currentDrawer: room.users[room.currentDrawer]?.name,
     currentDrawerId: room.users[room.currentDrawer]?.id,
+    secretWord: secretWord,
+    time: room.time,
   });
 
   startTurnTimer(roomId);
@@ -238,14 +257,15 @@ function changeDrawer(roomId) {
 
 function startTurnTimer(roomId) {
   const room = rooms[roomId];
-
   if (!room) return;
 
   clearTimeout(room.turnTimer);
+  const timeoutDuration = room.time * 1000;
+  console.log(timeoutDuration);
 
   room.turnTimer = setTimeout(() => {
     changeDrawer(roomId);
-  }, 10000); // 90 seconds
+  }, timeoutDuration);
 }
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

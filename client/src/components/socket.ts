@@ -1,6 +1,6 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:3000"); // Replace with your server URL
-
+const socket = io("https://paint-game.onrender.com"); // Replace with your server URL
+// https://paint-game.onrender.com
 export default socket;

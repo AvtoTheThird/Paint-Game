@@ -16,7 +16,7 @@ const rooms = {};
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow any origin
+    origin: "*", // Allow any origin
     methods: ["GET", "POST"],
     credentials: true,
   })
@@ -24,7 +24,7 @@ app.use(
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Allow any origin
+    origin: "*", // Allow any origin
     methods: ["GET", "POST"],
     credentials: false,
   },

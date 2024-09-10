@@ -8,6 +8,10 @@ export default {
       },
       backgroundColor: {
         "bg-pink": "#FF70F5",
+        "light-purupe": "#CC90E4",
+        "dark-purupe": "#923CB4",
+
+        "light-pink": "#F9D4FF",
         "bg-white": "rgb(249, 248, 253,0.5)",
       },
       fontFamily: {

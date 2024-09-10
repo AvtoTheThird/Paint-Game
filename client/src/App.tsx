@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, MouseEvent } from "react";
-
 import confetti from "canvas-confetti";
 import Canvas from "./components/Canvas";
 import { io, Socket } from "socket.io-client";
@@ -146,10 +145,6 @@ const ChatRoom: React.FC = () => {
       // });
       socket.on("updateUserList", (data) => {
         setJoinedUsers(data);
-
-        console.log(data);
-        const usersArray = Object.values(joinedUsers);
-        console.log(usersArray);
       });
       socket.on("gameStarted", ({ currentDrawer, currentDrawerId, time }) => {
         console.log(currentDrawerId, time);
@@ -167,6 +162,7 @@ const ChatRoom: React.FC = () => {
           setTimeLeft(time);
           setCurrentDrawer(currentDrawer);
           setSecretWord(secretWord);
+          setHasGuesed(false);
 
           if (currentDrawerId != userId) {
             setDrawWord(null);
@@ -223,19 +219,19 @@ const ChatRoom: React.FC = () => {
   // console.log(roomId, userId);
   const canvasData = { roomId, userId };
   return (
-    <main className="font-ge-bold bg-no-repeat bg-cover h-screen flex flex-col justify-center items-center">
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {!isRoomJoined ? (
-        <div className="border-black border-2 border-solid w-[90vw] h-[95vh] flex flex-col justify-center items-center gap-5 bg-bg-white  rounded-[5rem]">
+        <div className="border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex flex-col justify-center items-center gap-5 lg:bg-bg-white  rounded-[5rem]">
           <h2 className=" text-[40px] font-extrabold text-white">
             firo$ Money
           </h2>
 
-          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+          <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-auto rounded-3xl lg:p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
             {" "}
-            <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
+            <p className="lg:text-2xl text-xl whitespace-nowrap font-extrabold text-white pb-5">
               შედი უკვე შექმნილ ოთახში{" "}
             </p>
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 შეიყვანე სახელი
               </p>
@@ -249,7 +245,7 @@ const ChatRoom: React.FC = () => {
                 }}
               />
             </div>
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 ოთახის პაროლი
               </p>
@@ -262,18 +258,18 @@ const ChatRoom: React.FC = () => {
               />
             </div>
             <button
-              className="border-2 border-solid border-blue-900 bg-blue-700 w-[180px] h-[80px] text-2xl text-white rounded-[30px]"
+              className="border-2 border-solid border-blue-900 bg-blue-700 lg:w-[180px] lg:h-[80px] text-2xl lg:p-0 p-3 text-white rounded-[30px]"
               onClick={joinRoom}
             >
               შედი ოთახში
             </button>
           </div>
 
-          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+          <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl w-[95vw] lg:w-auto px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
             <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
               შექმენი ოთახი{" "}
             </p>
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 room name
               </p>
@@ -288,7 +284,7 @@ const ChatRoom: React.FC = () => {
               />
             </div>
 
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               {" "}
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 room ID
@@ -304,7 +300,7 @@ const ChatRoom: React.FC = () => {
               />
             </div>
 
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 max players
               </p>
@@ -321,7 +317,7 @@ const ChatRoom: React.FC = () => {
                 }}
               />
             </div>
-            <div className="flex gap-5 items-center justify-between pb-3 w-[600px]">
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 time
               </p>
@@ -351,38 +347,44 @@ const ChatRoom: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="flex justify-between items-start bg-bg-white w-[90vw] h-[95vh] rounded-[5rem] ">
-          <div className="flex">
-            {/* <h1>{roomName}</h1>{" "} */}
-            <div className="border borde-2 border-black bg-bg-white rounded-tl-[5rem] rounded-bl-[5rem] h-[95vh] w-[350px] text-center">
-              <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
-                სასტავი:
-              </p>
-              {joinedUsers.length > 0
-                ? // Object.values(usersObject);
+        <div className="h-[100vh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center gap-5 lg:bg-bg-white  rounded-[5rem]">
+          {/* marcxena plani */}
+          {/* <h1>{roomName}</h1>{" "} */}
+          {/* ppl */}
+          <div className=" bg-light-pink rounded-[5rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[300px] overflow-hidden  text-center">
+            <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
+              სასტავი:
+            </p>
+            {joinedUsers.length > 0
+              ? // Object.values(usersObject);
 
-                  Object.values(joinedUsers).map((user: any) => (
-                    <p
-                      className={`${
-                        user.name == currentDrawer ? "text-red-700" : null
-                      } text-lg `}
-                    >
-                      {user.name}:{user.score}
-                      {user.name == userName ? "(შენ)" : null}
-                    </p>
+                Object.values(joinedUsers)
+                  .sort((a, b) => b.score - a.score)
+                  .map((user: any) => (
+                    <div>
+                      <p
+                        className={`${
+                          user.name == currentDrawer
+                            ? "bg-dark-purupe py-5"
+                            : "bg-light-purupe py-5"
+                        } text-lg `}
+                      >
+                        {user.name}:{user.score}
+                        {user.name == userName ? "(შენ)" : null}
+                      </p>
+                      <hr />
+                    </div>
                   ))
-                : null}
-            </div>
+              : null}
           </div>
+          {/* shuala plani */}
 
-          <div className="pt-10">
-            <div className="flex bg-white h-[70px] rounded-xl justify-between items-center px-5 ">
+          <div className="  flex flex-col justify-center items-center">
+            <div className="flex bg-light-pink h-[70px] w-full  rounded-xl justify-between items-center px-5">
               {isGameStarted ? null : (
                 <button
                   onClick={() => {
                     startGame();
-                    // setIsGameStarted(true);
-                    // startTimer();
                   }}
                   className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
                 >
@@ -402,27 +404,69 @@ const ChatRoom: React.FC = () => {
               <div>.</div>
             </div>
 
-            <Canvas canvasData={canvasData} />
-          </div>
-          <div className="flex flex-col h-full justify-end bg-bg-white rounded-tr-[5rem] rounded-br-[5rem] w-[350px] overflow-hidden">
-            <div>
-              {messages.map((msg, index) => (
-                <p className="break-all" key={index}>
-                  {msg.userName}: {msg.message}
-                </p>
-              ))}
+            <div className="w-full max-w-screen-lg mx-auto">
+              <Canvas canvasData={canvasData} />
             </div>
-            <form onSubmit={sendMessage}>
-              <input
-                type="text"
-                placeholder="Enter message"
-                value={message}
-                onChange={(e) => {
-                  setMessage(e.target.value);
-                }}
-              />
-              <button type="submit">Send</button>
-            </form>
+          </div>
+
+          <div className="flex justify-between gap-3">
+            {" "}
+            <div className=" overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
+              <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
+                სასტავი:
+              </p>
+              {joinedUsers.length > 0
+                ? // Object.values(usersObject);
+
+                  Object.values(joinedUsers)
+                    .sort((a, b) => b.score - a.score)
+                    .map((user: any) => (
+                      <div>
+                        <p
+                          className={`${
+                            user.name == currentDrawer
+                              ? "bg-dark-purupe py-5"
+                              : "bg-light-purupe py-5"
+                          } text-lg `}
+                        >
+                          {user.name}:{user.score}
+                          {user.name == userName ? "(შენ)" : null}
+                        </p>
+                        <hr />
+                      </div>
+                    ))
+                : null}
+            </div>
+            <div
+              id="chat"
+              className="  flex flex-col lg:h-[90vh] justify-between items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
+            >
+              <span className="text-3xl ">ჩატი</span>
+              <div className="lg:w-[250px]  w-[40vw] overflow-x-scroll  lg:h-full h-[30vh] flex items-center justify-center flex-col   ">
+                <div className="bg-white  lg:h-full h-[30vh]  m-2  rounded-lg  flex justify-end flex-col w-full ">
+                  {messages.map((msg, index) => (
+                    <p className="break-all" key={index}>
+                      {msg.userName}: {msg.message}
+                      <hr />
+                    </p>
+                  ))}
+                </div>
+                <form onSubmit={sendMessage}>
+                  <input
+                    className="h-[35px] rounded-3xl text-center"
+                    type="text"
+                    placeholder="Enter message"
+                    value={message}
+                    onChange={(e) => {
+                      setMessage(e.target.value);
+                    }}
+                  />
+                  <button type="submit" className="">
+                    Send
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
       )}

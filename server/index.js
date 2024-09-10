@@ -69,6 +69,8 @@ io.on("connection", (socket) => {
 
     socket.join(roomId);
 
+    io.to(roomId).emit("updateUserList", Object.values(room.users));
+
     io.to(roomId).emit("userJoined", userData);
   });
 

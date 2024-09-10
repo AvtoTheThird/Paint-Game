@@ -112,13 +112,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     });
     socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
       setHistory([]);
-      console.log("Aqa");
+      console.log(currentDrawer);
 
       if (ctxRef.current) {
         ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
       }
-      console.log(currentDrawer, currentDrawerId);
-      console.log(userId);
+      // console.log(currentDrawer, currentDrawerId);
+      // console.log(userId);
 
       if (currentDrawerId != userId) {
         setCanDraw(false);
@@ -137,9 +137,27 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     };
   }, []);
 
-  const startDrawing = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (
+    event:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     drawing.current = true;
-    const { offsetX, offsetY } = event.nativeEvent;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    let offsetX, offsetY;
+    if (event.type === "mousedown") {
+      offsetX = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
+        .offsetX;
+      offsetY = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
+        .offsetY;
+    } else {
+      const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
+      const rect = canvas.getBoundingClientRect();
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+    }
 
     // Set the starting point of the drawing
     lastPosition.current = { x: offsetX, y: offsetY };
@@ -153,16 +171,31 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       ctxRef.current.closePath();
     }
     saveCanvasState(); // Save state after drawing ends.
-    console.log(history);
+    // console.log(history);
   };
 
-  const draw = (event: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (
+    event:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     if (!drawing.current) return;
 
     const canvas = canvasRef.current;
     if (!canvas || !ctxRef.current) return;
 
-    const { offsetX, offsetY } = event.nativeEvent;
+    let offsetX, offsetY;
+    if (event.type === "mousemove") {
+      offsetX = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
+        .offsetX;
+      offsetY = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
+        .offsetY;
+    } else {
+      const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
+      const rect = canvas.getBoundingClientRect();
+      offsetX = touch.clientX - rect.left;
+      offsetY = touch.clientY - rect.top;
+    }
 
     if (lastPosition.current) {
       ctxRef.current.strokeStyle = color; // Set the current color
@@ -238,17 +271,25 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   };
-
+  const vw = Math.max(
+    document.documentElement.clientWidth || 0,
+    window.innerWidth || 0
+  );
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center">
       <canvas
-        className="border-2 border-black bg-white"
+        className={`border-2 border-black bg-white   ${
+          vw < 768 ? "w-[300px]" : "scale-[1]"
+        } `}
         ref={canvasRef}
         onMouseDown={canDraw ? startDrawing : undefined}
         onMouseUp={canDraw ? stopDrawing : undefined}
         onMouseMove={canDraw ? draw : undefined}
+        onTouchStart={canDraw ? startDrawing : undefined}
+        onTouchEnd={canDraw ? stopDrawing : undefined}
+        onTouchMove={canDraw ? draw : undefined}
       />
-      <div className="flex flex-row gap-4 border-2 border-black justify-center">
+      <div className="flex flex-wrap flex-row gap-4 border-2 border-black justify-center lg:w-full w-[95vw]">
         {" "}
         {canDraw ? <button onClick={clearCanvas}>Clear Canvas</button> : null}
         <input
@@ -273,5 +314,4 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     </div>
   );
 };
-
 export default Canvas;

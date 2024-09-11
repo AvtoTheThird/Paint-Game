@@ -147,16 +147,19 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     if (!canvas) return;
 
     let offsetX, offsetY;
+    const scaleX = canvas.width / canvas.getBoundingClientRect().width;
+    const scaleY = canvas.height / canvas.getBoundingClientRect().height;
+
     if (event.type === "mousedown") {
-      offsetX = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
-        .offsetX;
-      offsetY = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
-        .offsetY;
+      const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
+        .nativeEvent;
+      offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
+      offsetY = nativeEvent.offsetY * scaleY;
     } else {
       const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
       const rect = canvas.getBoundingClientRect();
-      offsetX = touch.clientX - rect.left;
-      offsetY = touch.clientY - rect.top;
+      offsetX = (touch.clientX - rect.left) * scaleX;
+      offsetY = (touch.clientY - rect.top) * scaleY;
     }
 
     // Set the starting point of the drawing
@@ -185,16 +188,19 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     if (!canvas || !ctxRef.current) return;
 
     let offsetX, offsetY;
+    const scaleX = canvas.width / canvas.getBoundingClientRect().width;
+    const scaleY = canvas.height / canvas.getBoundingClientRect().height;
+
     if (event.type === "mousemove") {
-      offsetX = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
-        .offsetX;
-      offsetY = (event as React.MouseEvent<HTMLCanvasElement>).nativeEvent
-        .offsetY;
+      const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
+        .nativeEvent;
+      offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
+      offsetY = nativeEvent.offsetY * scaleY;
     } else {
       const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
       const rect = canvas.getBoundingClientRect();
-      offsetX = touch.clientX - rect.left;
-      offsetY = touch.clientY - rect.top;
+      offsetX = (touch.clientX - rect.left) * scaleX;
+      offsetY = (touch.clientY - rect.top) * scaleY;
     }
 
     if (lastPosition.current) {
@@ -276,11 +282,15 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     window.innerWidth || 0
   );
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div
+      style={{ aspectRatio: `${800} / ${600}` }}
+      className="flex flex-col items-center justify-center"
+    >
       <canvas
-        className={`border-2 border-black bg-white   ${
-          vw < 768 ? "w-[300px]" : "scale-[1]"
-        } `}
+        // className={`border-2 border-black bg-white   ${
+        //   vw < 768 ? "w-[300px]" : "scale-[1]"
+        // } `}
+        className="w-full h-full block border-2 border-black bg-white"
         ref={canvasRef}
         onMouseDown={canDraw ? startDrawing : undefined}
         onMouseUp={canDraw ? stopDrawing : undefined}
@@ -289,14 +299,15 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         onTouchEnd={canDraw ? stopDrawing : undefined}
         onTouchMove={canDraw ? draw : undefined}
       />
-      <div className="flex flex-wrap flex-row gap-4 border-2 border-black justify-center lg:w-full w-[95vw]">
+      <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw]">
         {" "}
         {canDraw ? <button onClick={clearCanvas}>Clear Canvas</button> : null}
         <input
+          className="lg:m-3"
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
-          style={{ margin: "10px" }}
+          // style={{ margin: "10px" }}
         />
         <button onClick={undoLastAction} disabled={history.length === 0}>
           Undo

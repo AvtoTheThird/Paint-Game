@@ -347,7 +347,7 @@ const ChatRoom: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="h-[100vh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center gap-5 lg:bg-bg-white  rounded-[5rem]">
+        <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-5 lg:bg-bg-white  rounded-[5rem]">
           {/* marcxena plani */}
           {/* <h1>{roomName}</h1>{" "} */}
           {/* ppl */}
@@ -439,7 +439,7 @@ const ChatRoom: React.FC = () => {
             </div>
             <div
               id="chat"
-              className="  flex flex-col lg:h-[90vh] justify-between items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
+              className="flex flex-col lg:h-[90vh] justify-between items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
             >
               <span className="text-3xl ">ჩატი</span>
               <div className="lg:w-[250px]  w-[40vw] overflow-x-scroll  lg:h-full h-[30vh] flex items-center justify-center flex-col   ">

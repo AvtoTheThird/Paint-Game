@@ -20,3 +20,7 @@ main {
 .font-ge-black {
   font-family: "GEFontBlack", sans-serif;
 }
+html,
+body {
+  overscroll-behavior: none;
+}

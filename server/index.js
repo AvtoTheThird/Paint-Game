@@ -3,14 +3,12 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
-const { log } = require("console");
-const words = ["one", "two"];
-// import { Room } from "./classes";
 const app = express();
 app.options("*", cors());
 const server = http.createServer(app);
 const ActiveRooms = [];
 const rooms = {};
+const words = require("./words");
 
 // Enable CORS
 
@@ -127,17 +125,24 @@ io.on("connection", (socket) => {
 
   socket.on("guess", ({ roomId, guess }) => {
     const room = rooms[roomId];
-
     if (!room) return;
-
     // console.log(`guesser is ${room.users[socket.id].name}`);
-
     if (guess.toLowerCase() === room?.currentWord?.toLowerCase()) {
       io.to(roomId).emit("correctGuess", {
         guesser: room.users[socket.id]?.name,
         guesserId: room.users[socket.id].id,
       });
+
+      if (!room.users[socket.id].hasGuessed) {
+        io.to(roomId).emit("message", {
+          message: `${room.users[socket.id]?.name}-მ გამოიცნო`,
+          userName: "game",
+        });
+      }
+      room.users[socket.id].hasGuessed = true;
+
       room.users[socket.id].score += 100;
+      room.users[room.currentDrawer].score += 25;
       io.to(roomId).emit("updateUserList", Object.values(room.users));
 
       // changeDrawer(roomId); // Move to the next drawer if the guess is correct
@@ -147,6 +152,20 @@ io.on("connection", (socket) => {
       io.to(socket.id).emit("conffeti", {
         message: "Correct!",
       });
+
+      // Check if all users have guessed
+
+      const usersWhoGuessed = Object.values(room.users).filter(
+        (user) => user.hasGuessed
+      ).length;
+
+      if (usersWhoGuessed === Object.keys(room.users).length - 1) {
+        changeDrawer(roomId);
+        Object.values(room.users).forEach((user) => {
+          user.hasGuessed = false;
+        });
+        io.to(roomId).emit("allGuessed");
+      }
     } else {
       io.to(roomId).emit("incorrectGuess", {
         guesser: room.users[socket.id].name,
@@ -156,7 +175,11 @@ io.on("connection", (socket) => {
   });
   socket.on("message", (data) => {
     const { roomId, message, userName } = data;
-    io.to(roomId).emit("message", { message, userName });
+    if (message == rooms[roomId].currentWord) {
+      return;
+    } else {
+      io.to(roomId).emit("message", { message, userName });
+    }
   });
   socket.on("canvas", (canvas) => {
     // console.log("server recived canvas message and emited");
@@ -217,52 +240,6 @@ io.on("connection", (socket) => {
   });
 });
 function selectRandomWord() {
-  const words = [
-    "თევზი",
-    "სახლი",
-    "ძაღლი",
-    "კატა",
-    "ხე",
-    "ვაშლი",
-    "ჩიტი",
-    "ყვავილი",
-    "ავტომობილი",
-    "მზე",
-    "ქუდი",
-    "ბანანი",
-    "ჭიქა",
-    "კოღო",
-    "ჭექა-ქუხილი",
-    "მდინარე",
-    "ყინული",
-    "თოკი",
-    "ტელეფონი",
-    "ნავი",
-    "ფანქარი",
-    "კამერა",
-    "თვითმფრინავი",
-    "სკამი",
-    "კარი",
-    "მოტოციკლი",
-    "ბალიში",
-    "ყავა",
-    "ბოთლი",
-    "ჩანგალი",
-    "პეპელა",
-    "კუ",
-    "ციყვი",
-    "პომიდორი",
-    "პიცა",
-    "შოკოლადი",
-    "წიგნი",
-    "სათვალე",
-    "კრემი",
-    "ტორტი",
-    "მატარებელი",
-    "ჭამა",
-    "შლაპა",
-    "ჰამაკი",
-  ];
   return words[Math.floor(Math.random() * words.length)];
 }
 function changeDrawer(roomId) {
@@ -278,9 +255,9 @@ function changeDrawer(roomId) {
   room.currentWord = selectRandomWord(); // Implement this function to select a word
   io.to(room.currentDrawer).emit("newWord", room.currentWord); // Send the word only to the drawer
   // console.log(room.currentDrawer);
-
+  // Object.values(room.users).every((user) => (user.hasGuessed = false));
   const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-  console.log(secretWord);
+  // console.log(secretWord);
 
   io.to(roomId).emit("newDrawer", {
     currentDrawer: room.users[room.currentDrawer]?.name,

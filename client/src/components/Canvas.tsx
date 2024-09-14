@@ -142,6 +142,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       | React.MouseEvent<HTMLCanvasElement>
       | React.TouchEvent<HTMLCanvasElement>
   ) => {
+    event.preventDefault();
+
     drawing.current = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -151,6 +153,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     const scaleY = canvas.height / canvas.getBoundingClientRect().height;
 
     if (event.type === "mousedown") {
+      event.preventDefault();
+
       const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
         .nativeEvent;
       offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
@@ -182,8 +186,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       | React.MouseEvent<HTMLCanvasElement>
       | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    if (!drawing.current) return;
+    event.preventDefault();
 
+    if (!drawing.current) return;
     const canvas = canvasRef.current;
     if (!canvas || !ctxRef.current) return;
 
@@ -192,6 +197,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     const scaleY = canvas.height / canvas.getBoundingClientRect().height;
 
     if (event.type === "mousemove") {
+      event.preventDefault();
+
       const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
         .nativeEvent;
       offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
@@ -299,29 +306,31 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         onTouchEnd={canDraw ? stopDrawing : undefined}
         onTouchMove={canDraw ? draw : undefined}
       />
-      <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw]">
-        {" "}
-        {canDraw ? <button onClick={clearCanvas}>Clear Canvas</button> : null}
-        <input
-          className="lg:m-3"
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          // style={{ margin: "10px" }}
-        />
-        <button onClick={undoLastAction} disabled={history.length === 0}>
-          Undo
-        </button>
-        <button onClick={() => setTool("draw")}>Draw Tool</button>
-        <button onClick={() => setTool("fill")}>Fill Tool</button>
-        <input
-          type="range"
-          min="1"
-          max="10"
-          value={lineWidth}
-          onChange={handleLineWithChange}
-        />
-      </div>
+
+      {canDraw ? (
+        <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw]">
+          <button onClick={clearCanvas}>Clear Canvas</button>
+          <input
+            className="lg:m-3"
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            // style={{ margin: "10px" }}
+          />
+          <button onClick={undoLastAction} disabled={history.length === 0}>
+            Undo
+          </button>
+          <button onClick={() => setTool("draw")}>Draw Tool</button>
+          <button onClick={() => setTool("fill")}>Fill Tool</button>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            value={lineWidth}
+            onChange={handleLineWithChange}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };

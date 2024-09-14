@@ -39,7 +39,6 @@ const ChatRoom: React.FC = () => {
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
   const [secretWord, setSecretWord] = useState<string>("");
   const [currentDrawer, setCurrentDrawer] = useState<any>();
-
   const [timeLeft, setTimeLeft] = useState<number>(0);
   // const [isActive, setIsActive] = useState(false); // Timer activity state
 
@@ -78,10 +77,6 @@ const ChatRoom: React.FC = () => {
         setRoomName(data.roomName);
         setIsRoomJoined(true);
       });
-
-      // setIsRoomJoined(true);
-      // Optionally, you can add some user feedback here
-      // setIsRoomJoined(true);
     }
   };
 
@@ -94,46 +89,30 @@ const ChatRoom: React.FC = () => {
   // });
   const sendMessage = (e: any) => {
     e.preventDefault();
-    if (message.trim() && roomId) {
-      const messageData: Message = { roomId, message, userName };
-      socket.emit("message", messageData);
-
-      setMessage("");
-    }
 
     if (!hasGuesed) {
       socket.emit("guess", { roomId: roomData.id, guess: message });
     }
-    console.log(roomData);
+    if (message.trim() && roomId) {
+      const messageData: Message = { roomId, message, userName };
+      // console.log(messageData);
+
+      socket.emit("message", messageData);
+      setMessage("");
+    }
+
+    // console.log(roomData);
   };
 
   useEffect(() => {
-    const rgbToHex = (rgb: string) => {
-      const result = rgb.match(/\d+/g);
-      if (!result) return null;
-      const r = parseInt(result[0]).toString(16).padStart(2, "0");
-      const g = parseInt(result[1]).toString(16).padStart(2, "0");
-      const b = parseInt(result[2]).toString(16).padStart(2, "0");
-      return `#${r}${g}${b}`.toUpperCase();
-    };
-
     if (isRoomJoined) {
       // Listen for messages
+
       socket.on("message", (message: RecivedMessage) => {
+        // console.log(hasGuesed, message);
         setMessages((prevMessages) => [...prevMessages, message]);
       });
-      // socket.on("canvas", (data: { col: number; row: number }) => {
-      //   console.log("client recived canvas message");
-      // });
-      // socket.on("draw", (data) => {
-      //   console.log(data);
-      // });
-      // socket.on("erace", (data: { pixel: string }) => {
-      //   console.log(data);
-      //   const pixelElement = document.getElementById(data.pixel);
-      //   if (pixelElement) {
-      //     pixelElement.style.backgroundColor = "";
-      //   }
+
       socket.on("room_not_found", (data: { roomId: string }) => {
         alert(`room with id ${data.roomId} not found`);
         console.log(`room with id ${data.roomId} not found`);
@@ -179,12 +158,10 @@ const ChatRoom: React.FC = () => {
         handleButtonClick();
       });
       socket.on("correctGuess", (guesser) => {
-        // console.log(guesser);
-
         if (guesser.guesserId == userId) {
-          console.log("correct guess");
-
+          console.log("HasGuesed has set to true");
           setHasGuesed(true);
+          console.log(hasGuesed);
         }
       });
 
@@ -192,9 +169,12 @@ const ChatRoom: React.FC = () => {
       return () => {
         socket.off("message");
         socket.off("canvas");
-        socket.off("draw");
-        socket.off("erace");
         socket.off("room_not_found");
+        socket.off("room_not_exist");
+        socket.off("updateUserList");
+        socket.off("gameStarted");
+        socket.off("newDrawer");
+        socket.off("newWord");
       };
     }
   }, [isRoomJoined]);
@@ -420,8 +400,8 @@ const ChatRoom: React.FC = () => {
 
                   Object.values(joinedUsers)
                     .sort((a, b) => b.score - a.score)
-                    .map((user: any) => (
-                      <div>
+                    .map((user: any, index: number) => (
+                      <div key={index}>
                         <p
                           className={`${
                             user.name == currentDrawer
@@ -445,8 +425,14 @@ const ChatRoom: React.FC = () => {
               <div className="lg:w-[250px]  w-[40vw] overflow-x-scroll  lg:h-full h-[30vh] flex items-center justify-center flex-col   ">
                 <div className="bg-white  lg:h-full h-[30vh]  m-2  rounded-lg  flex justify-end flex-col w-full ">
                   {messages.map((msg, index) => (
-                    <p className="break-all" key={index}>
-                      {msg.userName}: {msg.message}
+                    <p
+                      className={`break-all ${
+                        msg.userName == "game" ? "bg-green-600" : ""
+                      }`}
+                      key={index}
+                    >
+                      {msg.userName == "game" ? null : msg.userName + ":"}
+                      {msg.message}
                       <hr />
                     </p>
                   ))}

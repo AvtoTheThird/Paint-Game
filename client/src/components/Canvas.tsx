@@ -192,22 +192,23 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     const canvas = canvasRef.current;
     if (!canvas || !ctxRef.current) return;
 
-    let offsetX, offsetY;
+    let offsetX: number, offsetY: number;
     const scaleX = canvas.width / canvas.getBoundingClientRect().width;
     const scaleY = canvas.height / canvas.getBoundingClientRect().height;
 
     if (event.type === "mousemove") {
       event.preventDefault();
-
       const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
         .nativeEvent;
       offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
       offsetY = nativeEvent.offsetY * scaleY;
-    } else {
+    } else if (event.type === "touchmove") {
       const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
       const rect = canvas.getBoundingClientRect();
       offsetX = (touch.clientX - rect.left) * scaleX;
       offsetY = (touch.clientY - rect.top) * scaleY;
+    } else {
+      return; // Exit if the event type is neither mousemove nor touchmove
     }
 
     if (lastPosition.current) {
@@ -221,8 +222,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     // Emit draw event to the server, including the color
     socket.emit("draw", {
       roomId: roomId,
-      x0: lastPosition.current?.x || offsetX,
-      y0: lastPosition.current?.y || offsetY,
+      x0: lastPosition.current?.x ?? offsetX,
+      y0: lastPosition.current?.y ?? offsetY,
       x1: offsetX,
       y1: offsetY,
       color: color, // Send the selected color
@@ -231,7 +232,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     // Update last position
     lastPosition.current = { x: offsetX, y: offsetY };
   };
-
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     if (canvas && ctxRef.current) {

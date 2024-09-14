@@ -90,7 +90,7 @@ const ChatRoom: React.FC = () => {
   const sendMessage = (e: any) => {
     e.preventDefault();
 
-    if (!hasGuesed) {
+    if (!hasGuesed && !canDraw) {
       socket.emit("guess", { roomId: roomData.id, guess: message });
     }
     if (message.trim() && roomId) {
@@ -145,6 +145,9 @@ const ChatRoom: React.FC = () => {
 
           if (currentDrawerId != userId) {
             setDrawWord(null);
+            setCanDraw(false);
+          } else {
+            setCanDraw(true);
           }
         }
       );
@@ -340,8 +343,8 @@ const ChatRoom: React.FC = () => {
 
                 Object.values(joinedUsers)
                   .sort((a, b) => b.score - a.score)
-                  .map((user: any) => (
-                    <div>
+                  .map((user: any, index: number) => (
+                    <div key={index}>
                       <p
                         className={`${
                           user.name == currentDrawer
@@ -425,16 +428,17 @@ const ChatRoom: React.FC = () => {
               <div className="lg:w-[250px]  w-[40vw] overflow-x-scroll  lg:h-full h-[30vh] flex items-center justify-center flex-col   ">
                 <div className="bg-white  lg:h-full h-[30vh]  m-2  rounded-lg  flex justify-end flex-col w-full ">
                   {messages.map((msg, index) => (
-                    <p
-                      className={`break-all ${
-                        msg.userName == "game" ? "bg-green-600" : ""
-                      }`}
-                      key={index}
-                    >
-                      {msg.userName == "game" ? null : msg.userName + ":"}
-                      {msg.message}
+                    <div key={index}>
+                      <p
+                        className={`break-all ${
+                          msg.userName == "game" ? "bg-green-600" : ""
+                        }`}
+                      >
+                        {msg.userName == "game" ? null : msg.userName + ":"}
+                        {msg.message}
+                      </p>{" "}
                       <hr />
-                    </p>
+                    </div>
                   ))}
                 </div>
                 <form onSubmit={sendMessage}>

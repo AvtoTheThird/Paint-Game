@@ -9,6 +9,7 @@ const server = http.createServer(app);
 const ActiveRooms = [];
 const rooms = {};
 const words = require("./words");
+const { log } = require("console");
 
 // Enable CORS
 
@@ -36,6 +37,7 @@ io.on("connection", (socket) => {
 
   // new join room without room_check
   socket.on("join_room", ({ roomId, name }) => {
+    console.log("someone joined room");
     console.log(roomId, name);
 
     const room = rooms[roomId];
@@ -73,6 +75,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("create_room", (data) => {
+    console.log("shot was created", data);
+
     const { name, id, maxPlayers, time } = data;
     // console.log(data);
 
@@ -93,7 +97,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("startGame", ({ roomId }) => {
-    // console.log(roomId, "aaaaa");
+    console.log(roomId, "game start was emited");
     startTurnTimer(roomId);
 
     const room = rooms[roomId];
@@ -118,7 +122,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("updateUserList", Object.values(room.users));
 
     io.to(roomId).emit("gameStarted", {
-      currentDrawer: room.users[room.currentDrawer].name,
+      currentDrawer: room.users[room.currentDrawer]?.name,
       currentDrawerId: room.users[room.currentDrawer].id,
     });
   });
@@ -142,7 +146,10 @@ io.on("connection", (socket) => {
       room.users[socket.id].hasGuessed = true;
 
       room.users[socket.id].score += 100;
-      room.users[room.currentDrawer].score += 25;
+
+      room.users[room.currentDrawer].score += Math.floor(
+        0.2 * room.users[socket.id].score
+      );
       io.to(roomId).emit("updateUserList", Object.values(room.users));
 
       // changeDrawer(roomId); // Move to the next drawer if the guess is correct
@@ -175,7 +182,7 @@ io.on("connection", (socket) => {
   });
   socket.on("message", (data) => {
     const { roomId, message, userName } = data;
-    if (message == rooms[roomId].currentWord) {
+    if (message == rooms[roomId]?.currentWord) {
       return;
     } else {
       io.to(roomId).emit("message", { message, userName });

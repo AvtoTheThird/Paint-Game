@@ -13,13 +13,17 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [canDraw, setCanDraw] = useState<boolean>(false);
   const [history, setHistory] = useState<string[]>([]); // To keep track of canvas states for undo
   const [tool, setTool] = useState<"draw" | "fill">("draw"); // 'draw' or 'fill'
+  const [userId, setUserId] = useState<string>("");
+  const [roomId, setRoomId] = useState<string>("");
+  const userIdRef = useRef<string>(""); // Create refs for userId and roomId
+  const roomIdRef = useRef<string>("");
 
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
-  // console.log(canvasData);
-  const roomId = canvasData.roomId;
-  const userId = canvasData.userId;
+  // console.log(canvasData.userId);
+  // const roomId = canvasData.roomId;
+  // const userId = canvasData.userId;
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -65,7 +69,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       window.removeEventListener("resize", resizeCanvas);
     };
   }, [lineWidth]);
+  useEffect(() => {
+    setUserId(canvasData.userId);
+    setRoomId(canvasData.roomId);
 
+    userIdRef.current = canvasData.userId; // Update the refs whenever canvasData changes
+    roomIdRef.current = canvasData.roomId;
+  }, [canvasData]);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -118,9 +128,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
       }
       // console.log(currentDrawer, currentDrawerId);
-      // console.log(userId);
+      console.log(userId);
+      console.log(canvasData.userId);
 
-      if (currentDrawerId != userId) {
+      if (currentDrawerId !== userIdRef.current) {
         setCanDraw(false);
       } else {
         setCanDraw(true);

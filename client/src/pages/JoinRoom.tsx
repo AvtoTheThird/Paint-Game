@@ -41,7 +41,7 @@ function CreateRoom() {
     }
   }, [roomData]);
   return (
-    <div>
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-auto rounded-3xl lg:p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
         {" "}
         <p className="lg:text-2xl text-xl whitespace-nowrap font-extrabold text-white pb-5">
@@ -80,7 +80,7 @@ function CreateRoom() {
           შედი ოთახში
         </button>
       </div>
-    </div>
+    </main>
   );
 }
 

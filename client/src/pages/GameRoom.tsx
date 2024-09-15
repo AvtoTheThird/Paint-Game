@@ -30,7 +30,6 @@ function GameRoom() {
   const [message, setMessage] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [messages, setMessages] = useState<RecivedMessage[]>([]);
-  const [isRoomJoined, setIsRoomJoined] = useState<boolean>(false);
   const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
   const [roomName, setRoomName] = useState<string>("");
   const [drawWord, setDrawWord] = useState<any>();
@@ -160,7 +159,7 @@ function GameRoom() {
     });
   };
   return (
-    <div>
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
       <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-5 lg:bg-bg-white  rounded-[5rem]">
         {/* marcxena plani */}
@@ -289,7 +288,7 @@ function GameRoom() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

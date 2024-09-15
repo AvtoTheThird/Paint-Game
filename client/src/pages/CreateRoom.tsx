@@ -8,7 +8,7 @@ function CreateRoom() {
     // console.log(roomData);
   };
   return (
-    <div>
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
       <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl w-[95vw] lg:w-auto px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
         <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
@@ -90,7 +90,7 @@ function CreateRoom() {
               log
             </button> */}
       </div>
-    </div>
+    </main>
   );
 }
 

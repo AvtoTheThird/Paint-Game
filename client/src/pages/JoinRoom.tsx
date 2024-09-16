@@ -38,7 +38,12 @@ function CreateRoom() {
   useEffect(() => {
     if (roomData.id) {
       navigate(`/game-room/${roomData.roomId}`, {
-        state: { roomId: roomData.id, userId: userId, userName: userName },
+        state: {
+          roomId: roomData.id,
+          userId: userId,
+          userName: userName,
+          isAdmin: false,
+        },
       });
     }
   }, [roomData]);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -14,48 +14,29 @@ function CreateRoom() {
   }, []);
   const createRoom = () => {
     socket.emit("create_room", { ...roomData });
-
     let dataToBeSent = { roomId: roomData.id, name: userName };
-    // console.log(dataToBeSent);
-
     socket.emit("join_room", dataToBeSent);
-
     socket.on("userJoined", (data) => {
       console.log(data);
       setUserId(data.id);
       setRecivedRoomData({ ...roomData, id: data.roomId });
     });
     console.log(roomData.id, userId, userName);
-
-    // navigate(`/game-room/${roomData.id}`, {
-    //   state: { roomId: roomData.id, userId: userId, userName: userName },
-    // });
   };
   useEffect(() => {
     console.log(roomData.id, userId, userName);
-
     if (roomData.id) {
       console.log(roomData.id, userId, userName);
-
       navigate(`/game-room/${roomData.roomId}`, {
-        state: { roomId: roomData.id, userId: userId, userName: userName },
+        state: {
+          roomId: roomData.id,
+          userId: userId,
+          userName: userName,
+          isAdmin: true,
+        },
       });
     }
   }, [recivedRoomData]);
-  //     useEffect(() => {
-  //     if (roomData.id) {
-  //       navigate(`/game-room/${roomData.roomId}`, {
-  //         state: { roomId: roomData.id, userId: userId, userName: userName },
-  //       });
-  //     }
-  //   }, [roomData]);
-  //   socket.on("roomCreated", (data) => {
-  //     // console.log(data);
-  //     setRoomData(data);
-  //     navigate(`/join-room/${data.roomId}`, {
-  //       state: { roomId: data.roomId, userName: userName },
-  //     });
-  //   });
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       {" "}
@@ -77,7 +58,6 @@ function CreateRoom() {
             }}
           />
         </div>
-
         <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
           {" "}
           <p className="text-2xl whitespace-nowrap font-extrabold text-white">
@@ -135,9 +115,6 @@ function CreateRoom() {
         >
           შექმენი ოთახი
         </button>
-        {/* <button id="celebrateBtn" onClick={handleButtonClick}>
-              log
-            </button> */}
       </div>
     </main>
   );

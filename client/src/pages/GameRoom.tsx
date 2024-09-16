@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
@@ -41,14 +41,16 @@ function GameRoom() {
   const [currentDrawer, setCurrentDrawer] = useState<any>();
   const [currentDrawerId, setCurrentDrawerId] = useState<any>();
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
 
-  //   console.log(location.state);
+  console.log(location.state);
   useEffect(() => {
     setRoomId(location.state.roomId);
     setUserId(location.state.userId);
     setUserName(location.state.userName);
+    setIsAdmin(location.state.isAdmin);
   }, [location]);
   function startGame() {
     // console.log(roomData.id);
@@ -175,14 +177,16 @@ function GameRoom() {
               Object.values(joinedUsers)
                 .sort((a, b) => b.score - a.score)
                 .map((user: any, index: number) => (
-                  <div key={index}>
-                    <p
-                      className={`${
-                        user.name == currentDrawer
-                          ? "bg-dark-purupe py-5"
-                          : "bg-light-purupe py-5"
-                      } text-lg `}
-                    >
+                  <div
+                    key={index}
+                    className={` flex flex-row justify-between items-center pl-2 ${
+                      user.name == currentDrawer
+                        ? "bg-dark-purupe py-5"
+                        : "bg-light-purupe py-5"
+                    } text-lg `}
+                  >
+                    <p>#{index}</p>
+                    <p>
                       {user.name}:{user.score}
                       {user.name == userName ? "(შენ)" : null}
                     </p>
@@ -195,7 +199,7 @@ function GameRoom() {
 
         <div className="  flex flex-col justify-center items-center">
           <div className="flex bg-light-pink h-[70px] w-full  rounded-xl justify-between items-center px-5">
-            {isGameStarted ? null : (
+            {!isGameStarted && location.state.isAdmin ? (
               <button
                 onClick={() => {
                   startGame();
@@ -204,7 +208,7 @@ function GameRoom() {
               >
                 start the game
               </button>
-            )}
+            ) : null}
             <p>{timeLeft}</p>
             {drawWord ? (
               <span className="text-black font-bold text-2xl">{drawWord}</span>

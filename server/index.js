@@ -119,6 +119,12 @@ io.on("connection", (socket) => {
       secretWord: secretWord,
       time: room.time,
     });
+    // console.log("zeita new drawer was emited");
+    // console.log(room.users[room.currentDrawer]?.name);
+    // console.log(room.users[room.currentDrawer]?.id);
+    // console.log(secretWord);
+    // console.log(room.time);
+
     io.to(roomId).emit("updateUserList", Object.values(room.users));
 
     io.to(roomId).emit("gameStarted", {
@@ -272,7 +278,11 @@ function changeDrawer(roomId) {
     secretWord: secretWord,
     time: room.time,
   });
-
+  // console.log("qveita new drawer was emited");
+  // console.log(room.users[room.currentDrawer]?.name);
+  // console.log(room.users[room.currentDrawer]?.id);
+  // console.log(secretWord);
+  // console.log(room.time);
   startTurnTimer(roomId);
 }
 
@@ -282,7 +292,7 @@ function startTurnTimer(roomId) {
 
   clearTimeout(room.turnTimer);
   const timeoutDuration = room.time * 1000;
-  console.log(timeoutDuration);
+  // console.log(timeoutDuration);
 
   room.turnTimer = setTimeout(() => {
     changeDrawer(roomId);

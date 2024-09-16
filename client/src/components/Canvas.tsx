@@ -15,13 +15,15 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [tool, setTool] = useState<"draw" | "fill">("draw"); // 'draw' or 'fill'
   const [userId, setUserId] = useState<string>("");
   const [roomId, setRoomId] = useState<string>("");
+  const [currentDrawer, setCurrentDrawer] = useState<any>();
+
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
 
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
-  // console.log(canvasData.userId);
+  // console.log(canvasData);
   // const roomId = canvasData.roomId;
   // const userId = canvasData.userId;
   useEffect(() => {
@@ -120,23 +122,25 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
       //   console.log(data);
     });
-    socket.on("newDrawer", ({ currentDrawer, currentDrawerId }) => {
-      setHistory([]);
-      console.log(currentDrawer);
+    socket.on(
+      "newDrawer",
+      ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+        setHistory([]);
 
-      if (ctxRef.current) {
-        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      // console.log(currentDrawer, currentDrawerId);
-      console.log(userId);
-      console.log(canvasData.userId);
+        if (ctxRef.current) {
+          ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        console.log(currentDrawer, currentDrawerId);
+        console.log(userId);
+        console.log(canvasData.userId);
 
-      if (currentDrawerId !== userIdRef.current) {
-        setCanDraw(false);
-      } else {
-        setCanDraw(true);
+        if (currentDrawerId !== userIdRef.current) {
+          setCanDraw(false);
+        } else {
+          setCanDraw(true);
+        }
       }
-    });
+    );
     socket.on("undo", (updatedHistory) => {
       setHistory(updatedHistory); // Update the local history state
       redrawCanvas(updatedHistory); // Redraw the canvas
@@ -145,16 +149,27 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("draw");
       socket.off("clear");
       socket.off("undo");
+      socket.off("newLineWidth");
+      socket.off("newDrawer");
     };
   }, []);
-
+  socket.on(
+    "newDrawer",
+    ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+      setHistory([]);
+      clearCanvas();
+      if (currentDrawerId !== userIdRef.current) {
+        setCanDraw(false);
+      } else {
+        setCanDraw(true);
+      }
+    }
+  );
   const startDrawing = (
     event:
       | React.MouseEvent<HTMLCanvasElement>
       | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    event.preventDefault();
-
     drawing.current = true;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -197,8 +212,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       | React.MouseEvent<HTMLCanvasElement>
       | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    event.preventDefault();
-
     if (!drawing.current) return;
     const canvas = canvasRef.current;
     if (!canvas || !ctxRef.current) return;
@@ -208,7 +221,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     const scaleY = canvas.height / canvas.getBoundingClientRect().height;
 
     if (event.type === "mousemove") {
-      event.preventDefault();
       const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
         .nativeEvent;
       offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates

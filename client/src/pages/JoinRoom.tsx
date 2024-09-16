@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import socket from "../components/socket";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function CreateRoom() {
   const [roomId, setRoomId] = useState<string>("");
-
   const [userName, setUserName] = useState<string>("");
   const [roomData, setRoomData] = useState<any>({});
   const [roomName, setRoomName] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
-
+  const location = useLocation();
+  useEffect(() => {
+    setUserName(location.state.userName);
+  }, []);
   const joinRoom = () => {
     if (roomId.trim()) {
       let dataToBeSent = { roomId, name: userName };
@@ -24,7 +26,7 @@ function CreateRoom() {
       });
 
       socket.on("userJoined", (data) => {
-        // console.log(data);
+        console.log(data);
         setUserId(data.id);
         setRoomName(data.roomName);
         setRoomData({ ...roomData, id: data.roomId });
@@ -41,13 +43,13 @@ function CreateRoom() {
     }
   }, [roomData]);
   return (
-    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
-      <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-auto rounded-3xl lg:p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
+      <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-auto rounded-3xl lg:p-10  p-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
         {" "}
         <p className="lg:text-2xl text-xl whitespace-nowrap font-extrabold text-white pb-5">
           შედი უკვე შექმნილ ოთახში{" "}
         </p>
-        <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
+        {/* <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
           <p className="text-2xl whitespace-nowrap font-extrabold text-white">
             შეიყვანე სახელი
           </p>
@@ -60,7 +62,7 @@ function CreateRoom() {
               setUserName(e.target.value);
             }}
           />
-        </div>
+        </div> */}
         <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
           <p className="text-2xl whitespace-nowrap font-extrabold text-white">
             ოთახის პაროლი

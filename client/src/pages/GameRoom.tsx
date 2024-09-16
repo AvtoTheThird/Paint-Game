@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
+import { useLocation } from "react-router-dom";
 
 interface Message {
   roomId: string;
@@ -22,7 +23,6 @@ interface JoinedUsers {
 interface CanvasData {
   data: { roomId: string; userId: string };
 }
-import { useLocation } from "react-router-dom";
 
 function GameRoom() {
   //   const [roomData, setRoomData] = useState<any>({});
@@ -40,7 +40,6 @@ function GameRoom() {
   const [secretWord, setSecretWord] = useState<string>("");
   const [currentDrawer, setCurrentDrawer] = useState<any>();
   const [currentDrawerId, setCurrentDrawerId] = useState<any>();
-
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
@@ -50,7 +49,7 @@ function GameRoom() {
     setRoomId(location.state.roomId);
     setUserId(location.state.userId);
     setUserName(location.state.userName);
-  }, []);
+  }, [location]);
   function startGame() {
     // console.log(roomData.id);
 
@@ -104,12 +103,18 @@ function GameRoom() {
     socket.on(
       "newDrawer",
       ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+        // console.log("----gameroom-----");
+
+        // console.log(currentDrawer);
+        // console.log(currentDrawerId);
+        // console.log("----gameroom-----");
+
         setTimeLeft(time);
         setCurrentDrawer(currentDrawer);
         setSecretWord(secretWord);
         setHasGuesed(false);
-        console.log(currentDrawerId, "------", userId);
-        console.log(location.state.userId);
+        // console.log(currentDrawerId, "------", userId);
+        // console.log(location.state.userId);
 
         if (currentDrawerId != location.state.userId) {
           setDrawWord(null);
@@ -124,15 +129,13 @@ function GameRoom() {
     });
 
     socket.on("conffeti", () => {
-      console.log("recived conffeti");
+      // console.log("recived conffeti");
 
       handleButtonClick();
     });
     socket.on("correctGuess", (guesser) => {
       if (guesser.guesserId == userId) {
-        console.log("HasGuesed has set to true");
         setHasGuesed(true);
-        console.log(hasGuesed);
       }
     });
 
@@ -149,9 +152,6 @@ function GameRoom() {
     };
   }, [isGameStarted]);
   const handleButtonClick = () => {
-    console.log("bus");
-
-    // Trigger confetti on button click
     confetti({
       particleCount: 100,
       spread: 70,

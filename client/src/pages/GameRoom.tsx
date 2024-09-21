@@ -19,6 +19,7 @@ interface JoinedUsers {
   roomId: string;
   roomName: string;
   score: number;
+  hasGuessed: boolean;
 }
 interface CanvasData {
   data: { roomId: string; userId: string };
@@ -105,6 +106,8 @@ function GameRoom() {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
     socket.on("updateUserList", (data) => {
+      console.log(data);
+
       setJoinedUsers(data);
     });
     socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
@@ -135,7 +138,16 @@ function GameRoom() {
         } else {
           setCanDraw(true);
         }
+        setJoinedUsers((prevUsers) => {
+          const updatedUsers = { ...prevUsers };
+          Object.keys(updatedUsers).forEach((userId: any) => {
+            updatedUsers[userId].hasGuessed = false;
+          });
+          return updatedUsers;
+        });
       }
+
+      // Set hasGuessed to false for all joinedUsers
     );
     socket.on("newWord", (word) => {
       setDrawWord(word);
@@ -150,6 +162,9 @@ function GameRoom() {
       if (guesser.guesserId == userId) {
         setHasGuesed(true);
       }
+
+      joinedUsers[guesser.guesserId].hasGuessed = true;
+      console.log(joinedUsers);
     });
 
     // Clean up when the component unmounts
@@ -171,6 +186,7 @@ function GameRoom() {
       origin: { y: 0.6 },
     });
   };
+
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
@@ -182,29 +198,33 @@ function GameRoom() {
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
           </p>
-          {joinedUsers.length > 0
-            ? // Object.values(usersObject);
+          {
+            // Object.values(usersObject);
 
-              Object.values(joinedUsers)
-                .sort((a, b) => b.score - a.score)
-                .map((user: any, index: number) => (
-                  <div
-                    key={index}
-                    className={` flex flex-row justify-between items-center pl-2 ${
-                      user.name == currentDrawer
-                        ? "bg-dark-purupe py-5"
-                        : "bg-light-purupe py-5"
-                    } text-lg `}
+            Object.values(joinedUsers)
+              .sort((a, b) => b.score - a.score)
+              .map((user: any, index: number) => (
+                <div
+                  key={index}
+                  className={` flex flex-row justify-between items-center pl-2 ${
+                    user.id == currentDrawerId
+                      ? "bg-dark-purupe py-5"
+                      : "bg-light-purupe py-5"
+                  } text-lg `}
+                >
+                  <p>#{index + 1}</p>
+                  <p
+                    className={`${
+                      user.hasGuessed ? "text-green-800" : "text-black"
+                    }`}
                   >
-                    <p>#{index + 1}</p>
-                    <p>
-                      {user.name}:{user.score}
-                      {user.name == userName ? "(შენ)" : null}
-                    </p>
-                    <hr />
-                  </div>
-                ))
-            : null}
+                    {user.name}:{user.score}
+                    {user.name == userName ? "(შენ)" : null}
+                  </p>
+                  <hr />
+                </div>
+              ))
+          }
         </div>
         {/* shuala plani */}
 

@@ -33,14 +33,13 @@ const io = new Server(server, {
 app.use(express.static("public"));
 
 function calculateScore(maxTime, timeOfGuessing) {
-  const DEFAULT_SCORE = 10; // Assuming you have a default score
+  const DEFAULT_SCORE = 10; //default score
   let multiplayer = 10;
 
   // If the guess is within the first 10% of the time, return the max score
   if (timeOfGuessing >= maxTime * 0.9) {
     return DEFAULT_SCORE * multiplayer;
   } else {
-    // Calculate the proportion of time spent and map it to the range [1, 9]
     let timeSpentRatio = (maxTime - timeOfGuessing) / maxTime;
     multiplayer = Math.floor(9 - timeSpentRatio * 8); // Linear gradient from 9 to 1, floored
     return DEFAULT_SCORE * multiplayer;

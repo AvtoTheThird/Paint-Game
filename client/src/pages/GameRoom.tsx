@@ -45,7 +45,7 @@ function GameRoom() {
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
 
-  console.log(location.state);
+  // console.log(location.state);
   useEffect(() => {
     setRoomId(location.state.roomId);
     setUserId(location.state.userId);
@@ -59,9 +59,20 @@ function GameRoom() {
   }
   const sendMessage = (e: any) => {
     e.preventDefault();
-
+    console.log(
+      timeLeft +
+        "timeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLeft"
+    );
     if (!hasGuesed && !canDraw) {
-      socket.emit("guess", { roomId: roomId, guess: message });
+      console.log(
+        timeLeft +
+          "timeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLeft"
+      );
+      socket.emit("guess", {
+        roomId: roomId,
+        guess: message,
+        timeLeft: timeLeft,
+      });
     }
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
@@ -185,7 +196,7 @@ function GameRoom() {
                         : "bg-light-purupe py-5"
                     } text-lg `}
                   >
-                    <p>#{index}</p>
+                    <p>#{index + 1}</p>
                     <p>
                       {user.name}:{user.score}
                       {user.name == userName ? "(შენ)" : null}

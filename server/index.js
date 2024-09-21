@@ -12,7 +12,7 @@ const words = require("./words");
 const { log } = require("console");
 
 // Enable CORS
-
+const DEFAULT_SCORE = 10;
 app.use(
   cors({
     origin: "*", // Allow any origin
@@ -32,6 +32,20 @@ const io = new Server(server, {
 // Serve static files or API routes here
 app.use(express.static("public"));
 
+function calculateScore(maxTime, timeOfGuessing) {
+  const DEFAULT_SCORE = 10; // Assuming you have a default score
+  let multiplayer = 10;
+
+  // If the guess is within the first 10% of the time, return the max score
+  if (timeOfGuessing >= maxTime * 0.9) {
+    return DEFAULT_SCORE * multiplayer;
+  } else {
+    // Calculate the proportion of time spent and map it to the range [1, 9]
+    let timeSpentRatio = (maxTime - timeOfGuessing) / maxTime;
+    multiplayer = Math.floor(9 - timeSpentRatio * 8); // Linear gradient from 9 to 1, floored
+    return DEFAULT_SCORE * multiplayer;
+  }
+}
 io.on("connection", (socket) => {
   console.log("we up");
 
@@ -133,7 +147,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("guess", ({ roomId, guess }) => {
+  socket.on("guess", ({ roomId, guess, timeLeft }) => {
     const room = rooms[roomId];
     if (!room) return;
     // console.log(`guesser is ${room.users[socket.id].name}`);
@@ -149,13 +163,13 @@ io.on("connection", (socket) => {
           userName: "game",
         });
       }
+
       room.users[socket.id].hasGuessed = true;
+      let score = calculateScore(room.time, timeLeft);
+      console.log("correct guessshi miviget score funqciidan" + score);
 
-      room.users[socket.id].score += 100;
-
-      room.users[room.currentDrawer].score += Math.floor(
-        0.2 * room.users[socket.id].score
-      );
+      room.users[socket.id].score += score;
+      room.users[room.currentDrawer].score += Math.floor(0.2 * score);
       io.to(roomId).emit("updateUserList", Object.values(room.users));
 
       // changeDrawer(roomId); // Move to the next drawer if the guess is correct

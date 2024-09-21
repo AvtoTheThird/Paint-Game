@@ -15,6 +15,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [tool, setTool] = useState<"draw" | "fill">("draw"); // 'draw' or 'fill'
   const [userId, setUserId] = useState<string>("");
   const [roomId, setRoomId] = useState<string>("");
+  const [cursorStyle, setCursorStyle] = useState<string>("default");
+
   const [currentDrawer, setCurrentDrawer] = useState<any>();
 
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
@@ -23,6 +25,91 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
+  const floodFill = (startX: number, startY: number, fillColor: string) => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const startColor = getPixelColor(imageData, startX, startY);
+    const fillColorRgb = hexToRgb(fillColor);
+
+    // Check if the fill color is the same as the start color
+    if (colorMatch(startColor, fillColorRgb)) {
+      console.log("Area is already filled with the selected color");
+      return;
+    }
+
+    const pixelsToCheck = [[startX, startY]];
+    const maxPixels = canvas.width * canvas.height;
+    let pixelsChecked = 0;
+    const maxIterations = Math.min(maxPixels, 200000); // Limit to prevent hanging
+
+    while (pixelsToCheck.length > 0 && pixelsChecked < maxIterations) {
+      const [x, y] = pixelsToCheck.pop()!;
+
+      if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) continue;
+
+      if (colorMatch(getPixelColor(imageData, x, y), startColor)) {
+        setPixelColor(imageData, x, y, fillColorRgb);
+        pixelsChecked++;
+
+        // Use 4-way flood fill for better performance
+        pixelsToCheck.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    saveCanvasState();
+    socket.emit("fill", { roomId, imageData: canvas.toDataURL(), fillColor });
+
+    if (pixelsChecked >= maxIterations) {
+      console.log("Fill operation stopped to prevent hanging");
+    }
+  };
+
+  const getPixelColor = (
+    imageData: ImageData,
+    x: number,
+    y: number
+  ): number[] => {
+    const index = (y * imageData.width + x) * 4;
+    return Array.from(imageData.data.slice(index, index + 4));
+  };
+
+  const setPixelColor = (
+    imageData: ImageData,
+    x: number,
+    y: number,
+    color: number[]
+  ) => {
+    const index = (y * imageData.width + x) * 4;
+    imageData.data.set(color, index);
+  };
+
+  const colorMatch = (color1: number[], color2: number[]): boolean => {
+    return color1.every((value, index) => Math.abs(value - color2[index]) < 5);
+  };
+
+  const hexToRgb = (hex: string): number[] => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? [
+          parseInt(result[1], 16),
+          parseInt(result[2], 16),
+          parseInt(result[3], 16),
+          255,
+        ]
+      : [0, 0, 0, 255];
+  };
+  useEffect(() => {
+    // Update cursor style when tool changes
+    if (canDraw) {
+      setCursorStyle(tool === "draw" ? "pencil" : "bucket");
+    } else {
+      setCursorStyle("default");
+    }
+  }, [tool, canDraw]);
   // console.log(canvasData);
   // const roomId = canvasData.roomId;
   // const userId = canvasData.userId;
@@ -125,6 +212,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on(
       "newDrawer",
       ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+        console.log(secretWord);
+        console.log(time);
+
         setHistory([]);
 
         if (ctxRef.current) {
@@ -156,6 +246,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   socket.on(
     "newDrawer",
     ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+      // console.log(currentDrawer);
+      // console.log(secretWord);
+      // console.log(time);
+
       setHistory([]);
       clearCanvas();
       if (currentDrawerId !== userIdRef.current) {
@@ -170,7 +264,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       | React.MouseEvent<HTMLCanvasElement>
       | React.TouchEvent<HTMLCanvasElement>
   ) => {
-    drawing.current = true;
+    if (!canDraw) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -180,10 +275,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
     if (event.type === "mousedown") {
       event.preventDefault();
-
       const nativeEvent = (event as React.MouseEvent<HTMLCanvasElement>)
         .nativeEvent;
-      offsetX = nativeEvent.offsetX * scaleX; // Scale the coordinates
+      offsetX = nativeEvent.offsetX * scaleX;
       offsetY = nativeEvent.offsetY * scaleY;
     } else {
       const touch = (event as React.TouchEvent<HTMLCanvasElement>).touches[0];
@@ -192,10 +286,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       offsetY = (touch.clientY - rect.top) * scaleY;
     }
 
-    // Set the starting point of the drawing
-    lastPosition.current = { x: offsetX, y: offsetY };
-
-    draw(event); // Start drawing
+    if (tool === "fill") {
+      floodFill(Math.floor(offsetX), Math.floor(offsetY), color);
+    } else {
+      drawing.current = true;
+      lastPosition.current = { x: offsetX, y: offsetY };
+      draw(event);
+    }
   };
 
   const stopDrawing = () => {
@@ -317,10 +414,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       className="flex flex-col items-center justify-center"
     >
       <canvas
-        // className={`border-2 border-black bg-white   ${
-        //   vw < 768 ? "w-[300px]" : "scale-[1]"
-        // } `}
-        className="w-full h-full block border-2 border-black bg-white"
+        className={`w-full h-full block border-2 border-black bg-white cursor-${cursorStyle}`}
         ref={canvasRef}
         onMouseDown={canDraw ? startDrawing : undefined}
         onMouseUp={canDraw ? stopDrawing : undefined}

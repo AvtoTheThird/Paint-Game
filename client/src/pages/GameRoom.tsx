@@ -61,17 +61,16 @@ function GameRoom() {
   function skipTurn() {
     socket.emit("skipTurn", { roomId });
   }
+  function kickPlayer(playerId: any) {
+    console.log(roomId, playerId);
+    console.log(joinedUsers);
+
+    socket.emit("kickPlayer", { roomId, playerId });
+  }
   const sendMessage = (e: any) => {
     e.preventDefault();
-    console.log(
-      timeLeft +
-        "timeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLeft"
-    );
+
     if (!hasGuesed && !canDraw) {
-      console.log(
-        timeLeft +
-          "timeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLefttimeLeft"
-      );
       socket.emit("guess", {
         roomId: roomId,
         guess: message,
@@ -173,7 +172,6 @@ function GameRoom() {
     // Clean up when the component unmounts
     return () => {
       socket.off("message");
-      socket.off("canvas");
       socket.off("room_not_found");
       socket.off("room_not_exist");
       socket.off("updateUserList");
@@ -224,6 +222,17 @@ function GameRoom() {
                     {user.name}:{user.score}
                     {user.name == userName ? "(შენ)" : null}
                   </p>
+                  {isAdmin ? (
+                    <button
+                      className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                      onClick={() => {
+                        kickPlayer(user.id);
+                      }}
+                    >
+                      გააგდე
+                    </button>
+                  ) : null}
+
                   <hr />
                 </div>
               ))

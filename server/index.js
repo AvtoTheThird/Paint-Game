@@ -86,7 +86,9 @@ io.on("connection", (socket) => {
 
     io.to(roomId).emit("userJoined", userData);
   });
-
+  socket.on("skipTurn", ({ roomId }) => {
+    changeDrawer(roomId);
+  });
   socket.on("create_room", (data) => {
     console.log("shot was created", data);
 

@@ -58,6 +58,9 @@ function GameRoom() {
 
     socket.emit("startGame", { roomId });
   }
+  function skipTurn() {
+    socket.emit("skipTurn", { roomId });
+  }
   const sendMessage = (e: any) => {
     e.preventDefault();
     console.log(
@@ -248,7 +251,16 @@ function GameRoom() {
                 {secretWord}
               </span>
             )}
-            <div>.</div>
+            {isGameStarted && isAdmin ? (
+              <button
+                className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                onClick={skipTurn}
+              >
+                გადართე სვლა
+              </button>
+            ) : (
+              "."
+            )}
           </div>
 
           <div className="w-full max-w-screen-lg mx-auto">

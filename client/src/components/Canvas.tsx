@@ -67,6 +67,30 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       console.log("Fill operation stopped to prevent hanging");
     }
   };
+  const downloadCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a new temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    const context = tempCanvas.getContext("2d");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+
+    // Fill the temp canvas with white background
+    if (!context) return;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Draw the original canvas content onto the temp canvas
+    context.drawImage(canvas, 0, 0);
+
+    // Download the temp canvas as an image
+    const link = document.createElement("a");
+    link.href = tempCanvas.toDataURL("image/png");
+    link.download = "firosmoney.jpeg";
+    link.click();
+  };
 
   const getPixelColor = (
     imageData: ImageData,
@@ -157,7 +181,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     return () => {
       window.removeEventListener("resize", resizeCanvas);
     };
-  }, [lineWidth]);
+  }, []);
   useEffect(() => {
     setUserId(canvasData.userId);
     setRoomId(canvasData.roomId);
@@ -171,7 +195,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
+    if (ctxRef.current) {
+      ctxRef.current.fillStyle = "white";
+    }
     ctxRef.current = ctx;
 
     socket.on(
@@ -243,22 +269,19 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("newDrawer");
     };
   }, []);
-  socket.on(
-    "newDrawer",
-    ({ currentDrawer, currentDrawerId, secretWord, time }) => {
-      // console.log(currentDrawer);
-      // console.log(secretWord);
-      // console.log(time);
+  socket.on("newDrawer", (data) => {
+    // console.log(currentDrawer);
+    // console.log(secretWord);
+    // console.log(time);
 
-      setHistory([]);
-      clearCanvas();
-      if (currentDrawerId !== userIdRef.current) {
-        setCanDraw(false);
-      } else {
-        setCanDraw(true);
-      }
+    setHistory([]);
+    clearCanvas();
+    if (data.currentDrawerId !== userIdRef.current) {
+      setCanDraw(false);
+    } else {
+      setCanDraw(true);
     }
-  );
+  });
   const startDrawing = (
     event:
       | React.MouseEvent<HTMLCanvasElement>
@@ -413,19 +436,28 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       style={{ aspectRatio: `${800} / ${600}` }}
       className="flex flex-col items-center justify-center"
     >
-      <canvas
-        className={`w-full h-full block border-2 border-black bg-white cursor-${cursorStyle}`}
-        ref={canvasRef}
-        onMouseDown={canDraw ? startDrawing : undefined}
-        onMouseUp={canDraw ? stopDrawing : undefined}
-        onMouseMove={canDraw ? draw : undefined}
-        onTouchStart={canDraw ? startDrawing : undefined}
-        onTouchEnd={canDraw ? stopDrawing : undefined}
-        onTouchMove={canDraw ? draw : undefined}
-      />
+      <div className="relative w-full h-full">
+        <canvas
+          className={`w-full h-full block border-2 border-black bg-white cursor-${cursorStyle}`}
+          ref={canvasRef}
+          onMouseDown={canDraw ? startDrawing : undefined}
+          onMouseUp={canDraw ? stopDrawing : undefined}
+          onMouseMove={canDraw ? draw : undefined}
+          onTouchStart={canDraw ? startDrawing : undefined}
+          onTouchEnd={canDraw ? stopDrawing : undefined}
+          onTouchMove={canDraw ? draw : undefined}
+        />
+        <button
+          id="download"
+          onClick={downloadCanvas}
+          className="absolute top-2 right-2 bg-black text-white opacity-50 hover:opacity-100 text-sm px-3 py-1 rounded-lg transition-opacity duration-200"
+        >
+          გადმოწერე
+        </button>
+      </div>
 
       {canDraw ? (
-        <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw]">
+        <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw] relative ">
           <button onClick={clearCanvas}>Clear Canvas</button>
           <input
             className="lg:m-3"

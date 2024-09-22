@@ -7,10 +7,10 @@ const LandingPage: React.FC = () => {
   }
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
-      <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-[35vw] lg:h-[30vh] rounded-3xl lg:p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+      <div className="flex flex-col items-center justify-center bg-bg-pink w-[95vw] lg:w-[35vw]  rounded-3xl lg:p-10 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
         <h1 className="text-4xl font-bold mb-8">Firo$ Money</h1>
         <input
-          className="border-2 border-solid border-red-800	rounded-[40px] w-[15vw] "
+          className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
           required
           type="text"
           placeholder="სახელი"

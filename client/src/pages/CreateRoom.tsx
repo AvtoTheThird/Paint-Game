@@ -12,7 +12,8 @@ function CreateRoom() {
   useEffect(() => {
     setUserName(location.state.userName);
   }, []);
-  const createRoom = () => {
+  const createRoom = (event: any) => {
+    event.preventDefault();
     socket.emit("create_room", { ...roomData });
     let dataToBeSent = { roomId: roomData.id, name: userName };
     socket.emit("join_room", dataToBeSent);
@@ -40,7 +41,10 @@ function CreateRoom() {
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       {" "}
-      <div className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl w-[95vw] lg:w-auto px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]">
+      <form
+        onSubmit={createRoom}
+        className="flex flex-col items-center justify-center bg-bg-pink rounded-3xl w-[95vw] lg:w-auto px-10 py-5 shadow-[5px_5px_0px_0px_rgba(109,40,217)]"
+      >
         <p className="text-2xl whitespace-nowrap font-extrabold text-white pb-5">
           შექმენი ოთახი{" "}
         </p>
@@ -49,10 +53,11 @@ function CreateRoom() {
             room name
           </p>
           <input
+            required
             className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
             type="text"
-            name=""
-            id=""
+            name="roomName"
+            id="roomName"
             onChange={(e) => {
               setRoomData({ ...roomData, name: e.target.value });
             }}
@@ -64,10 +69,11 @@ function CreateRoom() {
             room ID
           </p>
           <input
+            required
             className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
             type="text"
-            name=""
-            id=""
+            name="roomId"
+            id="roomId"
             onChange={(e) => {
               setRoomData({ ...roomData, id: e.target.value });
             }}
@@ -79,10 +85,11 @@ function CreateRoom() {
             max players
           </p>
           <input
+            required
             className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
-            type="text"
-            name=""
-            id=""
+            type="number"
+            name="maxPlayers"
+            id="maxPlayers"
             onChange={(e) => {
               setRoomData({
                 ...roomData,
@@ -96,10 +103,11 @@ function CreateRoom() {
             time
           </p>
           <input
+            required
             className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
-            type="text"
-            name=""
-            id=""
+            type="number"
+            name="time"
+            id="time"
             onChange={(e) => {
               setRoomData({
                 ...roomData,
@@ -110,12 +118,12 @@ function CreateRoom() {
         </div>
 
         <button
-          onClick={createRoom}
+          type="submit"
           className="border-2 border-solid border-blue-900 bg-blue-700 w-[180px] h-[80px] text-2xl text-white rounded-[30px]"
         >
           შექმენი ოთახი
         </button>
-      </div>
+      </form>
     </main>
   );
 }

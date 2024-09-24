@@ -14,9 +14,13 @@ function CreateRoom() {
   }, []);
   const createRoom = (event: any) => {
     event.preventDefault();
+
     socket.emit("create_room", { ...roomData });
+
     let dataToBeSent = { roomId: roomData.id, name: userName };
+
     socket.emit("join_room", dataToBeSent);
+
     socket.on("userJoined", (data) => {
       console.log(data);
       setUserId(data.id);

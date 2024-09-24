@@ -47,6 +47,8 @@ function changeDrawer(roomId) {
   const room = rooms[roomId];
   if (!room) return;
 
+  let oldWord = room.currentWord;
+
   room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
   room.currentDrawer = room.users[room.currentDrawerIndex].id;
   room.currentWord = selectRandomWord();
@@ -54,14 +56,22 @@ function changeDrawer(roomId) {
   io.to(room.currentDrawer).emit("newWord", room.currentWord);
 
   const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-  io.to(roomId).emit("newDrawer", {
+
+  io.to(roomId).emit("handEnded", {
     currentDrawer: room.users[room.currentDrawerIndex].name,
-    currentDrawerId: room.currentDrawer,
-    secretWord: secretWord,
-    time: room.time,
+    Word: oldWord,
   });
 
-  startTurnTimer(roomId);
+  setTimeout(() => {
+    io.to(roomId).emit("newDrawer", {
+      currentDrawer: room.users[room.currentDrawerIndex].name,
+      currentDrawerId: room.currentDrawer,
+      secretWord: secretWord,
+      time: room.time,
+    });
+
+    startTurnTimer(roomId);
+  }, 5000);
 }
 
 function startTurnTimer(roomId) {

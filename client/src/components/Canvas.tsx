@@ -16,9 +16,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [userId, setUserId] = useState<string>("");
   const [roomId, setRoomId] = useState<string>("");
   const [cursorStyle, setCursorStyle] = useState<string>("default");
-
-  const [currentDrawer, setCurrentDrawer] = useState<any>();
-
+  const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
+  const [currentDrawer, setCurrentDrawer] = useState<string>("");
+  const [oldWord, setOldWord] = useState<string>("");
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
 
@@ -247,34 +247,39 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("newLineWidth", (data) => {
       setLineWidth(data.newLineWidth);
     });
-    socket.on(
-      "newDrawer",
-      ({ currentDrawer, currentDrawerId, secretWord, time }) => {
-        console.log(secretWord);
-        console.log(time);
+    socket.on("newDrawer", (data) => {
+      // console.log(secretWord);
+      // console.log(time);
 
-        setHistory([]);
+      setHistory([]);
+      setIsGamePaused(false);
 
-        if (ctxRef.current) {
-          ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        console.log(currentDrawer, currentDrawerId);
-        console.log(userId);
-        console.log(canvasData.userId);
-
-        if (currentDrawerId !== userIdRef.current) {
-          setCanDraw(false);
-        } else {
-          setCanDraw(true);
-        }
+      if (ctxRef.current) {
+        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
       }
-    );
+      // console.log(currentDrawer, currentDrawerId);
+      // console.log(userId);
+      // console.log(canvasData.userId);
+
+      if (data.currentDrawerId !== userIdRef.current) {
+        setCanDraw(false);
+      } else {
+        setCanDraw(true);
+      }
+    });
     socket.on("undo", (updatedHistory) => {
       setHistory(updatedHistory); // Update the local history state
       redrawCanvas(updatedHistory); // Redraw the canvas
     });
     socket.on("fill", ({ startX, startY, fillColor }) => {
       floodFill(startX, startY, fillColor, false);
+    });
+    socket.on("handEnded", (data) => {
+      setCurrentDrawer(data.currentDrawer);
+      setOldWord(data.Word);
+      setCanDraw(false);
+      setIsGamePaused(true);
+      console.log(data);
     });
     return () => {
       socket.off("draw");
@@ -289,6 +294,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     // console.log(currentDrawer);
     // console.log(secretWord);
     // console.log(time);
+    setIsGamePaused(false);
 
     setHistory([]);
     clearCanvas();
@@ -470,6 +476,17 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         >
           გადმოწერე
         </button>
+        {isGamePaused ? (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-bg-pink p-4 rounded-lg shadow-lg z-50">
+            <span className="text-lg">
+              სიტყვა იყო <span className="text-red">{oldWord}</span>{" "}
+            </span>
+
+            <span className="text-lg">
+              ეხლა ხატამს <span className="text-red">{currentDrawer}</span>
+            </span>
+          </div>
+        ) : null}
       </div>
 
       {canDraw ? (
@@ -487,13 +504,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           </button>
           <button
             onClick={() => setTool("draw")}
-            className={tool === "draw" ? "text-green-800" : "text-black"}
+            className={tool === "draw" ? "text-blue-800" : "text-black"}
           >
             Draw Tool
           </button>
           <button
             onClick={() => setTool("fill")}
-            className={tool === "fill" ? "text-green-800" : "text-black"}
+            className={tool === "fill" ? "text-blue-800" : "text-black"}
           >
             Fill Tool
           </button>

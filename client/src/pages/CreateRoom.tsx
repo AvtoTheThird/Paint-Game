@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { arsebiti, zedsartavi } from "../components/words";
 function CreateRoom() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +38,17 @@ function CreateRoom() {
       });
     }
   }, [recivedRoomData]);
+  function randomizePassword() {
+    let password = "";
+    console.log("randomizePassword");
+
+    password += zedsartavi[Math.floor(Math.random() * zedsartavi.length)];
+    password += arsebiti[Math.floor(Math.random() * arsebiti.length)];
+    console.log(password);
+
+    setRoomData({ ...roomData, id: password });
+    console.log(roomData);
+  }
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       {" "}
@@ -68,16 +79,27 @@ function CreateRoom() {
           <p className="text-2xl whitespace-nowrap font-extrabold text-white">
             room ID
           </p>
-          <input
-            required
-            className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
-            type="text"
-            name="roomId"
-            id="roomId"
-            onChange={(e) => {
-              setRoomData({ ...roomData, id: e.target.value });
-            }}
-          />
+          <div className="relative w-full">
+            {" "}
+            <input
+              required
+              className="h-[50px] border-2 border-solid border-red-800	rounded-[40px] w-full"
+              type="text"
+              name="roomId"
+              id="roomId"
+              value={roomData.id}
+              onChange={(e) => {
+                setRoomData({ ...roomData, id: e.target.value });
+              }}
+            />
+            <button
+              onClick={randomizePassword}
+              type="button"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white px-4 py-1 rounded-md"
+            >
+              RRR
+            </button>
+          </div>
         </div>
 
         <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">

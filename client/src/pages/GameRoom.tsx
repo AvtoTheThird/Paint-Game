@@ -210,14 +210,16 @@ function GameRoom() {
                   className={` flex flex-row justify-between items-center pl-2 ${
                     user.id == currentDrawerId
                       ? "bg-dark-purupe py-5"
+                      : user.hasGuessed
+                      ? "bg-green-600 py-5"
                       : "bg-light-purupe py-5"
                   } text-lg `}
                 >
                   <p>#{index + 1}</p>
                   <p
-                    className={`${
-                      user.hasGuessed ? "text-green-800" : "text-black"
-                    }`}
+                  // className={`${
+                  //   user.hasGuessed ? "text-green-800" : "text-black"
+                  // }`}
                   >
                     {user.name}:{user.score}
                     {user.name == userName ? "(შენ)" : null}

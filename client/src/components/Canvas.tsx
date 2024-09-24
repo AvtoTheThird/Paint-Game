@@ -25,7 +25,12 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
-  const floodFill = (startX: number, startY: number, fillColor: string) => {
+  const floodFill = (
+    startX: number,
+    startY: number,
+    fillColor: string,
+    emitEvent: boolean = true
+  ) => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
     if (!canvas || !ctx) return;
@@ -61,7 +66,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
     ctx.putImageData(imageData, 0, 0);
     saveCanvasState();
-    socket.emit("fill", { roomId, imageData: canvas.toDataURL(), fillColor });
+
+    if (emitEvent) {
+      socket.emit("fill", { roomId, startX, startY, fillColor });
+    }
 
     if (pixelsChecked >= maxIterations) {
       console.log("Fill operation stopped to prevent hanging");
@@ -88,7 +96,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     // Download the temp canvas as an image
     const link = document.createElement("a");
     link.href = tempCanvas.toDataURL("image/png");
-    link.download = "firosmoney.jpeg";
+    link.download = "firosmoney.png";
     link.click();
   };
 
@@ -134,9 +142,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setCursorStyle("default");
     }
   }, [tool, canDraw]);
-  // console.log(canvasData);
-  // const roomId = canvasData.roomId;
-  // const userId = canvasData.userId;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -157,7 +163,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         canvasRef.current.width,
         canvasRef.current.height
       );
-      // console.log(savedImage);
 
       // Resize the canvas to the new window size
       canvasRef.current.width = 800;
@@ -182,6 +187,15 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       window.removeEventListener("resize", resizeCanvas);
     };
   }, []);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctxRef.current = ctx;
+    ctxRef.current.lineWidth = lineWidth;
+  }, [lineWidth]);
   useEffect(() => {
     setUserId(canvasData.userId);
     setRoomId(canvasData.roomId);
@@ -232,8 +246,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     });
     socket.on("newLineWidth", (data) => {
       setLineWidth(data.newLineWidth);
-
-      //   console.log(data);
     });
     socket.on(
       "newDrawer",
@@ -261,12 +273,16 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setHistory(updatedHistory); // Update the local history state
       redrawCanvas(updatedHistory); // Redraw the canvas
     });
+    socket.on("fill", ({ startX, startY, fillColor }) => {
+      floodFill(startX, startY, fillColor, false);
+    });
     return () => {
       socket.off("draw");
       socket.off("clear");
       socket.off("undo");
       socket.off("newLineWidth");
       socket.off("newDrawer");
+      socket.off("fill");
     };
   }, []);
   socket.on("newDrawer", (data) => {
@@ -427,10 +443,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
   };
-  const vw = Math.max(
-    document.documentElement.clientWidth || 0,
-    window.innerWidth || 0
-  );
+  // const vw = Math.max(
+  //   document.documentElement.clientWidth || 0,
+  //   window.innerWidth || 0
+  // );
   return (
     <div
       style={{ aspectRatio: `${800} / ${600}` }}
@@ -469,8 +485,18 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           <button onClick={undoLastAction} disabled={history.length === 0}>
             Undo
           </button>
-          <button onClick={() => setTool("draw")}>Draw Tool</button>
-          <button onClick={() => setTool("fill")}>Fill Tool</button>
+          <button
+            onClick={() => setTool("draw")}
+            className={tool === "draw" ? "text-green-800" : "text-black"}
+          >
+            Draw Tool
+          </button>
+          <button
+            onClick={() => setTool("fill")}
+            className={tool === "fill" ? "text-green-800" : "text-black"}
+          >
+            Fill Tool
+          </button>
           <input
             type="range"
             min="1"

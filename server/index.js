@@ -225,6 +225,9 @@ io.on("connection", (socket) => {
   socket.on("skipTurn", ({ roomId }) => {
     changeDrawer(roomId);
   });
+  socket.on("fill", ({ roomId, startX, startY, fillColor }) => {
+    io.to(roomId).emit("fill", { startX, startY, fillColor });
+  });
   socket.on("kickPlayer", ({ roomId, playerId }) => {
     const room = rooms[roomId];
     if (!room) return;

@@ -19,12 +19,21 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
   const [currentDrawer, setCurrentDrawer] = useState<string>("");
   const [oldWord, setOldWord] = useState<string>("");
+  const [pauseTime, setPauseTime] = useState<number>(0);
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
 
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
+  useEffect(() => {
+    if (pauseTime > 0) {
+      const timer = setTimeout(() => {
+        setPauseTime(pauseTime - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pauseTime]);
   const floodFill = (
     startX: number,
     startY: number,
@@ -252,7 +261,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       // console.log(time);
 
       setHistory([]);
-      setIsGamePaused(false);
 
       if (ctxRef.current) {
         ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
@@ -279,6 +287,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setOldWord(data.Word);
       setCanDraw(false);
       setIsGamePaused(true);
+      setPauseTime(5);
       console.log(data);
     });
     return () => {
@@ -479,12 +488,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         {isGamePaused ? (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-bg-pink p-4 rounded-lg shadow-lg z-50">
             <span className="text-lg">
-              სიტყვა იყო <span className="text-red">{oldWord}</span>{" "}
+              სიტყვა იყო <span className="text-blue-700">{oldWord}</span>{" "}
             </span>
 
             <span className="text-lg">
-              ეხლა ხატამს <span className="text-red">{currentDrawer}</span>
+              ეხლა ხატამს <span className="text-blue-700">{currentDrawer}</span>
             </span>
+            <span>{pauseTime}</span>
           </div>
         ) : null}
       </div>

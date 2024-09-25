@@ -43,6 +43,8 @@ function GameRoom() {
   const [currentDrawerId, setCurrentDrawerId] = useState<any>();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
+
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
 
@@ -131,6 +133,7 @@ function GameRoom() {
         setCurrentDrawer(currentDrawer);
         setSecretWord(secretWord);
         setHasGuesed(false);
+        setIsGamePaused(false);
         // console.log(currentDrawerId, "------", userId);
         // console.log(location.state.userId);
 
@@ -164,7 +167,11 @@ function GameRoom() {
       if (guesser.guesserId == userId) {
         setHasGuesed(true);
       }
-
+      socket.on("handEnded", (data) => {
+        setCanDraw(false);
+        setIsGamePaused(true);
+        console.log(data);
+      });
       joinedUsers[guesser.guesserId].hasGuessed = true;
       console.log(joinedUsers);
     });
@@ -255,11 +262,11 @@ function GameRoom() {
               </button>
             ) : null}
             <p>{timeLeft}</p>
-            {drawWord ? (
+            {!isGamePaused && drawWord ? (
               <span className="text-black font-bold text-2xl">{drawWord}</span>
             ) : (
               <span className="text-black tracking-[0.2rem] font-bold">
-                {secretWord}
+                {!isGamePaused && secretWord}
               </span>
             )}
             {isGameStarted && isAdmin ? (

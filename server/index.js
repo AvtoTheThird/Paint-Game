@@ -58,13 +58,13 @@ function changeDrawer(roomId) {
   const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
   io.to(roomId).emit("handEnded", {
-    currentDrawer: room.users[room.currentDrawerIndex].name,
+    currentDrawer: room.users[room.currentDrawerIndex]?.name,
     Word: oldWord,
   });
 
   setTimeout(() => {
     io.to(roomId).emit("newDrawer", {
-      currentDrawer: room.users[room.currentDrawerIndex].name,
+      currentDrawer: room.users[room.currentDrawerIndex]?.name,
       currentDrawerId: room.currentDrawer,
       secretWord: secretWord,
       time: room.time,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
@@ -44,9 +44,16 @@ function GameRoom() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
+  const messagesEndRef = useRef(null);
 
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
+  useEffect(() => {
+    if (!messagesEndRef.current) return;
+    (messagesEndRef.current as HTMLElement)?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
   // console.log(location.state);
   useEffect(() => {
@@ -199,53 +206,42 @@ function GameRoom() {
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
       <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-5 lg:bg-bg-white  rounded-[5rem]">
-        {/* marcxena plani */}
-        {/* <h1>{roomName}</h1>{" "} */}
-        {/* ppl */}
         <div className=" bg-light-pink rounded-[5rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[300px] overflow-hidden  text-center">
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
           </p>
-          {
-            // Object.values(usersObject);
-
-            Object.values(joinedUsers)
-              .sort((a, b) => b.score - a.score)
-              .map((user: any, index: number) => (
-                <div
-                  key={index}
-                  className={` flex flex-row justify-between items-center pl-2 ${
-                    user.id == currentDrawerId
-                      ? "bg-dark-purupe py-5"
-                      : user.hasGuessed
-                      ? "bg-green-600 py-5"
-                      : "bg-light-purupe py-5"
-                  } text-lg `}
-                >
-                  <p>#{index + 1}</p>
-                  <p
-                  // className={`${
-                  //   user.hasGuessed ? "text-green-800" : "text-black"
-                  // }`}
+          {Object.values(joinedUsers)
+            .sort((a, b) => b.score - a.score)
+            .map((user: any, index: number) => (
+              <div
+                key={index}
+                className={` flex flex-row justify-between items-center pl-2 ${
+                  user.id == currentDrawerId
+                    ? "bg-dark-purupe py-5"
+                    : user.hasGuessed
+                    ? "bg-green-600 py-5"
+                    : "bg-light-purupe py-5"
+                } text-lg `}
+              >
+                <p>#{index + 1}</p>
+                <p>
+                  {user.name}:{user.score}
+                  {user.name == userName ? "(შენ)" : null}
+                </p>
+                {isAdmin ? (
+                  <button
+                    className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                    onClick={() => {
+                      kickPlayer(user.id);
+                    }}
                   >
-                    {user.name}:{user.score}
-                    {user.name == userName ? "(შენ)" : null}
-                  </p>
-                  {isAdmin ? (
-                    <button
-                      className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
-                      onClick={() => {
-                        kickPlayer(user.id);
-                      }}
-                    >
-                      გააგდე
-                    </button>
-                  ) : null}
+                    გააგდე
+                  </button>
+                ) : null}
 
-                  <hr />
-                </div>
-              ))
-          }
+                <hr />
+              </div>
+            ))}
         </div>
         {/* shuala plani */}
 
@@ -316,26 +312,30 @@ function GameRoom() {
           </div>
           <div
             id="chat"
-            className="flex flex-col lg:h-[90vh] justify-between items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
+            className="flex flex-col lg:h-[90vh] justify-evenly items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
           >
-            <span className="text-3xl ">ჩატი</span>
-            <div className="lg:w-[250px]  w-[40vw] overflow-x-scroll  lg:h-full h-[30vh] flex items-center justify-center flex-col   ">
-              <div className="bg-white  lg:h-full h-[30vh]  m-2  rounded-lg  flex justify-end flex-col w-full ">
-                {messages.map((msg, index) => (
-                  <div key={index}>
-                    <p
-                      className={`break-all ${
-                        msg.userName == "game" ? "bg-green-600" : ""
-                      }`}
-                    >
-                      {msg.userName == "game" ? null : msg.userName + ":"}
-                      {msg.message}
-                    </p>{" "}
-                    <hr />
-                  </div>
-                ))}
+            <span className="text-2xl">ჩათი</span>
+            <div className="lg:w-[250px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
+              <div className="bg-white lg:h-[80vh] h-[30vh] m-2 rounded-lg w-full flex flex-col overflow-hidden">
+                <div className="overflow-y-auto h-full p-2 flex flex-col">
+                  <div className="flex-grow"></div>
+                  {messages.map((msg, index) => (
+                    <div key={index}>
+                      <p
+                        className={`break-all ${
+                          msg.userName === "game" ? "bg-green-600" : ""
+                        }`}
+                      >
+                        {msg.userName === "game" ? null : msg.userName + ":"}
+                        {msg.message}
+                      </p>
+                      <hr />
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
-              <form onSubmit={sendMessage}>
+              <form onSubmit={sendMessage} className="flex items-center gap-2">
                 <input
                   className="h-[35px] rounded-3xl text-center"
                   type="text"

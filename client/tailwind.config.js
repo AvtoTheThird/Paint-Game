@@ -13,6 +13,11 @@ export default {
 
         "light-pink": "#F9D4FF",
         "bg-white": "rgb(249, 248, 253,0.5)",
+        "button-background-1": "#7337FF",
+        "button-background-2": "#61B1F1",
+
+        "button-background-3": "#857DF5",
+        "bg-black": "rgb(0, 0, 0,0.3)",
       },
       fontFamily: {
         "ge-black": ["GEFontBlack", "sans-serif"],

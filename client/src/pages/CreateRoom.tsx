@@ -143,6 +143,24 @@ function CreateRoom() {
                 }}
               />
             </div>
+            <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
+              <p className="text-2xl whitespace-nowrap font-extrabold text-white">
+                რაუნდები{" "}
+              </p>
+              <input
+                required
+                className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"
+                type="number"
+                name="time"
+                id="time"
+                onChange={(e) => {
+                  setRoomData({
+                    ...roomData,
+                    maxRounds: Number(e.target.value),
+                  });
+                }}
+              />
+            </div>
           </div>
 
           <button

@@ -20,6 +20,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [currentDrawer, setCurrentDrawer] = useState<string>("");
   const [oldWord, setOldWord] = useState<string>("");
   const [pauseTime, setPauseTime] = useState<number>(0);
+  const [maxRoundsReached, setMaxRoundsReached] = useState<boolean>(false);
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
 
@@ -288,7 +289,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setCanDraw(false);
       setIsGamePaused(true);
       setPauseTime(5);
-      console.log(data);
+      // console.log(data);
+    });
+    socket.on("MaxRoundsReached", () => {
+      setMaxRoundsReached(true);
+    });
+    socket.on("gameStarted", () => {
+      setIsGamePaused(false);
+      setMaxRoundsReached(false);
     });
     return () => {
       socket.off("draw");
@@ -494,6 +502,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
             <span className="text-lg">
               ეხლა ხატამს <span className="text-blue-700">{currentDrawer}</span>
             </span>
+            <span>{pauseTime}</span>
+          </div>
+        ) : null}
+        {maxRoundsReached ? (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-green-500 p-4 rounded-lg shadow-lg z-50">
+            <span className="text-lg">მორჩა კინო</span>
+
+            <span className="text-lg">წადით სახლში</span>
             <span>{pauseTime}</span>
           </div>
         ) : null}

@@ -41,9 +41,11 @@ function GameRoom() {
   const [secretWord, setSecretWord] = useState<string>("");
   const [currentDrawer, setCurrentDrawer] = useState<any>();
   const [currentDrawerId, setCurrentDrawerId] = useState<any>();
+  const [currentRound, setCurrentRound] = useState<any>();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
+  const [maxRounds, setMaxRounds] = useState<any>();
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -71,8 +73,8 @@ function GameRoom() {
     socket.emit("skipTurn", { roomId });
   }
   function kickPlayer(playerId: any) {
-    console.log(roomId, playerId);
-    console.log(joinedUsers);
+    // console.log(roomId, playerId);
+    // console.log(joinedUsers);
 
     socket.emit("kickPlayer", { roomId, playerId });
   }
@@ -88,7 +90,7 @@ function GameRoom() {
     }
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
-      console.log(messageData);
+      // console.log(messageData);
 
       socket.emit("message", messageData);
       setMessage("");
@@ -121,27 +123,34 @@ function GameRoom() {
 
       setJoinedUsers(data);
     });
-    socket.on("gameStarted", ({ currentDrawer, currentDrawerId }) => {
-      setIsGameStarted(true);
-      setCurrentDrawer(currentDrawer);
-      setCurrentDrawerId(currentDrawerId);
-    });
+    socket.on(
+      "gameStarted",
+      ({ currentDrawer, currentDrawerId, maxRounds }) => {
+        setIsGameStarted(true);
+        setCurrentDrawer(currentDrawer);
+        setCurrentDrawerId(currentDrawerId);
+        setMaxRounds(maxRounds);
+      }
+    );
 
     socket.on(
       "newDrawer",
-      ({ currentDrawer, currentDrawerId, secretWord, time }) => {
+      ({ currentDrawer, currentDrawerId, secretWord, time, currentRound }) => {
         // console.log("----gameroom-----");
 
-        // console.log(currentDrawer);
-        // console.log(currentDrawerId);
+        console.log(currentDrawer);
+        console.log(currentDrawerId);
         // console.log("----gameroom-----");
+        setCurrentRound(currentRound);
+        console.log(currentRound);
+        setCurrentDrawerId(currentDrawerId);
 
         setTimeLeft(time);
         setCurrentDrawer(currentDrawer);
         setSecretWord(secretWord);
         setHasGuesed(false);
         setIsGamePaused(false);
-        // console.log(currentDrawerId, "------", userId);
+        console.log(currentDrawerId, "------", userId);
         // console.log(location.state.userId);
 
         if (currentDrawerId != location.state.userId) {
@@ -182,7 +191,11 @@ function GameRoom() {
       joinedUsers[guesser.guesserId].hasGuessed = true;
       console.log(joinedUsers);
     });
-
+    socket.on("MaxRoundsReached", () => {
+      setIsGameStarted(false);
+      console.log("MaxRoundsReached");
+      // console.log(setIsGameStarted);
+    });
     // Clean up when the component unmounts
     return () => {
       socket.off("message");
@@ -257,6 +270,7 @@ function GameRoom() {
                 start the game
               </button>
             ) : null}
+
             <p>{timeLeft}</p>
             {!isGamePaused && drawWord ? (
               <span className="text-black font-bold text-2xl">{drawWord}</span>
@@ -266,14 +280,20 @@ function GameRoom() {
               </span>
             )}
             {isGameStarted && isAdmin ? (
-              <button
-                className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
-                onClick={skipTurn}
-              >
-                გადართე სვლა
-              </button>
+              <>
+                <span>
+                  {currentRound} / {maxRounds}
+                </span>
+
+                <button
+                  className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                  onClick={skipTurn}
+                >
+                  გადართე სვლა
+                </button>
+              </>
             ) : (
-              "."
+              <> {currentRound}.</>
             )}
           </div>
 
@@ -291,13 +311,13 @@ function GameRoom() {
             {joinedUsers.length > 0
               ? // Object.values(usersObject);
 
-                Object.values(joinedUsers)
+                joinedUsers
                   .sort((a, b) => b.score - a.score)
                   .map((user: any, index: number) => (
                     <div key={index}>
                       <p
                         className={`${
-                          user.name == currentDrawer
+                          user.id == currentDrawerId
                             ? "bg-dark-purupe py-5"
                             : "bg-light-purupe py-5"
                         } text-lg `}

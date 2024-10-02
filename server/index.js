@@ -48,6 +48,14 @@ function changeDrawer(roomId) {
   if (!room) return;
 
   let oldWord = room.currentWord;
+  room.handsPlayed++;
+  console.log("incremented hand", room.handsPlayed);
+
+  room.currentRound =
+    Math.floor(room.handsPlayed / room.users.length) >= room.currentRound
+      ? Math.floor(room.handsPlayed / room.users.length)
+      : room.currentRound;
+  console.log("round is ", room.currentRound);
 
   room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
   room.currentDrawer = room.users[room.currentDrawerIndex].id;
@@ -68,6 +76,7 @@ function changeDrawer(roomId) {
       currentDrawerId: room.currentDrawer,
       secretWord: secretWord,
       time: room.time,
+      currentRound: room.currentRound,
     });
 
     startTurnTimer(roomId);
@@ -77,7 +86,11 @@ function changeDrawer(roomId) {
 function startTurnTimer(roomId) {
   const room = rooms[roomId];
   if (!room) return;
-
+  if (room.currentRound === room.maxRounds) {
+    io.to(roomId).emit("MaxRoundsReached");
+    console.log("Max rounds reached, stopping execution.");
+    return;
+  }
   clearTimeout(room.turnTimer);
   const timeoutDuration = room.time * 1000;
 
@@ -116,7 +129,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("userJoined", userData);
   });
 
-  socket.on("create_room", ({ name, id, maxPlayers, time }) => {
+  socket.on("create_room", ({ name, id, maxPlayers, time, maxRounds }) => {
     if (rooms[id]) {
       socket.emit("roomError", { error: "Room ID already exists." });
       return;
@@ -125,9 +138,12 @@ io.on("connection", (socket) => {
     rooms[id] = {
       name,
       maxPlayers,
+      maxRounds: maxRounds - 1,
       users: [],
       time,
       currentDrawerIndex: 0,
+      currentRound: 0,
+      handsPlayed: 0,
       currentDrawer: null,
       currentWord: null,
     };
@@ -138,6 +154,8 @@ io.on("connection", (socket) => {
   socket.on("startGame", ({ roomId }) => {
     const room = rooms[roomId];
     if (!room) return;
+    room.currentRound = 0;
+    room.handsPlayed = 0;
 
     room.currentDrawerIndex = 0;
     room.currentDrawer = room.users[0].id;
@@ -151,12 +169,14 @@ io.on("connection", (socket) => {
       currentDrawerId: room.currentDrawer,
       secretWord: secretWord,
       time: room.time,
+      currentRound: room.currentRound,
     });
 
     io.to(roomId).emit("updateUserList", room.users);
     io.to(roomId).emit("gameStarted", {
       currentDrawer: room.users[0].name,
       currentDrawerId: room.currentDrawer,
+      maxRounds: room.maxRounds,
     });
 
     startTurnTimer(roomId);

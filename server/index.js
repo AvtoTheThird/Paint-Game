@@ -138,7 +138,7 @@ io.on("connection", (socket) => {
     rooms[id] = {
       name,
       maxPlayers,
-      maxRounds: maxRounds - 1,
+      maxRounds: maxRounds,
       users: [],
       time,
       currentDrawerIndex: 0,

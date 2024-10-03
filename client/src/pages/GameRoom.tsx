@@ -271,20 +271,25 @@ function GameRoom() {
               </button>
             ) : null}
 
-            <p>{timeLeft}</p>
+            <div className="flex  bg-white px-4  rounded-full justify-center items-center  border-[1px] border-black h-12">
+              <span className="font-extrabold text-4xl border-r-2 border-pink-500 pr-1 h-full ">
+                {timeLeft}
+              </span>
+              {/* <span className="bg-pink-500 text-pink-500  ">.</span> */}
+              <span className="font-extrabold text-4xl border-l-2 border-pink-500 pl-2 h-full">
+                {currentRound}/{maxRounds}
+              </span>
+            </div>
+
             {!isGamePaused && drawWord ? (
               <span className="text-black font-bold text-2xl">{drawWord}</span>
             ) : (
               <span className="text-black tracking-[0.2rem] font-bold">
-                {!isGamePaused && secretWord}
+                {!isGamePaused && secretWord + secretWord.length}
               </span>
             )}
             {isGameStarted && isAdmin ? (
               <>
-                <span>
-                  {currentRound} / {maxRounds}
-                </span>
-
                 <button
                   className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
                   onClick={skipTurn}
@@ -292,9 +297,7 @@ function GameRoom() {
                   გადართე სვლა
                 </button>
               </>
-            ) : (
-              <> {currentRound}.</>
-            )}
+            ) : null}
           </div>
 
           <div className="w-full max-w-screen-lg mx-auto">

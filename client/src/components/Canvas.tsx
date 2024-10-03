@@ -294,10 +294,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("MaxRoundsReached", () => {
       setMaxRoundsReached(true);
     });
-    socket.on("gameStarted", () => {
-      setIsGamePaused(false);
-      setMaxRoundsReached(false);
-    });
+
     return () => {
       socket.off("draw");
       socket.off("clear");
@@ -307,6 +304,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("fill");
     };
   }, []);
+  socket.on("gameStarted", () => {
+    setIsGamePaused(false);
+    setMaxRoundsReached(false);
+  });
   socket.on("newDrawer", (data) => {
     // console.log(currentDrawer);
     // console.log(secretWord);

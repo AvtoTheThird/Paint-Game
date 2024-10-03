@@ -65,7 +65,7 @@ function CreateRoom() {
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 right-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full bottom-4 right-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full bottom-4 left-4 border-[1px] border-black "></div>
-          <div className="flex flex-col gap-5 items-center justify-between  w-full bg-bg-black p-5 rounded-2xl">
+          <div className="mt-5 flex flex-col gap-5 items-center justify-between  w-full bg-bg-black p-5 rounded-2xl">
             <div className="lg:flex gap-5 items-center justify-between pb-3 lg:w-[600px]">
               <p className="text-2xl whitespace-nowrap font-extrabold text-white">
                 ოთახის სახელი

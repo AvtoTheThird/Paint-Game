@@ -59,7 +59,7 @@ function CreateRoom() {
         <h1 className="text-4xl font-bold mb-8 ">Firo$ Money</h1>
         <form
           onSubmit={createRoom}
-          className=" relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[780px] lg:h-[580px] px-5 border-[2px] border-red-600 border-dotted shadow-[-5px_5px_0px_0px_rgba(109,40,217)]"
+          className=" relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[780px] lg:h-[580px] px-5 border-[2px] border-red-600 border-dotted shadow-[-5px_5px_3px_0px_rgba(109,40,217)]"
         >
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 left-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 right-4 border-[1px] border-black "></div>

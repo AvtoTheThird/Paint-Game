@@ -218,8 +218,8 @@ function GameRoom() {
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
-      <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-5 lg:bg-bg-white  rounded-[5rem]">
-        <div className=" bg-light-pink rounded-[5rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[300px] overflow-hidden  text-center">
+      <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white  rounded-[5rem]">
+        <div className=" bg-light-pink rounded-[2rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[320px] overflow-hidden  text-center">
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
           </p>
@@ -271,15 +271,17 @@ function GameRoom() {
               </button>
             ) : null}
 
-            <div className="flex  bg-white px-4  rounded-full justify-center items-center  border-[1px] border-black h-12">
-              <span className="font-extrabold text-4xl border-r-2 border-pink-500 pr-1 h-full ">
-                {timeLeft}
-              </span>
-              {/* <span className="bg-pink-500 text-pink-500  ">.</span> */}
-              <span className="font-extrabold text-4xl border-l-2 border-pink-500 pl-2 h-full">
-                {currentRound}/{maxRounds}
-              </span>
-            </div>
+            {isGameStarted ? (
+              <div className="flex  bg-white px-4  rounded-full justify-center items-center  border-[1px] border-black h-12">
+                <span className="font-extrabold text-4xl border-r-2 border-pink-500 pr-1 h-full ">
+                  {timeLeft}
+                </span>
+                {/* <span className="bg-pink-500 text-pink-500  ">.</span> */}
+                <span className="font-extrabold text-4xl border-l-2 border-pink-500 pl-2 h-full">
+                  {currentRound}/{maxRounds}
+                </span>
+              </div>
+            ) : null}
 
             {!isGamePaused && drawWord ? (
               <span className="text-black font-bold text-2xl">{drawWord}</span>
@@ -335,10 +337,10 @@ function GameRoom() {
           </div>
           <div
             id="chat"
-            className="flex flex-col lg:h-[90vh] justify-evenly items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[4rem] lg:w-[200px] 2xl:w-[300px] pb-5"
+            className="flex flex-col lg:h-[90vh] justify-evenly items-center bg-light-pink lg:mr-8 rounded-[1rem] lg:rounded-[2rem] lg:w-[200px] 2xl:w-[320px] pb-5"
           >
             <span className="text-2xl">ჩათი</span>
-            <div className="lg:w-[250px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
+            <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
               <div className="bg-white lg:h-[80vh] h-[30vh] m-2 rounded-lg w-full flex flex-col overflow-hidden">
                 <div className="overflow-y-auto h-full p-2 flex flex-col">
                   <div className="flex-grow"></div>

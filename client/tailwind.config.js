@@ -3,11 +3,17 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      textShadow: {
+        "1px-black":
+          "1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black",
+      },
       backgroundImage: {
         "main-bg": "url('bg.png')",
       },
       backgroundColor: {
         "bg-pink": "#FF70F5",
+        "bg-pink-opacity": "rgba(255, 112, 245, 0.8)",
+
         "light-purupe": "#CC90E4",
         "dark-purupe": "#923CB4",
 
@@ -25,5 +31,14 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      addUtilities({
+        ".text-shadow": {
+          "text-shadow":
+            "1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black",
+        },
+      });
+    },
+  ],
 };

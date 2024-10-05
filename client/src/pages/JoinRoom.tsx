@@ -14,6 +14,8 @@ function CreateRoom() {
     setUserName(location.state.userName);
   }, []);
   const joinRoom = () => {
+    console.log("join room handler");
+
     if (roomId.trim()) {
       let dataToBeSent = { roomId, name: userName };
       // console.log("data to be sent", dataToBeSent);

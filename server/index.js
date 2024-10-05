@@ -49,13 +49,11 @@ function changeDrawer(roomId) {
 
   let oldWord = room.currentWord;
   room.handsPlayed++;
-  console.log("incremented hand", room.handsPlayed);
 
   room.currentRound =
     Math.floor(room.handsPlayed / room.users.length) >= room.currentRound
       ? Math.floor(room.handsPlayed / room.users.length)
       : room.currentRound;
-  console.log("round is ", room.currentRound);
 
   room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
   room.currentDrawer = room.users[room.currentDrawerIndex].id;
@@ -87,6 +85,7 @@ function startTurnTimer(roomId) {
   const room = rooms[roomId];
   if (!room) return;
   if (room.currentRound === room.maxRounds) {
+    room.isGameStarted = false;
     io.to(roomId).emit("MaxRoundsReached");
     console.log("Max rounds reached, stopping execution.");
     return;
@@ -97,6 +96,14 @@ function startTurnTimer(roomId) {
   room.turnTimer = setTimeout(() => {
     changeDrawer(roomId);
   }, timeoutDuration);
+}
+
+function handleLateJoin(roomId, id) {
+  const room = rooms[roomId];
+  if (!room) return;
+  console.log("requested canvas data from client", roomId, id);
+
+  io.to(room.currentDrawer).emit("requestCanvasDataFromClient", roomId, id);
 }
 
 io.on("connection", (socket) => {
@@ -125,7 +132,15 @@ io.on("connection", (socket) => {
     room.users.push(userData);
 
     socket.join(roomId);
-    io.to(roomId).emit("updateUserList", room.users);
+
+    if (room.isGameStarted) {
+      handleLateJoin(roomId, socket.id);
+      console.log("someone joined late");
+    }
+
+    setTimeout(() => {
+      io.to(roomId).emit("updateUserList", room.users);
+    }, 500);
     io.to(roomId).emit("userJoined", userData);
   });
 
@@ -146,6 +161,7 @@ io.on("connection", (socket) => {
       handsPlayed: 0,
       currentDrawer: null,
       currentWord: null,
+      isGameStarted: false,
     };
 
     socket.emit("roomCreated", { id, name, maxPlayers, time });
@@ -156,7 +172,7 @@ io.on("connection", (socket) => {
     if (!room) return;
     room.currentRound = 0;
     room.handsPlayed = 0;
-
+    room.isGameStarted = true;
     room.currentDrawerIndex = 0;
     room.currentDrawer = room.users[0].id;
     room.currentWord = selectRandomWord();
@@ -257,6 +273,28 @@ io.on("connection", (socket) => {
   });
   socket.on("fill", ({ roomId, startX, startY, fillColor }) => {
     io.to(roomId).emit("fill", { startX, startY, fillColor });
+  });
+  socket.on("sendCanvasDataToServer", (data) => {
+    console.log(data);
+
+    const room = rooms[data.roomId];
+    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+    console.log(room.currentDrawerId);
+    const dataForClient = {
+      currentDrawer: room.currentDrawer,
+      currentDrawerId: room.users[room.currentDrawerIndex].id,
+
+      secretWord: secretWord,
+      base64Image: data.base64Image,
+      time: room.time,
+      currentRound: room.currentRound,
+      maxRounds: room.maxRounds,
+    };
+    console.log("Received canvas data from client:", dataForClient);
+    io.to(data.id).emit("SendCanvasDataToClient", dataForClient);
+  });
+  socket.on("test", (history) => {
+    console.log("test:", history);
   });
   socket.on("kickPlayer", ({ roomId, playerId }) => {
     const room = rooms[roomId];

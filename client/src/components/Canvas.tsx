@@ -27,6 +27,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
+
   useEffect(() => {
     if (pauseTime > 0) {
       const timer = setTimeout(() => {
@@ -173,6 +174,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         canvasRef.current.width,
         canvasRef.current.height
       );
+      // console.log(savedImage);
 
       // Resize the canvas to the new window size
       canvasRef.current.width = 800;
@@ -294,7 +296,25 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("MaxRoundsReached", () => {
       setMaxRoundsReached(true);
     });
+    socket.on("requestCanvasDataFromClient", (roomId, id) => {
+      console.log("recived requestCanvasData", id);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctxRef.current = ctx;
+      if (!canvasRef.current || !ctxRef.current) return;
+
+      const base64Image = canvas.toDataURL("image/png");
+
+      socket.emit("test");
+
+      const data = { base64Image, id, roomId };
+      socket.emit("sendCanvasDataToServer", data);
+      console.log("sent data to server", base64Image, id);
+    });
     return () => {
       socket.off("draw");
       socket.off("clear");
@@ -309,11 +329,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     setMaxRoundsReached(false);
   });
   socket.on("newDrawer", (data) => {
-    // console.log(currentDrawer);
-    // console.log(secretWord);
-    // console.log(time);
     setIsGamePaused(false);
-
     setHistory([]);
     clearCanvas();
     if (data.currentDrawerId !== userIdRef.current) {
@@ -321,6 +337,31 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     } else {
       setCanDraw(true);
     }
+  });
+
+  socket.on("SendCanvasDataToClient", (data) => {
+    const base64Image = data.base64Image;
+    setCurrentDrawer(data.currentDrawer);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Create a new Image object
+    const img = new Image();
+
+    // Set the src of the image to the base64 data
+    img.src = base64Image;
+
+    // Once the image is loaded, draw it onto the canvas
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+
+    img.onerror = (err) => {
+      console.error("Failed to load the image", err);
+    };
   });
   const startDrawing = (
     event:

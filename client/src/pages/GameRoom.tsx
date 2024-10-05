@@ -119,7 +119,7 @@ function GameRoom() {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
     socket.on("updateUserList", (data) => {
-      console.log(data);
+      // console.log(data);
 
       setJoinedUsers(data);
     });
@@ -138,11 +138,11 @@ function GameRoom() {
       ({ currentDrawer, currentDrawerId, secretWord, time, currentRound }) => {
         // console.log("----gameroom-----");
 
-        console.log(currentDrawer);
-        console.log(currentDrawerId);
+        // console.log(currentDrawer);
+        // console.log(currentDrawerId);
         // console.log("----gameroom-----");
         setCurrentRound(currentRound);
-        console.log(currentRound);
+        // console.log(currentRound);
         setCurrentDrawerId(currentDrawerId);
 
         setTimeLeft(time);
@@ -150,7 +150,7 @@ function GameRoom() {
         setSecretWord(secretWord);
         setHasGuesed(false);
         setIsGamePaused(false);
-        console.log(currentDrawerId, "------", userId);
+        // console.log(currentDrawerId, "------", userId);
         // console.log(location.state.userId);
 
         if (currentDrawerId != location.state.userId) {
@@ -196,6 +196,16 @@ function GameRoom() {
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });
+    socket.on("SendCanvasDataToClient", (data) => {
+      console.log(data);
+
+      setCurrentDrawer(data.currentDrawer);
+      setCurrentDrawerId(data.currentDrawerId);
+      setSecretWord(secretWord);
+      setTimeLeft(data.time);
+      setCurrentRound(data.currentRound);
+      setMaxRounds(data.maxRounds);
+    });
     // Clean up when the component unmounts
     return () => {
       socket.off("message");
@@ -207,6 +217,7 @@ function GameRoom() {
       socket.off("newWord");
     };
   }, [isGameStarted]);
+
   const handleButtonClick = () => {
     confetti({
       particleCount: 100,

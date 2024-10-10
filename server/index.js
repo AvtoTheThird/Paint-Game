@@ -3,12 +3,12 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const words = require("./words");
-
 const app = express();
 const server = http.createServer(app);
-
 const DEFAULT_SCORE = 10;
 const rooms = {};
+const publicRooms = {};
+const MAX_PLAYERS_PER_PUBLIC_ROOM = 8;
 
 // Enable CORS
 app.use(
@@ -38,22 +38,55 @@ function calculateScore(maxTime, timeOfGuessing) {
     return DEFAULT_SCORE * multiplier;
   }
 }
+function createPublicRoom() {
+  const id = `public-${Date.now()}`;
+  publicRooms[id] = {
+    name: `Public Room ${Object.keys(publicRooms).length + 1}`,
+    maxPlayers: 8,
+    maxRounds: 8,
+    users: [],
+    time: 90, // You can adjust this as needed
+    currentDrawerIndex: 0,
+    currentRound: 0,
+    handsPlayed: 0,
+    currentDrawer: null,
+    currentWord: null,
+    isGameStarted: false,
+  };
+  return id;
+}
+function getAvailablePublicRoom() {
+  const availableRooms = Object.keys(publicRooms).filter(
+    (id) => publicRooms[id].users.length < publicRooms[id].maxPlayers
+  );
 
+  if (availableRooms.length === 0) {
+    return createPublicRoom();
+  }
+
+  // Return the room with the most players (but not full)
+  return availableRooms.reduce((a, b) =>
+    publicRooms[a].users.length > publicRooms[b].users.length ? a : b
+  );
+}
+
+function ensurePublicRoomAvailable() {
+  if (Object.keys(publicRooms).length === 0) {
+    createPublicRoom();
+  }
+}
 function selectRandomWord() {
   return words[Math.floor(Math.random() * words.length)];
 }
 
-function changeDrawer(roomId) {
-  const room = rooms[roomId];
+function changeDrawer(roomId, isPublic = false) {
+  const room = isPublic ? publicRooms[roomId] : rooms[roomId];
   if (!room) return;
 
   let oldWord = room.currentWord;
   room.handsPlayed++;
 
-  room.currentRound =
-    Math.floor(room.handsPlayed / room.users.length) >= room.currentRound
-      ? Math.floor(room.handsPlayed / room.users.length)
-      : room.currentRound;
+  room.currentRound = Math.floor(room.handsPlayed / room.users.length);
 
   room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
   room.currentDrawer = room.users[room.currentDrawerIndex].id;
@@ -77,14 +110,52 @@ function changeDrawer(roomId) {
       currentRound: room.currentRound,
     });
 
-    startTurnTimer(roomId);
+    startTurnTimer(roomId, isPublic);
   }, 5000);
 }
+function startGame(roomId, isPublic = false) {
+  const room = isPublic ? publicRooms[roomId] : rooms[roomId];
+  if (!room) return;
+  room.currentRound = 0;
+  room.handsPlayed = 0;
+  room.isGameStarted = true;
+  room.currentDrawerIndex = 0;
+  room.currentDrawer = room.users[0].id;
+  room.currentWord = selectRandomWord();
 
-function startTurnTimer(roomId) {
-  const room = rooms[roomId];
+  io.to(room.currentDrawer).emit("newWord", room.currentWord);
+  const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+
+  io.to(roomId).emit("newDrawer", {
+    currentDrawer: room.users[0].name,
+    currentDrawerId: room.currentDrawer,
+    secretWord: secretWord,
+    time: room.time,
+    currentRound: room.currentRound,
+  });
+
+  io.to(roomId).emit("updateUserList", room.users);
+  io.to(roomId).emit("gameStarted", {
+    currentDrawer: room.users[0].name,
+    currentDrawerId: room.currentDrawer,
+    maxRounds: room.maxRounds,
+  });
+
+  startTurnTimer(roomId, isPublic);
+}
+function startTurnTimer(roomId, isPublic = false) {
+  const room = isPublic ? publicRooms[roomId] : rooms[roomId];
   if (!room) return;
   if (room.currentRound === room.maxRounds) {
+    if (isPublic) {
+      room.isGameStarted = false;
+      io.to(roomId).emit("MaxRoundsReached");
+      setTimeout(() => {
+        room.isGameStarted = false;
+
+        startGame(roomId, true);
+      }, 5000);
+    }
     room.isGameStarted = false;
     io.to(roomId).emit("MaxRoundsReached");
     console.log("Max rounds reached, stopping execution.");
@@ -94,7 +165,7 @@ function startTurnTimer(roomId) {
   const timeoutDuration = room.time * 1000;
 
   room.turnTimer = setTimeout(() => {
-    changeDrawer(roomId);
+    changeDrawer(roomId, isPublic);
   }, timeoutDuration);
 }
 
@@ -105,9 +176,49 @@ function handleLateJoin(roomId, id) {
 
   io.to(room.currentDrawer).emit("requestCanvasDataFromClient", roomId, id);
 }
-
+function ensurePublicRoomExists() {
+  if (Object.keys(publicRooms).length === 0) {
+    createPublicRoom();
+  }
+}
 io.on("connection", (socket) => {
   console.log("New connection established");
+  ensurePublicRoomAvailable();
+  socket.on("join_public_room", ({ name }) => {
+    const roomId = getAvailablePublicRoom();
+    const room = publicRooms[roomId];
+
+    const userData = {
+      id: socket.id,
+      name,
+      roomName: room.name,
+      roomId: roomId,
+      score: 0,
+      hasGuessed: false,
+    };
+    room.users.push(userData);
+
+    socket.join(roomId);
+
+    if (room.isGameStarted) {
+      handleLateJoin(roomId, socket.id, true);
+    } else if (room.users.length >= 2) {
+      // Start the game automatically when there are at least 2 players
+      startGame(roomId, true);
+    }
+
+    setTimeout(() => {
+      io.to(roomId).emit("updateUserList", room.users);
+    }, 500);
+    io.to(roomId).emit("userJoined", userData);
+
+    // Inform the client which room they've joined
+    socket.emit("joined_public_room", {
+      roomId,
+      roomName: room.name,
+      userId: socket.id,
+    });
+  });
 
   socket.on("join_room", ({ roomId, name }) => {
     const room = rooms[roomId];
@@ -167,40 +278,17 @@ io.on("connection", (socket) => {
     socket.emit("roomCreated", { id, name, maxPlayers, time });
   });
 
-  socket.on("startGame", ({ roomId }) => {
-    const room = rooms[roomId];
-    if (!room) return;
-    room.currentRound = 0;
-    room.handsPlayed = 0;
-    room.isGameStarted = true;
-    room.currentDrawerIndex = 0;
-    room.currentDrawer = room.users[0].id;
-    room.currentWord = selectRandomWord();
-
-    io.to(room.currentDrawer).emit("newWord", room.currentWord);
-    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-
-    io.to(roomId).emit("newDrawer", {
-      currentDrawer: room.users[0].name,
-      currentDrawerId: room.currentDrawer,
-      secretWord: secretWord,
-      time: room.time,
-      currentRound: room.currentRound,
-    });
-
-    io.to(roomId).emit("updateUserList", room.users);
-    io.to(roomId).emit("gameStarted", {
-      currentDrawer: room.users[0].name,
-      currentDrawerId: room.currentDrawer,
-      maxRounds: room.maxRounds,
-    });
-
-    startTurnTimer(roomId);
+  socket.on("startGame", ({ roomId, isPublic = false }) => {
+    startGame(roomId, isPublic);
   });
 
   socket.on("guess", ({ roomId, guess, timeLeft }) => {
-    const room = rooms[roomId];
+    console.log(roomId, guess, timeLeft);
+
+    const isPublic = roomId.startsWith("public-");
+    const room = isPublic ? publicRooms[roomId] : rooms[roomId];
     if (!room) return;
+    console.log(room.currentWord);
 
     const guesser = room.users.find((user) => user.id === socket.id);
     if (!guesser) return;
@@ -234,12 +322,34 @@ io.on("connection", (socket) => {
         (user) => user.hasGuessed || user.id === room.currentDrawer
       );
       if (allGuessed) {
-        changeDrawer(roomId);
+        changeDrawer(roomId, isPublic);
+        room.handsPlayed++;
         room.users.forEach((user) => (user.hasGuessed = false));
         io.to(roomId).emit("allGuessed");
       }
     } else {
       io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
+    }
+
+    // Check if the game should end (for private rooms) or reset (for public rooms)
+    if (room.currentRound >= room.maxRounds) {
+      if (isPublic) {
+        // Reset the game for public rooms
+        room.currentRound = 0;
+        room.handsPlayed = 0;
+        room.users.forEach((user) => (user.score = 0));
+        io.to(roomId).emit("gameReset", {
+          message: "Game has been reset. Starting a new game!",
+        });
+        startGame(roomId, true);
+      } else {
+        // End the game for private rooms
+        io.to(roomId).emit("gameEnded", {
+          message: "Game has ended. Final scores:",
+          scores: room.users.map((u) => ({ name: u.name, score: u.score })),
+        });
+        // You might want to handle room cleanup or allow players to start a new game here
+      }
     }
   });
 
@@ -249,6 +359,9 @@ io.on("connection", (socket) => {
     }
   });
 
+  // socket.on("joinPublicRoom", () => {
+  //   hanleJoinPublicRoom();
+  // });
   socket.on("draw", ({ roomId, x0, y0, x1, y1, color }) => {
     io.to(roomId).emit("draw", { x0, y0, x1, y1, color });
   });
@@ -321,8 +434,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    for (const roomId in rooms) {
-      const room = rooms[roomId];
+    for (const roomId in { ...rooms, ...publicRooms }) {
+      const isPublic = roomId in publicRooms;
+      const room = isPublic ? publicRooms[roomId] : rooms[roomId];
       const userIndex = room.users.findIndex((user) => user.id === socket.id);
 
       if (userIndex !== -1) {
@@ -333,17 +447,24 @@ io.on("connection", (socket) => {
 
         if (room.users.length === 0) {
           console.log("Room is empty, removing it");
-          delete rooms[roomId];
+          if (isPublic) {
+            delete publicRooms[roomId];
+            ensurePublicRoomAvailable();
+          } else {
+            delete rooms[roomId];
+          }
         } else if (room.currentDrawer === socket.id) {
-          changeDrawer(roomId);
+          changeDrawer(roomId, isPublic);
         }
         break;
       }
     }
+    ensurePublicRoomAvailable();
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  createPublicRoom();
 });

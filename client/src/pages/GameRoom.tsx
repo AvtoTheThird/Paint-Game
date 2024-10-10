@@ -57,7 +57,7 @@ function GameRoom() {
     });
   }, [messages]);
 
-  // console.log(location.state);
+  // console.log(location);
   useEffect(() => {
     setRoomId(location.state.roomId);
     setUserId(location.state.userId);
@@ -82,6 +82,8 @@ function GameRoom() {
     e.preventDefault();
 
     if (!hasGuesed && !canDraw) {
+      console.log(`guess: ${message}`);
+
       socket.emit("guess", {
         roomId: roomId,
         guess: message,

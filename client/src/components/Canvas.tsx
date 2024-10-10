@@ -27,7 +27,20 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "z") {
+        event.preventDefault();
+        undoLastAction();
+      }
+    };
 
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
   useEffect(() => {
     if (pauseTime > 0) {
       const timer = setTimeout(() => {
@@ -36,6 +49,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       return () => clearTimeout(timer);
     }
   }, [pauseTime]);
+
   const floodFill = (
     startX: number,
     startY: number,
@@ -480,6 +494,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     }
   };
   const undoLastAction = () => {
+    console.log("called undo");
+
     if (history.length === 0) return; // No history to undo
 
     const newHistory = [...history];

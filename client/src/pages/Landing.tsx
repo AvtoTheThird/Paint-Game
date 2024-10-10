@@ -1,13 +1,45 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import socket from "../components/socket";
+
 const LandingPage: React.FC = () => {
+  // const [roomId, setRoomId] = useState("");
+
   const [userName, setUserName] = useState<string>("");
+  const [dataToBeSent, setDataToBeSent] = useState<any>({});
+  const navigate = useNavigate();
   function handleClicck() {
     alert("შეიყვანეთ სახელი(მინ 3 სიმბოლო)");
   }
   function handleUndoneClick() {
     alert("ega ara msuhaobs jer");
   }
+  function handleJoinPublicRoom() {
+    socket.emit("join_public_room", {
+      name: userName,
+    });
+  }
+  socket.on("joined_public_room", ({ roomId, roomName, userId }) => {
+    console.log(
+      `Joined public room: (roomname: ${roomName} )(ID: ${roomId}) (userid: ${userId})`
+    );
+    setDataToBeSent({ roomId, userId, userName: userName, isadmin: false });
+    // setRoomId(location.state.roomId);
+    // setUserId(location.state.userId);
+    // setUserName(location.state.userName);
+    // setIsAdmin(location.state.isAdmin);
+  });
+  useEffect(() => {
+    console.log(dataToBeSent);
+
+    if (dataToBeSent.roomId) {
+      navigate(`/game-room/${dataToBeSent.roomId}`, {
+        state: {
+          ...dataToBeSent,
+        },
+      });
+    }
+  }, [dataToBeSent]);
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
       <div className="my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  lg:bg-bg-white  lg:rounded-[5rem] rounded-[2rem]">
@@ -23,12 +55,17 @@ const LandingPage: React.FC = () => {
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
             <div className="w-[250px] h-[337px] bg-white rounded-lg"></div>
             <div className="flex flex-col  items-center gap-3">
+              {/* <Link
+                to={`${userName.length > 2 ? `/game-room/${undefined}` : `/`}`}
+                state={{ userName: userName, roomId: roomId }}
+              > */}
               <button
-                // onClick={handleUndoneClick}
+                onClick={userName.length > 3 ? handleJoinPublicRoom : undefined}
                 className=" border-solid bg-button-background-1 border-black border-[1px]  text-[48px]  p-3 m-2 text-white rounded-[30px] lg:w-[240px] lg:h-[100px]  drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)] text-shadow  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
               >
                 თამაში
               </button>
+              {/* </Link> */}
               <Link
                 to={`${userName.length > 2 ? `/join-room` : `/`}`}
                 state={{ userName: userName }}

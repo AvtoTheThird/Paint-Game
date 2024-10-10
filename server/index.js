@@ -42,7 +42,7 @@ function createPublicRoom() {
   const id = `public-${Date.now()}`;
   publicRooms[id] = {
     name: `Public Room ${Object.keys(publicRooms).length + 1}`,
-    maxPlayers: 8,
+    maxPlayers: 2,
     maxRounds: 8,
     users: [],
     time: 90, // You can adjust this as needed

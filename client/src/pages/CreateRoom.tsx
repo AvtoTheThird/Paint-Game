@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
-import { arsebiti, zedsartavi } from "../components/words";
+// import { arsebiti, zedsartavi } from "../components/words";
 function CreateRoom() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,17 +42,17 @@ function CreateRoom() {
       });
     }
   }, [recivedRoomData]);
-  function randomizePassword() {
-    let password = "";
-    console.log("randomizePassword");
+  // function randomizePassword() {
+  //   let password = "";
+  //   console.log("randomizePassword");
 
-    password += zedsartavi[Math.floor(Math.random() * zedsartavi.length)];
-    password += arsebiti[Math.floor(Math.random() * arsebiti.length)];
-    console.log(password);
+  //   password += zedsartavi[Math.floor(Math.random() * zedsartavi.length)];
+  //   password += arsebiti[Math.floor(Math.random() * arsebiti.length)];
+  //   console.log(password);
 
-    setRoomData({ ...roomData, id: password });
-    console.log(roomData);
-  }
+  //   setRoomData({ ...roomData, id: password });
+  //   console.log(roomData);
+  // }
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       <div className="h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  bg-bg-white  rounded-[5rem]">
@@ -87,7 +87,7 @@ function CreateRoom() {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={randomizePassword}
+                  // onClick={randomizePassword}
                   type="button"
                   className=" bg-blue-500 text-white px-2  rounded-md"
                 >

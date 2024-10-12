@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
+// import { nouns, adjectives } from "../components/words";
 
 function CreateRoom() {
   const [roomId, setRoomId] = useState<string>("");
@@ -49,6 +50,17 @@ function CreateRoom() {
       });
     }
   }, [roomData]);
+  //  function randomizeUserName() {
+  //   let password = "";
+  //   console.log("randomizePassword");
+
+  //   password += nouns[Math.floor(Math.random() * nouns.length)];
+  //   password += adjectives[Math.floor(Math.random() * adjectives.length)];
+  //   console.log(password);
+
+  //   setRoomData({ ...roomData, id: password });
+  //   console.log(roomData);
+  // }
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       <div className="h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  bg-bg-white  rounded-[5rem]">

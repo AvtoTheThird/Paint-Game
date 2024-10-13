@@ -1,5 +1,8 @@
 import React, { useRef, useEffect, useState, MouseEvent } from "react";
 import socket from "./socket"; // Use the same socket instance
+import EndOFHandScreen from "./EndOFHandScreen";
+import EndOFGameScreen from "./EndOfGameScreen";
+import ColorPicker from "./ColorPicker";
 
 const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   canvasData,
@@ -23,9 +26,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [maxRoundsReached, setMaxRoundsReached] = useState<boolean>(false);
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
+  // console.log(canvasData);
 
   interface CanvasData {
     data: { roomId: string; userId: string };
+  }
+  interface EndOFHandScreenData {
+    data: { oldWord: string; currentDrawer: string };
   }
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -278,7 +285,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       // console.log(time);
 
       setHistory([]);
-
+      setLineWidth(5);
       if (ctxRef.current) {
         ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
       }
@@ -528,6 +535,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   //   document.documentElement.clientWidth || 0,
   //   window.innerWidth || 0
   // );
+  const EndOFHandScreenData = { oldWord, currentDrawer };
+  const EndOFGameScreenData = { oldWord, currentDrawer };
+
   return (
     <div
       style={{ aspectRatio: `${800} / ${600}` }}
@@ -552,30 +562,17 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           გადმოწერე
         </button>
         {isGamePaused ? (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-bg-pink p-4 rounded-lg shadow-lg z-50">
-            <span className="text-lg">
-              სიტყვა იყო <span className="text-blue-700">{oldWord}</span>{" "}
-            </span>
-
-            <span className="text-lg">
-              ეხლა ხატამს <span className="text-blue-700">{currentDrawer}</span>
-            </span>
-            <span>{pauseTime}</span>
-          </div>
+          <EndOFHandScreen endOFHandScreenData={EndOFHandScreenData} />
         ) : null}
         {maxRoundsReached ? (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-green-500 p-4 rounded-lg shadow-lg z-50">
-            <span className="text-lg">მორჩა კინო</span>
-
-            <span className="text-lg">წადით სახლში</span>
-            <span>{pauseTime}</span>
-          </div>
+          <EndOFGameScreen endOFGameScreenData={EndOFGameScreenData} />
         ) : null}
       </div>
 
       {canDraw ? (
         <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw] relative ">
           <button onClick={clearCanvas}>Clear Canvas</button>
+          {/* <ColorPicker /> */}
           <input
             className="lg:m-3"
             type="color"

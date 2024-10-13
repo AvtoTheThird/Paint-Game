@@ -42,7 +42,7 @@ function createPublicRoom() {
   const id = `public-${Date.now()}`;
   publicRooms[id] = {
     name: `Public Room ${Object.keys(publicRooms).length + 1}`,
-    maxPlayers: 2,
+    maxPlayers: 8,
     maxRounds: 8,
     users: [],
     time: 90, // You can adjust this as needed
@@ -176,18 +176,13 @@ function handleLateJoin(roomId, id) {
 
   io.to(room.currentDrawer).emit("requestCanvasDataFromClient", roomId, id);
 }
-function ensurePublicRoomExists() {
-  if (Object.keys(publicRooms).length === 0) {
-    createPublicRoom();
-  }
-}
+
 io.on("connection", (socket) => {
   console.log("New connection established");
   ensurePublicRoomAvailable();
   socket.on("join_public_room", ({ name }) => {
     const roomId = getAvailablePublicRoom();
     const room = publicRooms[roomId];
-
     const userData = {
       id: socket.id,
       name,
@@ -217,6 +212,7 @@ io.on("connection", (socket) => {
       roomId,
       roomName: room.name,
       userId: socket.id,
+      name,
     });
   });
 
@@ -316,7 +312,7 @@ io.on("connection", (socket) => {
       }
 
       io.to(roomId).emit("updateUserList", room.users);
-      io.to(socket.id).emit("conffeti", { message: "Correct!" });
+      // io.to(socket.id).emit("conffeti", { message: "Correct!" });
 
       const allGuessed = room.users.every(
         (user) => user.hasGuessed || user.id === room.currentDrawer

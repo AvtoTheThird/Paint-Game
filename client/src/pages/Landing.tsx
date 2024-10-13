@@ -9,39 +9,26 @@ const LandingPage: React.FC = () => {
   const [userName, setUserName] = useState<string>("");
   const [dataToBeSent, setDataToBeSent] = useState<any>({});
   const navigate = useNavigate();
-  function handleClicck() {
-    alert("შეიყვანეთ სახელი(მინ 3 სიმბოლო)");
-  }
-  function handleUndoneClick() {
-    alert("ega ara msuhaobs jer");
-  }
+
   function handleJoinPublicRoom() {
     console.log(userName);
-
-    if (userName.length == 0) {
-      randomizeUserName();
-    }
-    console.log(userName);
-
-    setTimeout(() => {
-      socket.emit("join_public_room", {
-        name: userName,
-      });
-    }, 1000);
+    socket.emit("join_public_room", {
+      name: userName.length == 0 ? randomizeUserName() : userName,
+    });
   }
-  socket.on("joined_public_room", ({ roomId, roomName, userId }) => {
+  socket.on("joined_public_room", ({ roomId, roomName, userId, name }) => {
     console.log(
       `Joined public room: (roomname: ${roomName} )(ID: ${roomId}) (userid: ${userId})`
     );
-    setDataToBeSent({ roomId, userId, userName: userName, isadmin: false });
-    // setRoomId(location.state.roomId);
-    // setUserId(location.state.userId);
-    // setUserName(location.state.userName);
-    // setIsAdmin(location.state.isAdmin);
+    setDataToBeSent({
+      roomId,
+      userId,
+      userName: name,
+      isadmin: false,
+    });
   });
   useEffect(() => {
     console.log(dataToBeSent);
-
     if (dataToBeSent.roomId) {
       navigate(`/game-room/${dataToBeSent.roomId}`, {
         state: {
@@ -52,8 +39,7 @@ const LandingPage: React.FC = () => {
   }, [dataToBeSent]);
 
   function randomizeUserName() {
-    let randomizeduUserName = "";
-    randomizeduUserName =
+    let randomizeduUserName =
       adjectives[Math.floor(Math.random() * adjectives.length)] +
       "_" +
       nouns[Math.floor(Math.random() * nouns.length)];
@@ -84,8 +70,12 @@ const LandingPage: React.FC = () => {
             <div className="w-[250px] h-[337px] bg-white rounded-lg"></div>
             <div className="flex flex-col  items-center gap-3">
               {/* <Link
-                to={`${userName.length > 2 ? `/game-room/${undefined}` : `/`}`}
-                state={{ userName: userName, roomId: roomId }}
+                to={`/game-room/${undefined}`}
+                state={
+                  userName.length <= 0
+                    ? { userName: randomizeUserName() }
+                    : { userName: userName }
+                }
               > */}
               <button
                 onClick={handleJoinPublicRoom}
@@ -108,7 +98,7 @@ const LandingPage: React.FC = () => {
                 </span>
               </Link>
               <Link
-                to={`${userName.length > 2 ? `/create-room` : `/`}`}
+                to="/create-room"
                 state={
                   userName.length <= 0
                     ? { userName: randomizeUserName() }

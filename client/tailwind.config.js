@@ -13,7 +13,7 @@ export default {
       backgroundColor: {
         "bg-pink": "#FF70F5",
         "bg-pink-opacity": "rgba(255, 112, 245, 0.8)",
-
+        "modal-pink": "#AB41D4",
         "light-purupe": "#CC90E4",
         "dark-purupe": "#923CB4",
 

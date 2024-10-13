@@ -3,7 +3,13 @@ import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
 import { useLocation } from "react-router-dom";
-
+import Correct_Guess from "/sounds/Correct_Guess.mp3";
+import End_Of_Game from "/sounds/End_Of_Game.mp3";
+import Hand_Start from "/sounds/Hand_Start.mp3";
+import Negative_Hand_Finish from "/sounds/Negative_Hand_Finish.mp3";
+import Player_Join from "/sounds/Player_Join.mp3";
+import Positive_Hand_Finish from "/sounds/Positive_Hand_Finish.mp3";
+import Tick_Clock from "/sounds/Tick_Clock.mp3";
 interface Message {
   roomId: string;
   message: string;
@@ -57,13 +63,14 @@ function GameRoom() {
     });
   }, [messages]);
 
-  // console.log(location);
   useEffect(() => {
     setRoomId(location.state.roomId);
     setUserId(location.state.userId);
     setUserName(location.state.userName);
     setIsAdmin(location.state.isAdmin);
+    console.log(userName);
   }, [location]);
+
   function startGame() {
     // console.log(roomData.id);
 
@@ -129,6 +136,7 @@ function GameRoom() {
       "gameStarted",
       ({ currentDrawer, currentDrawerId, maxRounds }) => {
         setIsGameStarted(true);
+
         setCurrentDrawer(currentDrawer);
         setCurrentDrawerId(currentDrawerId);
         setMaxRounds(maxRounds);
@@ -176,15 +184,17 @@ function GameRoom() {
       setDrawWord(word);
     });
 
-    socket.on("conffeti", () => {
-      // console.log("recived conffeti");
-
-      handleButtonClick();
-    });
     socket.on("correctGuess", (guesser) => {
       if (guesser.guesserId == userId) {
         setHasGuesed(true);
       }
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+      const Correct_Guess_Audio = new Audio(Correct_Guess);
+      Correct_Guess_Audio.play();
       socket.on("handEnded", (data) => {
         setCanDraw(false);
         setIsGamePaused(true);
@@ -195,6 +205,8 @@ function GameRoom() {
     });
     socket.on("MaxRoundsReached", () => {
       setIsGameStarted(false);
+      const End_Of_Game_Audio = new Audio(End_Of_Game);
+      End_Of_Game_Audio.play();
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });
@@ -220,18 +232,12 @@ function GameRoom() {
     };
   }, [isGameStarted]);
 
-  const handleButtonClick = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
-  };
+  // const handleButtonClick = () => {};
 
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
       {" "}
-      <div className="h-[100svh] border-black lg:border-2 border-solid lg:w-[90vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white  rounded-[5rem]">
+      <div className="h-[100svh]  lg:w-[80vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white  rounded-[5rem]">
         <div className=" bg-light-pink rounded-[2rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[320px] overflow-hidden  text-center">
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
@@ -285,13 +291,12 @@ function GameRoom() {
             ) : null}
 
             {isGameStarted ? (
-              <div className="flex  bg-white px-4  rounded-full justify-center items-center  border-[1px] border-black h-12">
-                <span className="font-extrabold text-4xl border-r-2 border-pink-500 pr-1 h-full ">
+              <div className="flex  gap-3">
+                <span className="bg-white font-bold text-3xl rounded-md h-[50px] w-[50px] flex items-center justify-center ">
                   {timeLeft}
                 </span>
-                {/* <span className="bg-pink-500 text-pink-500  ">.</span> */}
-                <span className="font-extrabold text-4xl border-l-2 border-pink-500 pl-2 h-full">
-                  {currentRound}/{maxRounds}
+                <span className="bg-white font-bold text-2xl rounded-md flex items-center justify-center px-2">
+                  რაუნდი - {currentRound}/{maxRounds}
                 </span>
               </div>
             ) : null}

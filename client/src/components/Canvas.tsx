@@ -28,6 +28,34 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const roomIdRef = useRef<string>("");
   // console.log(canvasData);
 
+  const colorList = [
+    "FFFFFF",
+    "C1C1C1",
+    "EF130B",
+    "FF7100",
+    "FFE400",
+    "00CC00",
+    "00FF91",
+    "00B2FF",
+    "231FD3",
+    "A300BA",
+    "DF69A7",
+    "FFAC8E",
+    "A0522D",
+    "000000",
+    "505050",
+    "740B07",
+    "C23800",
+    "E8A200",
+    "004619",
+    "00785D",
+    "00569E",
+    "0E0865",
+    "550069",
+    "873554",
+    "CC774D",
+    "63300D",
+  ];
   interface CanvasData {
     data: { roomId: string; userId: string };
   }
@@ -537,7 +565,12 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   // );
   const EndOFHandScreenData = { oldWord, currentDrawer };
   const EndOFGameScreenData = { oldWord, currentDrawer };
+  const handleColorClick = (newColor: any) => {
+    setColor(`#${newColor}`);
+    console.log(newColor);
 
+    // setShowPicker(false);
+  };
   return (
     <div
       style={{ aspectRatio: `${800} / ${600}` }}
@@ -570,16 +603,19 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       </div>
 
       {canDraw ? (
-        <div className="flex flex-wrap flex-row gap-4 border-2 border-black bg-bg-white lg:p-5 justify-center lg:w-full w-[95vw] relative ">
+        <div className="flex flex-wrap flex-row lg:gap-4 gap-x-3 border-2 border-black bg-bg-white lg:p-5 p-0 justify-center lg:w-full w-[95vw] relative ">
+          <div className="relative grid grid-cols-13">
+            {colorList.map((c) => (
+              <div
+                key={c}
+                className="lg:w-6 lg:h-6 w-4 h-4 border cursor-pointer hover:border-black"
+                style={{ backgroundColor: `#${c}` }}
+                onClick={() => handleColorClick(c)}
+              ></div>
+            ))}
+          </div>
           <button onClick={clearCanvas}>Clear Canvas</button>
-          {/* <ColorPicker /> */}
-          <input
-            className="lg:m-3"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            // style={{ margin: "10px" }}
-          />
+
           <button onClick={undoLastAction} disabled={history.length === 0}>
             Undo
           </button>

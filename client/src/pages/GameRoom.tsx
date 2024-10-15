@@ -235,9 +235,9 @@ function GameRoom() {
   // const handleButtonClick = () => {};
 
   return (
-    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center">
+    <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
       {" "}
-      <div className="h-[100svh]  lg:w-[80vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white  rounded-[5rem]">
+      <div className="  lg:w-[80vw] lg:h-[95vh] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white  rounded-[5rem]">
         <div className=" bg-light-pink rounded-[2rem] ml-8 lg:block hidden  h-[90vh] w-[200px] 2xl:w-[320px] overflow-hidden  text-center">
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
@@ -278,7 +278,7 @@ function GameRoom() {
         {/* shuala plani */}
 
         <div className="  flex flex-col justify-center items-center">
-          <div className="flex bg-light-pink h-[70px] w-full  rounded-xl justify-between items-center px-5">
+          <div className="flex bg-light-pink lg:h-[70px] w-full  rounded-xl justify-between items-center px-5">
             {!isGameStarted && location.state.isAdmin ? (
               <button
                 onClick={() => {
@@ -332,21 +332,22 @@ function GameRoom() {
               სასტავი:
             </p>
             {joinedUsers.length > 0
-              ? // Object.values(usersObject);
-
-                joinedUsers
+              ? joinedUsers
                   .sort((a, b) => b.score - a.score)
                   .map((user: any, index: number) => (
-                    <div key={index}>
+                    <div key={index} className="flex flex-col break-words ">
                       <p
-                        className={`${
+                        key={index}
+                        className={` flex flex-row justify-between items-center  ${
                           user.id == currentDrawerId
-                            ? "bg-dark-purupe py-5"
-                            : "bg-light-purupe py-5"
-                        } text-lg `}
+                            ? "bg-dark-purupe py-1"
+                            : user.hasGuessed
+                            ? "bg-green-600 py-1"
+                            : "bg-light-purupe py-1"
+                        }  `}
                       >
-                        {user.name}:{user.score}
-                        {user.name == userName ? "(შენ)" : null}
+                        {user.name}: {user.score}
+                        {user.name == userName ? " (შენ)" : null}
                       </p>
                       <hr />
                     </div>
@@ -380,7 +381,7 @@ function GameRoom() {
               </div>
               <form onSubmit={sendMessage} className="flex items-center gap-2">
                 <input
-                  className="h-[35px] rounded-3xl text-center"
+                  className="h-[35px] rounded-3xl text-center "
                   type="text"
                   placeholder="Enter message"
                   value={message}
@@ -388,7 +389,7 @@ function GameRoom() {
                     setMessage(e.target.value);
                   }}
                 />
-                <button type="submit" className="">
+                <button type="submit" className="lg:block hidden">
                   Send
                 </button>
               </form>

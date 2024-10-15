@@ -3,7 +3,7 @@ import React from "react";
 const EndOFGameScreen: React.FC<{
   endOFGameScreenData: { oldWord: string; currentDrawer: string };
 }> = ({ endOFGameScreenData }) => {
-  //   console.log(endOFGameScreenData);
+  console.log(endOFGameScreenData);
 
   return (
     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center bg-modal-pink border-[#A0008B] border-[5px] w-[700px] h-[500px] rounded-[3rem] shadow-[-5px_5px_3px_0px_rgba(109,40,217)] gap-5 z-50">

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
 import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
-import { useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useBeforeUnload, useNavigate } from "react-router-dom";
+
 import Correct_Guess from "/sounds/Correct_Guess.mp3";
 import End_Of_Game from "/sounds/End_Of_Game.mp3";
 import Hand_Start from "/sounds/Hand_Start.mp3";
@@ -68,9 +69,32 @@ function GameRoom() {
     setUserId(location.state.userId);
     setUserName(location.state.userName);
     setIsAdmin(location.state.isAdmin);
-    console.log(userName);
   }, [location]);
+  useEffect(() => {
+    // This function will run when the component mounts
+    const handleBackButton = (e: PopStateEvent) => {
+      console.log("Browser back button clicked");
+      socket.emit("disconnect", { roomId, userId });
 
+      // Clean up game state
+      setMessages([]);
+      setJoinedUsers([]);
+      setIsGameStarted(false);
+      setCanDraw(false);
+      setHasGuesed(false);
+    };
+
+    // Add listener for popstate (back/forward button) events
+    window.addEventListener("popstate", handleBackButton);
+
+    // Cleanup function to remove the listener when component unmounts
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+
+      // Also emit leaveRoom when component unmounts (e.g., direct navigation)
+      socket.emit("leaveRoom", { roomId, userId });
+    };
+  }, [roomId, userId]);
   function startGame() {
     // console.log(roomData.id);
 
@@ -212,10 +236,10 @@ function GameRoom() {
     });
     socket.on("SendCanvasDataToClient", (data) => {
       console.log(data);
-
+      setIsGameStarted(true);
       setCurrentDrawer(data.currentDrawer);
       setCurrentDrawerId(data.currentDrawerId);
-      setSecretWord(secretWord);
+      setSecretWord(data.secretWord);
       setTimeLeft(data.time);
       setCurrentRound(data.currentRound);
       setMaxRounds(data.maxRounds);

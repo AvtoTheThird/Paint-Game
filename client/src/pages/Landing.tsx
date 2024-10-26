@@ -8,10 +8,12 @@ const LandingPage: React.FC = () => {
 
   const [userName, setUserName] = useState<string>("");
   const [dataToBeSent, setDataToBeSent] = useState<any>({});
+  const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
-
+  socket.connected = true;
   function handleJoinPublicRoom() {
-    console.log(userName);
+    console.log(socket);
+
     socket.emit("join_public_room", {
       name: userName.length == 0 ? randomizeUserName() : userName,
     });
@@ -69,21 +71,12 @@ const LandingPage: React.FC = () => {
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
             <div className="w-[250px] h-[337px] bg-white rounded-lg"></div>
             <div className="flex flex-col  items-center gap-3">
-              {/* <Link
-                to={`/game-room/${undefined}`}
-                state={
-                  userName.length <= 0
-                    ? { userName: randomizeUserName() }
-                    : { userName: userName }
-                }
-              > */}
               <button
                 onClick={handleJoinPublicRoom}
                 className=" border-solid bg-button-background-1 border-black border-[1px]  text-[48px]  p-3 m-2 text-white rounded-[30px] lg:w-[240px] lg:h-[100px]  drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)] text-shadow  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
               >
                 თამაში
               </button>
-              {/* </Link> */}
               <Link
                 to="/join-room"
                 state={

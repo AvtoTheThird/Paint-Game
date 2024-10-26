@@ -179,6 +179,8 @@ function handleLateJoin(roomId, id) {
 
 io.on("connection", (socket) => {
   console.log("New connection established");
+  // console.log(publicRooms);
+
   ensurePublicRoomAvailable();
   socket.on("join_public_room", ({ name }) => {
     const roomId = getAvailablePublicRoom();
@@ -277,7 +279,42 @@ io.on("connection", (socket) => {
   socket.on("startGame", ({ roomId, isPublic = false }) => {
     startGame(roomId, isPublic);
   });
+  socket.on("leaveRoom", ({ roomId, userId }) => {
+    const isPublic = roomId.startsWith("public-");
+    const room = isPublic ? publicRooms[roomId] : rooms[roomId];
 
+    if (!room) return;
+
+    const userIndex = room.users.findIndex((user) => user.id === userId);
+    if (userIndex === -1) return;
+
+    const userData = room.users[userIndex];
+    room.users.splice(userIndex, 1);
+
+    // Leave the socket.io room
+    socket.leave(roomId);
+
+    // Notify other users in the room
+    io.to(roomId).emit("userLeft", userData);
+    io.to(roomId).emit("updateUserList", room.users);
+
+    // Send confirmation to the user who left
+    socket.emit("leftRoom", { roomId, success: true });
+
+    // Handle empty room cleanup
+    if (room.users.length === 0) {
+      if (isPublic) {
+        delete publicRooms[roomId];
+        ensurePublicRoomAvailable();
+      } else {
+        delete rooms[roomId];
+      }
+    }
+    // Handle drawer leaving
+    else if (room.currentDrawer === userId) {
+      changeDrawer(roomId, isPublic);
+    }
+  });
   socket.on("guess", ({ roomId, guess, timeLeft }) => {
     console.log(roomId, guess, timeLeft);
 
@@ -384,7 +421,7 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("fill", { startX, startY, fillColor });
   });
   socket.on("sendCanvasDataToServer", (data) => {
-    console.log(data);
+    // console.log(data);
 
     const room = rooms[data.roomId];
     const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
@@ -392,14 +429,13 @@ io.on("connection", (socket) => {
     const dataForClient = {
       currentDrawer: room.currentDrawer,
       currentDrawerId: room.users[room.currentDrawerIndex].id,
-
       secretWord: secretWord,
       base64Image: data.base64Image,
       time: room.time,
       currentRound: room.currentRound,
       maxRounds: room.maxRounds,
     };
-    console.log("Received canvas data from client:", dataForClient);
+    // console.log("Received canvas data from client:", dataForClient);
     io.to(data.id).emit("SendCanvasDataToClient", dataForClient);
   });
   socket.on("test", (history) => {

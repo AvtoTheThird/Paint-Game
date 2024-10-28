@@ -72,7 +72,7 @@ function GameRoom() {
   }, [location]);
   useEffect(() => {
     // This function will run when the component mounts
-    const handleBackButton = (e: PopStateEvent) => {
+    const handleBackButton = () => {
       console.log("Browser back button clicked");
       socket.emit("disconnect", { roomId, userId });
 

@@ -3,6 +3,7 @@ import socket from "./socket"; // Use the same socket instance
 import EndOFHandScreen from "./EndOFHandScreen";
 import EndOFGameScreen from "./EndOfGameScreen";
 import ColorPicker from "./ColorPicker";
+import Hand_Start from "/sounds/Hand_Start.mp3";
 
 const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   canvasData,
@@ -379,6 +380,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   });
   socket.on("newDrawer", (data) => {
     setIsGamePaused(false);
+    const Hand_Start_AUDIO = new Audio(Hand_Start);
+    Hand_Start_AUDIO.play();
     setHistory([]);
     clearCanvas();
     if (data.currentDrawerId !== userIdRef.current) {
@@ -634,7 +637,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           <input
             type="range"
             min="1"
-            max="10"
+            max="20"
             value={lineWidth}
             onChange={handleLineWithChange}
           />

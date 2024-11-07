@@ -169,8 +169,10 @@ function startTurnTimer(roomId, isPublic = false) {
   }, timeoutDuration);
 }
 
-function handleLateJoin(roomId, id) {
-  const room = rooms[roomId];
+function handleLateJoin(roomId, id, isPublic = false) {
+  console.log("inside of handleLateJoin");
+
+  const room = isPublic ? publicRooms[roomId] : rooms[roomId];
   if (!room) return;
   console.log("requested canvas data from client", roomId, id);
 
@@ -196,12 +198,14 @@ io.on("connection", (socket) => {
     room.users.push(userData);
 
     socket.join(roomId);
-
-    if (room.isGameStarted) {
-      handleLateJoin(roomId, socket.id, true);
-    } else if (room.users.length >= 2) {
+    if (room.users.length >= 2) {
       // Start the game automatically when there are at least 2 players
       startGame(roomId, true);
+    }
+    if (room.isGameStarted) {
+      // console.log("inside of if statment");
+
+      handleLateJoin(roomId, socket.id, true);
     }
 
     setTimeout(() => {
@@ -421,11 +425,13 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("fill", { startX, startY, fillColor });
   });
   socket.on("sendCanvasDataToServer", (data) => {
+    // console.log(data); -- base64Image, id, roomId
+
+    const room = rooms[data.roomId] || publicRooms[data.roomId];
     // console.log(data);
 
-    const room = rooms[data.roomId];
     const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-    console.log(room.currentDrawerId);
+    // console.log(room.currentDrawerId);
     const dataForClient = {
       currentDrawer: room.currentDrawer,
       currentDrawerId: room.users[room.currentDrawerIndex].id,

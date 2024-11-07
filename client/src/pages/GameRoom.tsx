@@ -141,6 +141,17 @@ function GameRoom() {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
+    } else if (isGameStarted && timeLeft === 0) {
+      switch (hasGuesed) {
+        case true:
+          const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
+          POSITIVE_HAND_FINISH_AUDIO.play();
+          break;
+        case false:
+          const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
+          NEGATIVE_HAND_FINISH_AUDIO.play();
+          break;
+      }
     }
 
     return () => clearInterval(timer); // Clean up the interval on component unmount
@@ -234,16 +245,7 @@ function GameRoom() {
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });
-    socket.on("SendCanvasDataToClient", (data) => {
-      console.log(data);
-      setIsGameStarted(true);
-      setCurrentDrawer(data.currentDrawer);
-      setCurrentDrawerId(data.currentDrawerId);
-      setSecretWord(data.secretWord);
-      setTimeLeft(data.time);
-      setCurrentRound(data.currentRound);
-      setMaxRounds(data.maxRounds);
-    });
+
     // Clean up when the component unmounts
     return () => {
       socket.off("message");
@@ -257,7 +259,16 @@ function GameRoom() {
   }, [isGameStarted]);
 
   // const handleButtonClick = () => {};
-
+  socket.on("SendCanvasDataToClient", (data) => {
+    console.log(data);
+    setIsGameStarted(true);
+    setCurrentDrawer(data.currentDrawer);
+    setCurrentDrawerId(data.currentDrawerId);
+    setSecretWord(data.secretWord);
+    setTimeLeft(data.time);
+    setCurrentRound(data.currentRound);
+    setMaxRounds(data.maxRounds);
+  });
   return (
     <main className="font-ge-bold bg-no-repeat bg-cover lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
       {" "}

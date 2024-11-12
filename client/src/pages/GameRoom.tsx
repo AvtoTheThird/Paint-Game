@@ -2,7 +2,7 @@ import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useBeforeUnload, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import Correct_Guess from "/sounds/Correct_Guess.mp3";
 import End_Of_Game from "/sounds/End_Of_Game.mp3";
@@ -39,20 +39,20 @@ function GameRoom() {
   const [userName, setUserName] = useState<string>("");
   const [messages, setMessages] = useState<RecivedMessage[]>([]);
   const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
-  const [roomName, setRoomName] = useState<string>("");
-  const [drawWord, setDrawWord] = useState<any>();
+  // const [roomName, setRoomName] = useState<string>("");
+  const [drawWord, setDrawWord] = useState<never>();
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);
   const [hasGuesed, setHasGuesed] = useState<boolean>(false);
   const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
   const [secretWord, setSecretWord] = useState<string>("");
-  const [currentDrawer, setCurrentDrawer] = useState<any>();
-  const [currentDrawerId, setCurrentDrawerId] = useState<any>();
-  const [currentRound, setCurrentRound] = useState<any>();
+  const [currentDrawer, setCurrentDrawer] = useState<string>("");
+  const [currentDrawerId, setCurrentDrawerId] = useState<string>("");
+  const [currentRound, setCurrentRound] = useState<number>();
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
-  const [maxRounds, setMaxRounds] = useState<any>();
+  const [maxRounds, setMaxRounds] = useState<number>();
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -103,13 +103,13 @@ function GameRoom() {
   function skipTurn() {
     socket.emit("skipTurn", { roomId });
   }
-  function kickPlayer(playerId: any) {
+  function kickPlayer(playerId: string) {
     // console.log(roomId, playerId);
     // console.log(joinedUsers);
 
     socket.emit("kickPlayer", { roomId, playerId });
   }
-  const sendMessage = (e: any) => {
+  const sendMessage = (e: Event) => {
     e.preventDefault();
 
     if (!hasGuesed && !canDraw) {
@@ -135,8 +135,8 @@ function GameRoom() {
   //   console.log(canvasData);
 
   useEffect(() => {
-    let timer: any;
-
+    let timer: number | undefined;
+    console.log(hasGuesed)
     if (isGameStarted && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
@@ -144,18 +144,21 @@ function GameRoom() {
     } else if (isGameStarted && timeLeft === 0) {
       switch (hasGuesed) {
         case true:
-          const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
-          POSITIVE_HAND_FINISH_AUDIO.play();
-          break;
+          { const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
+          POSITIVE_HAND_FINISH_AUDIO.play().catch(err => console.log(err));
+          POSITIVE_HAND_FINISH_AUDIO.onended=()=>{POSITIVE_HAND_FINISH_AUDIO.remove()}
+          break; }
         case false:
-          const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
-          NEGATIVE_HAND_FINISH_AUDIO.play();
-          break;
+          { const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
+          NEGATIVE_HAND_FINISH_AUDIO.play().catch(err => console.log(err));
+          NEGATIVE_HAND_FINISH_AUDIO.onended=()=>{NEGATIVE_HAND_FINISH_AUDIO.remove()}
+          }
       }
     }
+    // console.log(hasGuesed)
 
     return () => clearInterval(timer); // Clean up the interval on component unmount
-  }, [isGameStarted]);
+  }, [hasGuesed, isGameStarted, timeLeft]);
 
   useEffect(() => {
     // Listen for messages
@@ -229,7 +232,8 @@ function GameRoom() {
         origin: { y: 0.6 },
       });
       const Correct_Guess_Audio = new Audio(Correct_Guess);
-      Correct_Guess_Audio.play();
+      Correct_Guess_Audio.play().catch(err => console.log(err));
+      Correct_Guess_Audio.onended=()=>{Correct_Guess_Audio.remove()}
       socket.on("handEnded", (data) => {
         setCanDraw(false);
         setIsGamePaused(true);
@@ -241,7 +245,8 @@ function GameRoom() {
     socket.on("MaxRoundsReached", () => {
       setIsGameStarted(false);
       const End_Of_Game_Audio = new Audio(End_Of_Game);
-      End_Of_Game_Audio.play();
+      End_Of_Game_Audio.play().catch(err => console.log(err));
+      End_Of_Game_Audio.onended=()=>{End_Of_Game_Audio.remove()}
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });

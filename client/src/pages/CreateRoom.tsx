@@ -17,7 +17,7 @@ function CreateRoom() {
 
     socket.emit("create_room", { ...roomData });
 
-    let dataToBeSent = { roomId: roomData.id, name: userName };
+    const dataToBeSent = { roomId: roomData.id, name: userName };
 
     socket.emit("join_room", dataToBeSent);
 

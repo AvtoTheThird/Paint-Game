@@ -18,7 +18,7 @@ function CreateRoom() {
     console.log("join room handler");
 
     if (roomId.trim()) {
-      let dataToBeSent = { roomId, name: userName };
+      const dataToBeSent = { roomId, name: userName };
       // console.log("data to be sent", dataToBeSent);
 
       socket.emit("join_room", dataToBeSent);

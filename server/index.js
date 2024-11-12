@@ -100,7 +100,7 @@ function changeDrawer(roomId, isPublic = false) {
     currentDrawer: room.users[room.currentDrawerIndex]?.name,
     Word: oldWord,
   });
-
+  console.log("function call")
   setTimeout(() => {
     io.to(roomId).emit("newDrawer", {
       currentDrawer: room.users[room.currentDrawerIndex]?.name,
@@ -109,7 +109,7 @@ function changeDrawer(roomId, isPublic = false) {
       time: room.time,
       currentRound: room.currentRound,
     });
-
+    console.log("settimout called")
     startTurnTimer(roomId, isPublic);
   }, 5000);
 }

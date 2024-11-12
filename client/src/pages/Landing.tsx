@@ -1,14 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, {useEffect, useState} from "react";
+import {Link, useNavigate} from "react-router-dom";
 import socket from "../components/socket";
-import { nouns, adjectives } from "../components/words";
+import {adjectives, nouns} from "../components/words";
 
 const LandingPage: React.FC = () => {
   // const [roomId, setRoomId] = useState("");
-
+interface dataToBeSent {
+  roomId: string;
+  userId: string;
+  userName: string;
+  isadmin: boolean;
+}
   const [userName, setUserName] = useState<string>("");
-  const [dataToBeSent, setDataToBeSent] = useState<any>({});
-  const [userId, setUserId] = useState<string>("");
+  const [dataToBeSent, setDataToBeSent] = useState<dataToBeSent>({
+    roomId: "",
+    userId: "",
+    userName: "",
+    isadmin: false,});
+  // const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
   socket.connected = true;
   function handleJoinPublicRoom() {
@@ -41,11 +50,9 @@ const LandingPage: React.FC = () => {
   }, [dataToBeSent]);
 
   function randomizeUserName() {
-    let randomizeduUserName =
-      adjectives[Math.floor(Math.random() * adjectives.length)] +
-      "_" +
-      nouns[Math.floor(Math.random() * nouns.length)];
-    return randomizeduUserName;
+    return adjectives[Math.floor(Math.random() * adjectives.length)] +
+        "_" +
+        nouns[Math.floor(Math.random() * nouns.length)];
   }
   function generateRandomizedUserName() {
     let randomizeduUserName = "";
@@ -84,9 +91,9 @@ const LandingPage: React.FC = () => {
                     ? { userName: randomizeUserName() }
                     : { userName: userName }
                 }
-                className=" border-solid bg-button-background-3 border-black border-[1px]  text-[36px]  leading-10  text-white rounded-[30px] lg:w-[260px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
+                className="flex justify-center items-center border-solid bg-button-background-3 border-black border-[1px]  text-[36px]  leading-10  text-white rounded-[30px] lg:w-[260px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
               >
-                <span className="text-white text-shadow">
+                <span className="text-white text-shadow ">
                   შეუერთდი მეგობრებს
                 </span>
               </Link>

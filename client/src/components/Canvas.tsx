@@ -1,8 +1,8 @@
-import React, { useRef, useEffect, useState, MouseEvent } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import socket from "./socket"; // Use the same socket instance
 import EndOFHandScreen from "./EndOFHandScreen";
 import EndOFGameScreen from "./EndOfGameScreen";
-import ColorPicker from "./ColorPicker";
+
 import Hand_Start from "/sounds/Hand_Start.mp3";
 
 const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
@@ -57,16 +57,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     "CC774D",
     "63300D",
   ];
-  interface CanvasData {
-    data: { roomId: string; userId: string };
-  }
+
   interface EndOFHandScreenData {
     data: { oldWord: string; currentDrawer: string };
   }
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.key === "z") {
-        event.preventDefault();
         undoLastAction();
       }
     };
@@ -76,7 +73,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [history]);
   useEffect(() => {
     if (pauseTime > 0) {
       const timer = setTimeout(() => {
@@ -310,23 +307,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setLineWidth(data.newLineWidth);
     });
     socket.on("newDrawer", (data) => {
-      // console.log(secretWord);
-      // console.log(time);
-
-      setHistory([]);
-      setLineWidth(5);
-      if (ctxRef.current) {
-        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      // console.log(currentDrawer, currentDrawerId);
-      // console.log(userId);
-      // console.log(canvasData.userId);
-
-      if (data.currentDrawerId !== userIdRef.current) {
-        setCanDraw(false);
-      } else {
-        setCanDraw(true);
-      }
+      const Hand_Start_AUDIO = new Audio(Hand_Start);
+      Hand_Start_AUDIO.play().catch((err) => console.log(err));
+      Hand_Start_AUDIO.onended = () => {Hand_Start_AUDIO.remove()};
     });
     socket.on("undo", (updatedHistory) => {
       setHistory(updatedHistory); // Update the local history state
@@ -365,6 +348,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.emit("sendCanvasDataToServer", data);
       console.log("sent data to server", base64Image, id);
     });
+
     return () => {
       socket.off("draw");
       socket.off("clear");
@@ -378,10 +362,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     setIsGamePaused(false);
     setMaxRoundsReached(false);
   });
+
   socket.on("newDrawer", (data) => {
     setIsGamePaused(false);
-    const Hand_Start_AUDIO = new Audio(Hand_Start);
-    Hand_Start_AUDIO.play();
+
+    console.log("new drawer");
+    setLineWidth(5);
+
+
     setHistory([]);
     clearCanvas();
     if (data.currentDrawerId !== userIdRef.current) {
@@ -390,7 +378,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setCanDraw(true);
     }
   });
-
   socket.on("SendCanvasDataToClient", (data) => {
     const base64Image = data.base64Image;
     setCurrentDrawer(data.currentDrawer);
@@ -535,10 +522,12 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     console.log("called undo");
 
     if (history.length === 0) return; // No history to undo
+    console.log("here");
 
     const newHistory = [...history];
     newHistory.pop(); // Remove the last saved state
     setHistory(newHistory);
+    console.log("now here");
 
     // Emit undo event to server with the updated history
     socket.emit("undo", { newHistory, roomId });
@@ -568,7 +557,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   // );
   const EndOFHandScreenData = { oldWord, currentDrawer };
   const EndOFGameScreenData = { oldWord, currentDrawer };
-  const handleColorClick = (newColor: any) => {
+  const handleColorClick = (newColor: string) => {
     setColor(`#${newColor}`);
     console.log(newColor);
 

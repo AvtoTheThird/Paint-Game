@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";

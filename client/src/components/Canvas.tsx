@@ -306,7 +306,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("newLineWidth", (data) => {
       setLineWidth(data.newLineWidth);
     });
-    socket.on("newDrawer", (data) => {
+    socket.on("newDrawer", () => {
       const Hand_Start_AUDIO = new Audio(Hand_Start);
       Hand_Start_AUDIO.play().catch((err) => console.log(err));
       Hand_Start_AUDIO.onended = () => {Hand_Start_AUDIO.remove()};
@@ -365,11 +365,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
   socket.on("newDrawer", (data) => {
     setIsGamePaused(false);
-
     console.log("new drawer");
     setLineWidth(5);
-
-
     setHistory([]);
     clearCanvas();
     if (data.currentDrawerId !== userIdRef.current) {

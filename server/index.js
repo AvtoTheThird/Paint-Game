@@ -69,7 +69,6 @@ function getAvailablePublicRoom() {
     publicRooms[a].users.length > publicRooms[b].users.length ? a : b
   );
 }
-
 function ensurePublicRoomAvailable() {
   if (Object.keys(publicRooms).length === 0) {
     createPublicRoom();
@@ -184,7 +183,7 @@ io.on("connection", (socket) => {
   // console.log(publicRooms);
 
   ensurePublicRoomAvailable();
-  socket.on("join_public_room", ({ name }) => {
+  socket.on("join_public_room", ({ name,avatarID }) => {
     const roomId = getAvailablePublicRoom();
     const room = publicRooms[roomId];
     const userData = {
@@ -194,6 +193,7 @@ io.on("connection", (socket) => {
       roomId: roomId,
       score: 0,
       hasGuessed: false,
+      avatarID
     };
     room.users.push(userData);
 
@@ -222,7 +222,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("join_room", ({ roomId, name }) => {
+  socket.on("join_room", ({ roomId, name, avatarID }) => {
     const room = rooms[roomId];
     if (!room) {
       socket.emit("roomError", { error: "Room does not exist." });
@@ -241,6 +241,8 @@ io.on("connection", (socket) => {
       roomId: roomId,
       score: 0,
       hasGuessed: false,
+      avatarID,
+
     };
     room.users.push(userData);
 
@@ -501,7 +503,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT =  3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   createPublicRoom();

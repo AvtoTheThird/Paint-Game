@@ -9,15 +9,19 @@ function CreateRoom() {
   const [recivedRoomData, setRecivedRoomData] = useState<any>({});
   const [userName, setUserName] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [avatarID, setAvatarID]= useState<string>("");
+
   useEffect(() => {
     setUserName(location.state.userName);
+    setAvatarID(location.state.avatarID)
+
   }, []);
   const createRoom = (event: any) => {
     event.preventDefault();
 
     socket.emit("create_room", { ...roomData });
 
-    const dataToBeSent = { roomId: roomData.id, name: userName };
+    const dataToBeSent = { roomId: roomData.id, name: userName, avatarID };
 
     socket.emit("join_room", dataToBeSent);
 

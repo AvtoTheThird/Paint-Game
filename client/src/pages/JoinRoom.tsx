@@ -7,24 +7,25 @@ function CreateRoom() {
   const [roomId, setRoomId] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [roomData, setRoomData] = useState<any>({});
+  const [avatarID, setAvatarID]= useState<string>("");
   const [roomName, setRoomName] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
     setUserName(location.state.userName);
+    setAvatarID(location.state.avatarID)
   }, []);
   const joinRoom = () => {
     console.log("join room handler");
 
     if (roomId.trim()) {
-      const dataToBeSent = { roomId, name: userName };
+      const dataToBeSent = { roomId, name: userName, avatarID };
       // console.log("data to be sent", dataToBeSent);
-
       socket.emit("join_room", dataToBeSent);
       socket.on("roomError", (data) => {
         alert(data.error);
-        false;
+
         return;
       });
 
@@ -35,8 +36,11 @@ function CreateRoom() {
         setRoomData({ ...roomData, id: data.roomId });
       });
       // console.log(roomData);
+      console.log(dataToBeSent)
+
     }
     // navigate(`/game-room/${roomData.roomId}`)
+
   };
   useEffect(() => {
     if (roomData.id) {
@@ -46,6 +50,7 @@ function CreateRoom() {
           userId: userId,
           userName: userName,
           isAdmin: false,
+          avatarID
         },
       });
     }

@@ -53,6 +53,8 @@ function GameRoom() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
   const [maxRounds, setMaxRounds] = useState<number>();
+  const [avatarID, setAvatarID]= useState<string>("/avatars/1-1.svg");
+
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -69,6 +71,7 @@ function GameRoom() {
     setUserId(location.state.userId);
     setUserName(location.state.userName);
     setIsAdmin(location.state.isAdmin);
+    setAvatarID(location.state.avatarID)
   }, [location]);
   useEffect(() => {
     // This function will run when the component mounts
@@ -296,6 +299,7 @@ function GameRoom() {
                 } text-lg `}
               >
                 <p>#{index + 1}</p>
+                <img width={"40px"} src={`/avatars/${user.avatarID}`} alt={".."}/>
                 <p>
                   {user.name}:{user.score}
                   {user.name == userName ? "(შენ)" : null}
@@ -389,6 +393,7 @@ function GameRoom() {
                         {user.name}: {user.score}
                         {user.name == userName ? " (შენ)" : null}
                       </p>
+
                       <hr />
                     </div>
                   ))

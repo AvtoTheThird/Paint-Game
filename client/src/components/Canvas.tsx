@@ -592,7 +592,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       </div>
 
       {canDraw ? (
-        <div className="flex flex-wrap flex-row lg:gap-4 gap-x-3 border-2 border-black bg-bg-white lg:p-5 p-0 justify-center lg:w-full w-[95vw] relative ">
+        <div className="flex flex-wrap flex-row lg:gap-4 gap-x-3  bg-white lg:p-2 p-0 justify-center lg:w-full w-[95vw] relative shadow-lg rounded-b-md ">
           <div className="relative grid grid-cols-13">
             {colorList.map((c) => (
               <div
@@ -603,22 +603,24 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
               ></div>
             ))}
           </div>
-          <button onClick={clearCanvas}>Clear Canvas</button>
+          <button onClick={clearCanvas}>
+            <img alt="clear canvas" width="30px" src="/trash.png"/>
+          </button>
 
           <button onClick={undoLastAction} disabled={history.length === 0}>
-            Undo
+            <img alt="undo" width="30px" src="/undo.png"/>
           </button>
           <button
-            onClick={() => setTool("draw")}
+              onClick={() => setTool("draw")}
             className={tool === "draw" ? "text-blue-800" : "text-black"}
           >
-            Draw Tool
+            <img alt="draw tool" width="30px" src="/draw.png"/>
           </button>
           <button
             onClick={() => setTool("fill")}
             className={tool === "fill" ? "text-blue-800" : "text-black"}
           >
-            Fill Tool
+            <img alt="fill tool" width="30px" src="/fill.png"/>
           </button>
           <input
             type="range"

@@ -29,6 +29,7 @@ const Carousel = ({ images, onImageChange  }) => {
                 duration: 0.5,
             },
         },
+
     };
     const slidersVariants = {
         hover: {

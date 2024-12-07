@@ -4,6 +4,7 @@ import {Link, useNavigate} from "react-router-dom";
 import socket from "../components/socket";
 import {adjectives, nouns} from "../components/words";
 import Carousel from "../components/Carousel.tsx";
+import Header from "../components/Header.tsx";
 const images = [
   "./avatars/1-1.svg",
   "./avatars/10-A.svg",
@@ -61,7 +62,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   socket.connected = true;
   function handleJoinPublicRoom() {
-    console.log(socket);
+    // console.log(socket);
 
     socket.emit("join_public_room", {
       name: userName.length == 0 ? randomizeUserName() : userName, avatarID:currentImage.slice(10)
@@ -76,7 +77,8 @@ const LandingPage: React.FC = () => {
       userId,
       userName: name,
       isadmin: false,
-      avatarID: currentImage.slice(10)
+      avatarID: currentImage.slice(10),
+      isPublic:true
     });
   });
   useEffect(() => {
@@ -108,16 +110,14 @@ const LandingPage: React.FC = () => {
   };
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
-      <div className="my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  lg:bg-bg-white  lg:rounded-[5rem] rounded-[2rem]">
-        <h1 className="text-4xl font-bold lg:mb-8 mb-1 lg:block hidden ">
-          Firo$ Money
-        </h1>
+     <Header/>
+      <div className="my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
+
         {/* <div className=" relative flex flex-col border-[2px] border-red-600 border-dotted  items-center justify-between bg-bg-pink w-[95vw] lg:w-[780px] lg:h-[580px]   rounded-3xl lg:p-10  p-5 shadow-[-5px_5px_0px_0px_rgba(109,40,217)]"> */}
 
-        <div className="flex flex-col   justify-between bg-bg-pink-opacity lg:bg-bg-pink w-[95vw] lg:w-[780px] lg:h-[580px]   rounded-3xl lg:p-10  p-5  shadow-[-5px_5px_3px_0px_rgba(109,40,217)] ">
-          <h1 className="text-4xl font-bold lg:mb-8 mb-1 lg:hidden block ">
-            Firo$ Money
-          </h1>
+        <div
+            className="flex flex-col   justify-between bg-bg-pink-opacity border-2 border-black lg:bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5  shadow-lg ">
+
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
             {/*<div className="w-[250px] h-[337px] bg-white rounded-lg"></div>*/}
             <Carousel images={images} onImageChange={handleImageChange} />

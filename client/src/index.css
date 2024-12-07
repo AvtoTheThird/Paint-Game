@@ -1,9 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@keyframes diagonalMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 650px 650px;
+  }
+}
+
 main {
-  background-image: url("/bg.png");
-  /* font-family: "GEFontBlack", sans-serif; */
+  background-color: #2f028b;
+  background-image: url("./background2.png");
+  background-repeat: repeat;
+  background-size: 650px 650px;
+  animation: diagonalMove 40s linear infinite;
 }
 @font-face {
   font-family: "GEFontBlack";

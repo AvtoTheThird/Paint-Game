@@ -329,7 +329,7 @@ function GameRoom() {
             .map((user: any, index: number) => (
               <div
                 key={index}
-                className={` flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-md py-2 ${
+                className={`relative  flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-md py-2 ${
                   user.id == currentDrawerId
                     ? "bg-dark-purupe"
                     : user.hasGuessed
@@ -353,12 +353,17 @@ function GameRoom() {
 
                 {isAdmin ? (
                   <button
-                    className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                    className="absolute bottom-2 right-2"
                     onClick={() => {
                       kickPlayer(user.id);
                     }}
                   >
-                    გააგდე
+                    <img
+                      className="w-[35px] h-[35px] "
+                      src="/kick.png"
+                      alt="გააგდე"
+                      title="გააგდე"
+                    />
                   </button>
                 ) : null}
 

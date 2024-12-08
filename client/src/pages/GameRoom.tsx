@@ -3,7 +3,7 @@ import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
 import React, { useEffect, useRef, useState } from "react";
-import {Link, useLocation} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import Correct_Guess from "/sounds/Correct_Guess.mp3";
 import End_Of_Game from "/sounds/End_Of_Game.mp3";
@@ -54,8 +54,8 @@ function GameRoom() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
   const [maxRounds, setMaxRounds] = useState<number>();
-  const [avatarID, setAvatarID]= useState<string>("/avatars/1-1.svg");
-const [isPublic,setIsPublic]= useState<boolean>()
+  const [avatarID, setAvatarID] = useState<string>("/avatars/1-1.svg");
+  const [isPublic, setIsPublic] = useState<boolean>();
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -72,8 +72,8 @@ const [isPublic,setIsPublic]= useState<boolean>()
     setUserId(location.state.userId);
     setUserName(location.state.userName);
     setIsAdmin(location.state.isAdmin);
-    setAvatarID(location.state.avatarID)
-    setIsPublic(location.state.isPublic)
+    setAvatarID(location.state.avatarID);
+    setIsPublic(location.state.isPublic);
   }, [location]);
   useEffect(() => {
     // This function will run when the component mounts
@@ -141,23 +141,28 @@ const [isPublic,setIsPublic]= useState<boolean>()
 
   useEffect(() => {
     let timer: number | undefined;
-    console.log(hasGuesed)
+    console.log(hasGuesed);
     if (isGameStarted && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
     } else if (isGameStarted && timeLeft === 0) {
       switch (hasGuesed) {
-        case true:
-          { const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
-          POSITIVE_HAND_FINISH_AUDIO.play().catch(err => console.log(err));
-          POSITIVE_HAND_FINISH_AUDIO.onended=()=>{POSITIVE_HAND_FINISH_AUDIO.remove()}
-          break; }
-        case false:
-          { const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
-          NEGATIVE_HAND_FINISH_AUDIO.play().catch(err => console.log(err));
-          NEGATIVE_HAND_FINISH_AUDIO.onended=()=>{NEGATIVE_HAND_FINISH_AUDIO.remove()}
-          }
+        case true: {
+          const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
+          POSITIVE_HAND_FINISH_AUDIO.play().catch((err) => console.log(err));
+          POSITIVE_HAND_FINISH_AUDIO.onended = () => {
+            POSITIVE_HAND_FINISH_AUDIO.remove();
+          };
+          break;
+        }
+        case false: {
+          const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
+          NEGATIVE_HAND_FINISH_AUDIO.play().catch((err) => console.log(err));
+          NEGATIVE_HAND_FINISH_AUDIO.onended = () => {
+            NEGATIVE_HAND_FINISH_AUDIO.remove();
+          };
+        }
       }
     }
     // console.log(hasGuesed)
@@ -237,8 +242,10 @@ const [isPublic,setIsPublic]= useState<boolean>()
         origin: { y: 0.6 },
       });
       const Correct_Guess_Audio = new Audio(Correct_Guess);
-      Correct_Guess_Audio.play().catch(err => console.log(err));
-      Correct_Guess_Audio.onended=()=>{Correct_Guess_Audio.remove()}
+      Correct_Guess_Audio.play().catch((err) => console.log(err));
+      Correct_Guess_Audio.onended = () => {
+        Correct_Guess_Audio.remove();
+      };
       socket.on("handEnded", (data) => {
         setCanDraw(false);
         setIsGamePaused(true);
@@ -250,8 +257,10 @@ const [isPublic,setIsPublic]= useState<boolean>()
     socket.on("MaxRoundsReached", () => {
       setIsGameStarted(false);
       const End_Of_Game_Audio = new Audio(End_Of_Game);
-      End_Of_Game_Audio.play().catch(err => console.log(err));
-      End_Of_Game_Audio.onended=()=>{End_Of_Game_Audio.remove()}
+      End_Of_Game_Audio.play().catch((err) => console.log(err));
+      End_Of_Game_Audio.onended = () => {
+        End_Of_Game_Audio.remove();
+      };
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });
@@ -280,198 +289,224 @@ const [isPublic,setIsPublic]= useState<boolean>()
     setMaxRounds(data.maxRounds);
   });
   return (
-      <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
-        {" "}
-        <header className=" group fixed top-0 w-full z-50 h-[100px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
-          <div className="container mx-auto    h-full flex items-center justify-between">
-            <div className="w-1/3"></div>
-            <div className="flex items-center">
-              <Link to="/">
-                <img
-                  src="/xelovniki.png"
-                  alt="Logo"
-                  className="w-[130px] group-hover:w-[200px] transition-all duration-200 ease-in-out  "
+    <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
+      {" "}
+      <header className=" group fixed top-0 w-full z-50 h-[100px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
+        <div className="container mx-auto    h-full flex items-center justify-between">
+          <div className="w-1/3"></div>
+          <div className="flex items-center">
+            <Link to="/">
+              <img
+                src="/xelovniki.png"
+                alt="Logo"
+                className="w-[130px] group-hover:w-[200px] transition-all duration-200 ease-in-out  "
               />
-              </Link>
-
-            </div>
-            <div className="w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
-              <a href="#home"
-                 className="text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out">თამაშის
-                წესები</a>
-              <a href="#about"
-                 className="text-white text-sm hover:text-pink group-hover:text-xl  transition-all duration-200 ease-in-out">კონტაქტი</a>
-            </div>
+            </Link>
           </div>
-        </header>
-        <div
-            className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white mt-16 ">
-          <div
-              className=" bg-light-pink rounded-md ml-8 lg:block hidden  h-[680px] w-[300px] 2xl:w-[320px] overflow-hidden  text-center mb-auto mt-2">
+          <div className="w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
+            <a
+              href="#home"
+              className="text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
+            >
+              თამაშის წესები
+            </a>
+            <a
+              href="#about"
+              className="text-white text-sm hover:text-pink group-hover:text-xl  transition-all duration-200 ease-in-out"
+            >
+              კონტაქტი
+            </a>
+          </div>
+        </div>
+      </header>
+      <div className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white mt-16 ">
+        <div className=" bg-light-pink rounded-md ml-8 lg:block hidden  h-[680px] w-[300px] 2xl:w-[320px] overflow-hidden  text-center mb-auto mt-2">
+          <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
+            სასტავი:
+          </p>
+          {Object.values(joinedUsers)
+            .sort((a, b) => b.score - a.score)
+            .map((user: any, index: number) => (
+              <div
+                key={index}
+                className={` flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-md py-2 ${
+                  user.id == currentDrawerId
+                    ? "bg-dark-purupe"
+                    : user.hasGuessed
+                    ? "bg-green-600"
+                    : "bg-white "
+                } text-lg `}
+              >
+                <img
+                  className="w-[65px] h-[65px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
+                  src={`/avatars/${user.avatarID}`}
+                  alt={".."}
+                />
+                <div className="flex flex-col justify-start items-start ">
+                  <p className="text-base">
+                    {user.name}
+                    {user.name == userName ? "(შენ)" : null}
+                  </p>{" "}
+                  <p className="text-sm text-light-pink"> ქულა: {user.score}</p>
+                  <p className="text-sm ">#{index + 1}</p>
+                </div>
+
+                {isAdmin ? (
+                  <button
+                    className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
+                    onClick={() => {
+                      kickPlayer(user.id);
+                    }}
+                  >
+                    გააგდე
+                  </button>
+                ) : null}
+
+                <hr />
+              </div>
+            ))}
+        </div>
+        {/* shuala plani */}
+
+        <div className="  flex flex-col justify-center items-center mb-auto mt-2">
+          <div className="flex bg-white lg:h-[74px] w-full  rounded-xl justify-between items-center px-5">
+            {isGameStarted ? (
+              <div className="flex  gap-3">
+                <span className="bg-light-pink font-bold text-3xl rounded-md h-[50px] w-[50px] flex items-center justify-center ">
+                  {timeLeft}
+                </span>
+                <span className="bg-light-pink font-bold text-2xl rounded-md flex items-center justify-center px-2">
+                  რაუნდი - {currentRound}/{maxRounds}
+                </span>
+              </div>
+            ) : null}
+
+            {!isGamePaused && drawWord ? (
+              <span className="text-black font-bold text-2xl">{drawWord}</span>
+            ) : (
+              <span className="text-black tracking-[0.2rem] font-bold">
+                {!isGamePaused && secretWord + secretWord.length}
+              </span>
+            )}
+            {!isGameStarted && location.state.isAdmin ? (
+              <button
+                onClick={() => {
+                  startGame();
+                }}
+                className="  bg-light-pink w-[50px] h-[50px] text-md text-white rounded-sm "
+              >
+                <img
+                  alt="დაიწყე თამაში"
+                  width="30px"
+                  src="/start.png"
+                  className="m-auto"
+                  title="დაიწყე თამაში"
+                />
+              </button>
+            ) : null}
+            {isGameStarted && isAdmin ? (
+              <>
+                <button
+                  className="bg-light-pink w-[50px] h-[50px] text-md text-white rounded-sm"
+                  onClick={skipTurn}
+                >
+                  <img
+                    alt="გადართე სვლა"
+                    width="30px"
+                    src="/skip.png"
+                    className="m-auto"
+                    title="გადართე სვლა"
+                  />
+                </button>
+              </>
+            ) : null}
+          </div>
+
+          <div className="w-full max-w-screen-lg mx-auto">
+            <Canvas canvasData={canvasData} />
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-3 mb-auto mt-2">
+          {" "}
+          <div className=" overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
             <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
               სასტავი:
             </p>
-            {Object.values(joinedUsers)
-                .sort((a, b) => b.score - a.score)
-                .map((user: any, index: number) => (
-                    <div
+            {joinedUsers.length > 0
+              ? joinedUsers
+                  .sort((a, b) => b.score - a.score)
+                  .map((user: any, index: number) => (
+                    <div key={index} className="flex flex-col break-words ">
+                      <p
                         key={index}
-                        className={` flex flex-row justify-between items-center pl-2 m-2 rounded-md ${
-                            user.id == currentDrawerId
-                                ? "bg-dark-purupe py-5"
-                                : user.hasGuessed
-                                    ? "bg-green-600 py-5"
-                                    : "bg-white py-5 "
-                        } text-lg `}
-                    >
-                      <p>#{index + 1}</p>
-                      <img width={"40px"} src={`/avatars/${user.avatarID}`} alt={".."}/>
-                      <p>
-                        {user.name}:{user.score}
-                        {user.name == userName ? "(შენ)" : null}
+                        className={` flex flex-row justify-between items-center  ${
+                          user.id == currentDrawerId
+                            ? "bg-dark-purupe py-1"
+                            : user.hasGuessed
+                            ? "bg-green-600 py-1"
+                            : "bg-slate-200 py-1"
+                        }  `}
+                      >
+                        {user.name}: {user.score}
+                        {user.name == userName ? " (შენ)" : null}
                       </p>
-                      {isAdmin ? (
-                          <button
-                              className="border-2 border-solid border-blue-900 bg-blue-700 w-[120px] h-[40px] text-md text-white rounded-[30px]"
-                              onClick={() => {
-                                kickPlayer(user.id);
-                              }}
-                          >
-                            გააგდე
-                          </button>
-                      ) : null}
 
-                      <hr/>
+                      <hr />
                     </div>
-                ))}
+                  ))
+              : null}
           </div>
-          {/* shuala plani */}
+          <div
+            id="chat"
+            className="flex flex-col lg:h-[682px] lg:w-[300px] justify-evenly items-center bg-light-pink lg:mr-8 rounded-md  2xl:w-[320px] pb-5 "
+          >
+            <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
+              <img
+                width={"40px"}
+                className="ml-auto"
+                src="/back.png"
+                alt={".."}
+              />
 
-          <div className="  flex flex-col justify-center items-center mb-auto mt-2">
-            <div className="flex bg-white lg:h-[74px] w-full  rounded-xl justify-between items-center px-5">
-
-
-              {isGameStarted ? (
-                  <div className="flex  gap-3">
-                <span
-                    className="bg-light-pink font-bold text-3xl rounded-md h-[50px] w-[50px] flex items-center justify-center ">
-                  {timeLeft}
-                </span>
-                    <span className="bg-light-pink font-bold text-2xl rounded-md flex items-center justify-center px-2">
-                  რაუნდი - {currentRound}/{maxRounds}
-                </span>
-                  </div>
-              ) : null}
-
-              {!isGamePaused && drawWord ? (
-                  <span className="text-black font-bold text-2xl">{drawWord}</span>
-              ) : (
-                  <span className="text-black tracking-[0.2rem] font-bold">
-                {!isGamePaused && secretWord + secretWord.length}
-              </span>
-              )}
-              {isPublic?null:isGameStarted && isAdmin ? (
-                  <>
-                    <button
-                        className="bg-light-pink w-[50px] h-[50px] text-md text-white rounded-sm"
-                        onClick={skipTurn}
-                    >
-                      <img alt="გადართე სვლა" width="30px" src="/skip.png" className="m-auto" title="გადართე სვლა"/>
-                    </button>
-                  </>
-              ) : <button
-                  onClick={() => {
-                    startGame();
-                  }}
-                  className="  bg-light-pink w-[50px] h-[50px] text-md text-white rounded-sm "
-              >
-                <img alt="დაიწყე თამაში" width="30px" src="/start.png" className="m-auto" title="დაიწყე თამაში"/>
-              </button>
-              }
-
-            </div>
-
-            <div className="w-full max-w-screen-lg mx-auto">
-              <Canvas canvasData={canvasData}/>
-            </div>
-          </div>
-
-          <div className="flex justify-between gap-3 mb-auto mt-2">
-            {" "}
-            <div
-                className=" overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
-              <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
-                სასტავი:
-              </p>
-              {joinedUsers.length > 0
-                  ? joinedUsers
-                      .sort((a, b) => b.score - a.score)
-                      .map((user: any, index: number) => (
-                          <div key={index} className="flex flex-col break-words ">
-                            <p
-                                key={index}
-                                className={` flex flex-row justify-between items-center  ${
-                                    user.id == currentDrawerId
-                                        ? "bg-dark-purupe py-1"
-                                        : user.hasGuessed
-                                            ? "bg-green-600 py-1"
-                                            : "bg-slate-200 py-1"
-                                }  `}
-                            >
-                              {user.name}: {user.score}
-                              {user.name == userName ? " (შენ)" : null}
-                            </p>
-
-                            <hr/>
-                          </div>
-                      ))
-                  : null}
-            </div>
-            <div
-                id="chat"
-                className="flex flex-col lg:h-[682px] lg:w-[300px] justify-evenly items-center bg-light-pink lg:mr-8 rounded-md  2xl:w-[320px] pb-5 "
-            >
-              <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
-                <img width={"40px"} className="ml-auto" src="/back.png" alt={".."}/>
-
-                <div className="bg-white lg:h-[561px] w-[295px] h-[30vh] m-2 rounded-md  flex flex-col overflow-hidden">
-                  <div className="overflow-y-auto h-full p-2 flex flex-col">
-                    <div className="flex-grow"></div>
-                    {messages.map((msg, index) => (
-                        <div key={index}>
-                          <p
-                              className={`break-all ${
-                                  msg.userName === "game" ? "bg-green-600" : ""
-                              }`}
-                          >
-                            {msg.userName === "game" ? null : msg.userName + ":"}
-                            {msg.message}
-                          </p>
-                          <hr/>
-                        </div>
-                    ))}
-                    <div ref={messagesEndRef}/>
-                  </div>
+              <div className="bg-white lg:h-[561px] w-[295px] h-[30vh] m-2 rounded-md  flex flex-col overflow-hidden">
+                <div className="overflow-y-auto h-full p-2 flex flex-col">
+                  <div className="flex-grow"></div>
+                  {messages.map((msg, index) => (
+                    <div key={index}>
+                      <p
+                        className={`break-all ${
+                          msg.userName === "game" ? "bg-green-600" : ""
+                        }`}
+                      >
+                        {msg.userName === "game" ? null : msg.userName + ":"}
+                        {msg.message}
+                      </p>
+                      <hr />
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-                <form onSubmit={sendMessage} className="flex items-center gap-2">
-                  <input
-                      className="h-[35px] rounded-3xl text-center "
-                      type="text"
-                      placeholder="Enter message"
-                      value={message}
-                      onChange={(e) => {
-                        setMessage(e.target.value);
-                      }}
-                  />
-                  <button type="submit" className="lg:block hidden">
-                    Send
-                  </button>
-                </form>
               </div>
+              <form onSubmit={sendMessage} className="flex items-center gap-2">
+                <input
+                  className="h-[35px] rounded-3xl text-center "
+                  type="text"
+                  placeholder="Enter message"
+                  value={message}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                  }}
+                />
+                <button type="submit" className="lg:block hidden">
+                  Send
+                </button>
+              </form>
             </div>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
   );
 }
 

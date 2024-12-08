@@ -32,11 +32,12 @@ export default {
         13: "repeat(13, minmax(0, 1fr))",
       },
       colors: {
-        'black-70': 'rgba(0, 0, 0, 0.7)',
+        "black-70": "rgba(0, 0, 0, 0.7)",
       },
-      textColor:{
-        "pink":"#FF70F5",
-      }
+      textColor: {
+        pink: "#FF70F5",
+        "light-pink": "#FFA4E4",
+      },
     },
   },
   plugins: [

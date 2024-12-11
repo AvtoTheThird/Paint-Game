@@ -30,7 +30,7 @@ const Header: React.FC = () => {
           </a>
           <a
             href="#about"
-            className="text-white hover:text-pink lg:text-xl text-md transition-all duration-200 ease-in-out"
+            className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
           >
             კონტაქტი
           </a>

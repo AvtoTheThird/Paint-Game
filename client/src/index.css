@@ -105,3 +105,15 @@ body {
 .active {
   background-color: #fa2020;
 }
+.wrap {
+  display: inline-block;
+  position: relative;
+}
+.button {
+  position: absolute;
+  right: 0.5em;
+  top: 0.5em;
+}
+.input {
+  padding: 0.5em 3.5em 0.5em 0.5em;
+}

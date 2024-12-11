@@ -1,8 +1,8 @@
 // @ts-nocheck
-import React, {useEffect, useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import socket from "../components/socket";
-import {adjectives, nouns} from "../components/words";
+import { adjectives, nouns } from "../components/words";
 import Carousel from "../components/Carousel.tsx";
 import Header from "../components/Header.tsx";
 const images = [
@@ -37,26 +37,26 @@ const images = [
   "./avatars/L4.svg",
   "./avatars/PEWI-A.svg",
   "./avatars/Sleepyjoe-A.svg",
-  "./avatars/Trump-A.svg"
+  "./avatars/Trump-A.svg",
 ];
 const LandingPage: React.FC = () => {
   // const [roomId, setRoomId] = useState("");
   const [currentImage, setCurrentImage] = useState(images[0]);
-  console.log(currentImage.slice(10))
+  console.log(currentImage.slice(10));
   interface dataToBeSent {
-  roomId: string;
-  userId: string;
-  userName: string;
-  isadmin: boolean;
-  avatarID: string
-}
+    roomId: string;
+    userId: string;
+    userName: string;
+    isadmin: boolean;
+    avatarID: string;
+  }
   const [userName, setUserName] = useState<string>("");
   const [dataToBeSent, setDataToBeSent] = useState<dataToBeSent>({
     roomId: "",
     userId: "",
     userName: "",
     isadmin: false,
-    avatarID: ""
+    avatarID: "",
   });
   // const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
@@ -65,7 +65,8 @@ const LandingPage: React.FC = () => {
     // console.log(socket);
 
     socket.emit("join_public_room", {
-      name: userName.length == 0 ? randomizeUserName() : userName, avatarID:currentImage.slice(10)
+      name: userName.length == 0 ? randomizeUserName() : userName,
+      avatarID: currentImage.slice(10),
     });
   }
   socket.on("joined_public_room", ({ roomId, roomName, userId, name }) => {
@@ -78,7 +79,7 @@ const LandingPage: React.FC = () => {
       userName: name,
       isadmin: false,
       avatarID: currentImage.slice(10),
-      isPublic:true
+      isPublic: true,
     });
   });
   useEffect(() => {
@@ -93,9 +94,11 @@ const LandingPage: React.FC = () => {
   }, [dataToBeSent]);
 
   function randomizeUserName() {
-    return adjectives[Math.floor(Math.random() * adjectives.length)] +
-        "_" +
-        nouns[Math.floor(Math.random() * nouns.length)];
+    return (
+      adjectives[Math.floor(Math.random() * adjectives.length)] +
+      "_" +
+      nouns[Math.floor(Math.random() * nouns.length)]
+    );
   }
   function generateRandomizedUserName() {
     let randomizeduUserName = "";
@@ -110,14 +113,11 @@ const LandingPage: React.FC = () => {
   };
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
-     <Header/>
+      <Header />
       <div className="my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
-
         {/* <div className=" relative flex flex-col border-[2px] border-red-600 border-dotted  items-center justify-between bg-bg-pink w-[95vw] lg:w-[780px] lg:h-[580px]   rounded-3xl lg:p-10  p-5 shadow-[-5px_5px_0px_0px_rgba(109,40,217)]"> */}
 
-        <div
-            className="flex flex-col   justify-between bg-bg-pink-opacity border-2 border-black lg:bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5  shadow-lg ">
-
+        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5  shadow-lg ">
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
             {/*<div className="w-[250px] h-[337px] bg-white rounded-lg"></div>*/}
             <Carousel images={images} onImageChange={handleImageChange} />
@@ -132,8 +132,11 @@ const LandingPage: React.FC = () => {
                 to="/join-room"
                 state={
                   userName.length <= 0
-                    ? { userName: randomizeUserName(),avatarID:currentImage.slice(10) }
-                    : { userName: userName,avatarID:currentImage.slice(10)}
+                    ? {
+                        userName: randomizeUserName(),
+                        avatarID: currentImage.slice(10),
+                      }
+                    : { userName: userName, avatarID: currentImage.slice(10) }
                 }
                 className="flex justify-center items-center border-solid bg-button-background-3 border-black border-[1px]  text-[36px]  leading-10  text-white rounded-[30px] lg:w-[260px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
               >
@@ -145,8 +148,11 @@ const LandingPage: React.FC = () => {
                 to="/create-room"
                 state={
                   userName.length <= 0
-                    ? { userName: randomizeUserName(),avatarID:currentImage.slice(10) }
-                    : { userName: userName,avatarID:currentImage.slice(10) }
+                    ? {
+                        userName: randomizeUserName(),
+                        avatarID: currentImage.slice(10),
+                      }
+                    : { userName: userName, avatarID: currentImage.slice(10) }
                 }
                 className=" border-solid bg-button-background-2 lg:p-0 p-3 border-black border-[1px]  text-[32px]  leading-8  text-white rounded-[30px] lg:w-[278px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)]"
               >

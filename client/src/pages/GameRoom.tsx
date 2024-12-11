@@ -291,9 +291,15 @@ function GameRoom() {
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
       {" "}
-      <header className=" group fixed top-0 w-full z-50 h-[100px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
-        <div className="container mx-auto    h-full flex items-center justify-between">
-          <div className="w-1/3"></div>
+      <header className="group fixed top-0 w-full z-50 h-[100px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
+        <div className="container mx-auto    h-full flex items-center justify-evenly">
+          <div className="lg:w-1/3 lg:block hidden"></div>
+          <a
+            href="#home"
+            className="block lg:hidden text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
+          >
+            წესები
+          </a>
           <div className="flex items-center">
             <Link to="/">
               <img
@@ -303,10 +309,10 @@ function GameRoom() {
               />
             </Link>
           </div>
-          <div className="w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
+          <div className="lg:w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
             <a
               href="#home"
-              className="text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
+              className="hidden lg:block text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
             >
               თამაშის წესები
             </a>
@@ -319,7 +325,7 @@ function GameRoom() {
           </div>
         </div>
       </header>
-      <div className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white mt-16 ">
+      <div className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 mt-0 ">
         <div className=" bg-light-pink rounded-md ml-8 lg:block hidden  h-[680px] w-[300px] 2xl:w-[320px] overflow-hidden  text-center mb-auto mt-2">
           <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
             სასტავი:
@@ -329,7 +335,7 @@ function GameRoom() {
             .map((user: any, index: number) => (
               <div
                 key={index}
-                className={`relative  flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-md py-2 ${
+                className={`relative group flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-md py-2 ${
                   user.id == currentDrawerId
                     ? "bg-dark-purupe"
                     : user.hasGuessed
@@ -359,7 +365,7 @@ function GameRoom() {
                     }}
                   >
                     <img
-                      className="w-[35px] h-[35px] "
+                      className="w-[35px] h-[35px] opacity-25 group-hover:opacity-100 transition-all duration-200 ease-in-out"
                       src="/kick.png"
                       alt="გააგდე"
                       title="გააგდე"
@@ -432,39 +438,67 @@ function GameRoom() {
           </div>
         </div>
 
-        <div className="flex justify-between gap-3 mb-auto mt-2">
+        <div className="flex justify-between gap-3 mb-auto mt-2 w-full">
           {" "}
-          <div className=" overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
+          <div className="flex-grow  overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
             <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
               სასტავი:
             </p>
-            {joinedUsers.length > 0
-              ? joinedUsers
-                  .sort((a, b) => b.score - a.score)
-                  .map((user: any, index: number) => (
-                    <div key={index} className="flex flex-col break-words ">
-                      <p
-                        key={index}
-                        className={` flex flex-row justify-between items-center  ${
-                          user.id == currentDrawerId
-                            ? "bg-dark-purupe py-1"
-                            : user.hasGuessed
-                            ? "bg-green-600 py-1"
-                            : "bg-slate-200 py-1"
-                        }  `}
-                      >
-                        {user.name}: {user.score}
-                        {user.name == userName ? " (შენ)" : null}
-                      </p>
+            {Object.values(joinedUsers)
+              .sort((a, b) => b.score - a.score)
+              .map((user: any, index: number) => (
+                <div
+                  key={index}
+                  className={`relative group items-center pl-2 m-2 rounded-md py-2 ${
+                    user.id == currentDrawerId
+                      ? "bg-dark-purupe"
+                      : user.hasGuessed
+                      ? "bg-green-600"
+                      : "bg-white "
+                  } text-lg `}
+                >
+                  <p className="text-base">
+                    {user.name}
+                    {user.name == userName ? "(შენ)" : null}
+                  </p>
 
-                      <hr />
+                  <div className="flex  justify-start items-start ">
+                    <img
+                      className="w-[40px] h-[40px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
+                      src={`/avatars/${user.avatarID}`}
+                      alt={".."}
+                    />{" "}
+                    <div className="flex flex-col justify-start items-start pl-2">
+                      {" "}
+                      <p className="text-sm text-light-pink">
+                        {" "}
+                        ქულა: {user.score}
+                      </p>
+                      <p className="text-sm ">#{index + 1}</p>
                     </div>
-                  ))
-              : null}
+                  </div>
+
+                  {isAdmin ? (
+                    <button
+                      className="absolute bottom-2 right-2"
+                      onClick={() => {
+                        kickPlayer(user.id);
+                      }}
+                    >
+                      <img
+                        className="w-[35px] h-[35px] opacity-25 group-hover:opacity-100 transition-all duration-200 ease-in-out"
+                        src="/kick.png"
+                        alt="გააგდე"
+                        title="გააგდე"
+                      />
+                    </button>
+                  ) : null}
+                </div>
+              ))}
           </div>
           <div
             id="chat"
-            className="flex flex-col lg:h-[682px] lg:w-[300px] justify-evenly items-center bg-light-pink lg:mr-8 rounded-md  2xl:w-[320px] pb-5 "
+            className="flex-grow lg:flex-grow-0 flex flex-col lg:h-[682px] lg:w-[300px] justify-evenly items-center bg-light-pink lg:mr-8 rounded-md  2xl:w-[320px] pb-5 "
           >
             <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
               <img
@@ -474,13 +508,13 @@ function GameRoom() {
                 alt={".."}
               />
 
-              <div className="bg-white lg:h-[561px] w-[295px] h-[30vh] m-2 rounded-md  flex flex-col overflow-hidden">
+              <div className="bg-white lg:h-[561px] w-full lg:w-[295px] h-[30vh] m-2 rounded-md  flex flex-col overflow-hidden">
                 <div className="overflow-y-auto h-full p-2 flex flex-col">
                   <div className="flex-grow"></div>
                   {messages.map((msg, index) => (
                     <div key={index}>
                       <p
-                        className={`break-all ${
+                        className={`text-sm break-all ${
                           msg.userName === "game" ? "bg-green-600" : ""
                         }`}
                       >
@@ -493,9 +527,13 @@ function GameRoom() {
                   <div ref={messagesEndRef} />
                 </div>
               </div>
-              <form onSubmit={sendMessage} className="flex items-center gap-2">
+              <form
+                onSubmit={sendMessage}
+                className="flex items-center gap-2"
+                class="wrap"
+              >
                 <input
-                  className="h-[35px] rounded-3xl text-center "
+                  className="h-[35px] w-[140px] lg:w-[295px] rounded-md text-center "
                   type="text"
                   placeholder="Enter message"
                   value={message}
@@ -503,8 +541,8 @@ function GameRoom() {
                     setMessage(e.target.value);
                   }}
                 />
-                <button type="submit" className="lg:block hidden">
-                  Send
+                <button type="submit" className="" class="button">
+                  <img src="/send.png" alt="" />
                 </button>
               </form>
             </div>

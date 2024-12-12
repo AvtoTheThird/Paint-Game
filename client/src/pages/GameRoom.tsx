@@ -75,6 +75,8 @@ function GameRoom() {
     setAvatarID(location.state.avatarID);
     setIsPublic(location.state.isPublic);
   }, [location]);
+  // console.log(avatarID);
+
   useEffect(() => {
     // This function will run when the component mounts
     const handleBackButton = () => {
@@ -291,7 +293,7 @@ function GameRoom() {
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
       {" "}
-      <header className="group fixed top-0 w-full z-50 h-[100px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
+      <header className="group fixed top-0 w-full z-50 h-[80px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
         <div className="container mx-auto    h-full flex items-center justify-evenly">
           <div className="lg:w-1/3 lg:block hidden"></div>
           <a
@@ -305,7 +307,7 @@ function GameRoom() {
               <img
                 src="/xelovniki.png"
                 alt="Logo"
-                className="w-[130px] group-hover:w-[200px] transition-all duration-200 ease-in-out  "
+                className="w-[110px] group-hover:w-[200px] transition-all duration-200 ease-in-out  "
               />
             </Link>
           </div>
@@ -345,7 +347,7 @@ function GameRoom() {
               >
                 <img
                   className="w-[65px] h-[65px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
-                  src={`/avatars/${user.avatarID}`}
+                  src={`${user.avatarID}`}
                   alt={".."}
                 />
                 <div className="flex flex-col justify-start items-start ">
@@ -438,7 +440,7 @@ function GameRoom() {
           </div>
         </div>
 
-        <div className="flex justify-between gap-3 mb-auto mt-2 w-full">
+        <div className="flex justify-between gap-3 mb-auto mt-2 ">
           {" "}
           <div className="flex-grow  overflow-y-scroll bg-light-pink rounded-[1rem] lg:rounded-[5rem]   lg:h-[90vh] w-[40vw] overflow-hidden  text-center lg:hidden">
             <p className="text-3xl whitespace-nowrap font-extrabold text-black inline-block pt-5">
@@ -465,7 +467,7 @@ function GameRoom() {
                   <div className="flex  justify-start items-start ">
                     <img
                       className="w-[40px] h-[40px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
-                      src={`/avatars/${user.avatarID}`}
+                      src={`${user.avatarID}`}
                       alt={".."}
                     />{" "}
                     <div className="flex flex-col justify-start items-start pl-2">
@@ -535,7 +537,7 @@ function GameRoom() {
                 <input
                   className="h-[35px] w-[140px] lg:w-[295px] rounded-md text-center "
                   type="text"
-                  placeholder="Enter message"
+                  // placeholder="Enter message"
                   value={message}
                   onChange={(e) => {
                     setMessage(e.target.value);

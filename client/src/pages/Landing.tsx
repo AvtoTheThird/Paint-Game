@@ -42,7 +42,7 @@ const images = [
 const LandingPage: React.FC = () => {
   // const [roomId, setRoomId] = useState("");
   const [currentImage, setCurrentImage] = useState(images[0]);
-  console.log(currentImage.slice(10));
+
   interface dataToBeSent {
     roomId: string;
     userId: string;
@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
 
     socket.emit("join_public_room", {
       name: userName.length == 0 ? randomizeUserName() : userName,
-      avatarID: currentImage.slice(10),
+      avatarID: currentImage,
     });
   }
   socket.on("joined_public_room", ({ roomId, roomName, userId, name }) => {

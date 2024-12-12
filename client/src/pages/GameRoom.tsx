@@ -76,6 +76,7 @@ function GameRoom() {
     setIsPublic(location.state.isPublic);
   }, [location]);
   // console.log(avatarID);
+  console.log(location.state);
 
   useEffect(() => {
     // This function will run when the component mounts
@@ -290,6 +291,8 @@ function GameRoom() {
     setCurrentRound(data.currentRound);
     setMaxRounds(data.maxRounds);
   });
+  console.log(joinedUsers);
+
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
       {" "}
@@ -347,9 +350,10 @@ function GameRoom() {
               >
                 <img
                   className="w-[65px] h-[65px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
-                  src={`${user.avatarID}`}
+                  src={`${user.avatarID}.svg`}
                   alt={".."}
                 />
+                {/* public/avatars/F/F10.svg */}
                 <div className="flex flex-col justify-start items-start ">
                   <p className="text-base">
                     {user.name}
@@ -358,7 +362,6 @@ function GameRoom() {
                   <p className="text-sm text-light-pink"> ქულა: {user.score}</p>
                   <p className="text-sm ">#{index + 1}</p>
                 </div>
-
                 {isAdmin ? (
                   <button
                     className="absolute bottom-2 right-2"
@@ -374,7 +377,6 @@ function GameRoom() {
                     />
                   </button>
                 ) : null}
-
                 <hr />
               </div>
             ))}
@@ -467,7 +469,7 @@ function GameRoom() {
                   <div className="flex  justify-start items-start ">
                     <img
                       className="w-[40px] h-[40px] bg-slate-300 rounded-md border-gray-500 border-[1px] "
-                      src={`${user.avatarID}`}
+                      src={`${user.avatarID}.svg`}
                       alt={".."}
                     />{" "}
                     <div className="flex flex-col justify-start items-start pl-2">

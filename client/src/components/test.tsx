@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
 interface CarouselProps {
   Fimages: string[];
   Mimages: string[];
-  onImageChange: (image: string, indexed: string) => void; // Callback when the image changes
+  onImageChange: (image: string) => void; // Callback when the image changes
 }
 
 const Carousel: React.FC<CarouselProps> = ({
@@ -17,35 +16,20 @@ const Carousel: React.FC<CarouselProps> = ({
   );
   const [direction, setDirection] = useState<string | null>(null);
   const [cachedImages, setCachedImages] = useState<string[]>([]);
-  const [gender, setGender] = useState<"male" | "female">(
-    (localStorage.getItem("gender") as "male" | "female") || "male"
-  );
-
-  const currentImages = gender === "male" ? Mimages : Fimages;
-
-  useEffect(() => {
-    const savedGender = localStorage.getItem("gender") as "male" | "female";
-    if (savedGender === "female") {
-      setGender("female");
-    } else {
-      setGender("male");
-    }
-  }, []);
+  const [gender, setGender] = useState<"male" | "female">("male");
+  const images = Fimages.concat(Mimages);
 
   useEffect(() => {
     localStorage.setItem("preferredImageIndex", currentIndex.toString());
     if (cachedImages.length > 0) {
-      onImageChange(
-        cachedImages[currentIndex],
-        gender === "female" ? Fimages[currentIndex] : Mimages[currentIndex]
-      );
+      onImageChange(cachedImages[currentIndex]);
     }
   }, [currentIndex, cachedImages]);
 
   useEffect(() => {
     const cacheImages = async () => {
       const cached = [];
-      for (const image of currentImages) {
+      for (const image of images) {
         const cachedImage = localStorage.getItem(image);
         if (cachedImage) {
           cached.push(cachedImage);
@@ -65,7 +49,7 @@ const Carousel: React.FC<CarouselProps> = ({
               reader.readAsDataURL(blob);
             });
           } catch (error) {
-            console.error(`Error caching image: ${image}`, error);
+            console.error(`Error caching image: ${image}, error`);
             cached.push(image); // Fallback to the original URL
           }
         }
@@ -74,7 +58,14 @@ const Carousel: React.FC<CarouselProps> = ({
     };
 
     cacheImages();
-  }, [currentImages]);
+  }, [Fimages, Mimages]);
+  console.log(Fimages, Mimages);
+
+  useEffect(() => {
+    if (cachedImages.length > 0) {
+      onImageChange(cachedImages[currentIndex]);
+    }
+  }, [currentIndex, cachedImages]);
 
   const handleNext = () => {
     setDirection("right");
@@ -90,45 +81,30 @@ const Carousel: React.FC<CarouselProps> = ({
     );
   };
 
-  useEffect(() => {
-    if (cachedImages.length > 0) {
-      onImageChange(
-        cachedImages[currentIndex],
-        gender === "female" ? Fimages[currentIndex] : Mimages[currentIndex]
-      );
-    }
-  }, [currentIndex, cachedImages]);
-  // console.log(Mimages[currentIndex]);
-
   return (
     <div className="w-[250px] h-[337px] rounded-lg">
-      {/* <img src="public\avatars\M\M1.svg" alt="AAAAAAAAAA" /> */}
-
-      <label className="rocker">
-        <input
-          type="checkbox"
-          checked={gender === "female" ? false : true}
-          onClick={() => {
-            setGender(gender === "female" ? "male" : "female");
-            localStorage.setItem(
-              "gender",
-              gender === "female" ? "male" : "female"
-            );
-          }}
-        />
-        <span className="switch-left">კ</span>
-        <span className="switch-right">ქ</span>
-      </label>
-
+      <button
+        onClick={() => {
+          setGender("female");
+          localStorage.setItem("gender", "female");
+        }}
+      >
+        F
+      </button>
+      <br />
+      <button
+        onClick={() => {
+          setGender("male");
+          localStorage.setItem("gender", "male");
+        }}
+      >
+        M
+      </button>
       <div className="carousel-images">
         <AnimatePresence>
           <motion.img
             key={currentIndex}
-            src={`./${
-              gender === "female"
-                ? Fimages[currentIndex]
-                : Mimages[currentIndex]
-            }.svg`}
+            src={cachedImages[currentIndex]} // Use cached images
             initial={direction === "right" ? "hiddenRight" : "hiddenLeft"}
             animate="visible"
             exit="exit"
@@ -163,8 +139,8 @@ const Carousel: React.FC<CarouselProps> = ({
               <path d="m304 974-56-57 343-343-343-343 56-57 400 400-400 400Z" />
             </svg>
           </motion.div>
-        </div>
-      </div>
+        </div>{" "}
+      </div>{" "}
     </div>
   );
 };

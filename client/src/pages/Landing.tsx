@@ -5,43 +5,46 @@ import socket from "../components/socket";
 import { adjectives, nouns } from "../components/words";
 import Carousel from "../components/Carousel.tsx";
 import Header from "../components/Header.tsx";
-const images = [
-  "./avatars/1-1.svg",
-  "./avatars/10-A.svg",
-  "./avatars/2-A.svg",
-  "./avatars/3-A.svg",
-  "./avatars/4-A.svg",
-  "./avatars/5-A.svg",
-  "./avatars/6-A.svg",
-  "./avatars/7-A.svg",
-  "./avatars/8-A.svg",
-  "./avatars/9-A.svg",
-  "./avatars/AF1.svg",
-  "./avatars/AF2.svg",
-  "./avatars/AF3.svg",
-  "./avatars/AF4.svg",
-  "./avatars/AF5.svg",
-  "./avatars/AVTO-A.svg",
-  "./avatars/D-A.svg",
-  "./avatars/F1.svg",
-  "./avatars/F2.svg",
-  "./avatars/F3.svg",
-  "./avatars/F4.svg",
-  "./avatars/F5.svg",
-  "./avatars/F6.svg",
-  "./avatars/F7.svg",
-  "./avatars/F8.svg",
-  "./avatars/F9.svg",
-  "./avatars/JOLO-A.svg",
-  "./avatars/L1.svg",
-  "./avatars/L4.svg",
-  "./avatars/PEWI-A.svg",
-  "./avatars/Sleepyjoe-A.svg",
-  "./avatars/Trump-A.svg",
+const Fimages = [
+  "/avatars/F/F1",
+  "/avatars/F/F2",
+  "/avatars/F/F3",
+  "/avatars/F/F4",
+  "/avatars/F/F5",
+  "/avatars/F/F6",
+  "/avatars/F/F7",
+  "/avatars/F/F8",
+  "/avatars/F/F9",
+  "/avatars/F/F10",
+  "/avatars/F/F11",
+  "/avatars/F/F12",
+  "/avatars/F/F13",
+  "/avatars/F/F14",
+  "/avatars/F/F15",
+  "/avatars/F/F16",
+];
+const Mimages = [
+  "/avatars/M/M1",
+  "/avatars/M/M2",
+  "/avatars/M/M3",
+  "/avatars/M/M4",
+  "/avatars/M/M5",
+  "/avatars/M/M6",
+  "/avatars/M/M7",
+  "/avatars/M/M8",
+  "/avatars/M/M9",
+  "/avatars/M/M10",
+  "/avatars/M/M11",
+  "/avatars/M/M12",
+  "/avatars/M/M13",
+  "/avatars/M/M14",
+  "/avatars/M/M15",
+  "/avatars/M/M16",
 ];
 const LandingPage: React.FC = () => {
   // const [roomId, setRoomId] = useState("");
-  const [currentImage, setCurrentImage] = useState(images[0]);
+  const [currentImage, setCurrentImage] = useState("");
+  // console.log(currentImage);
 
   interface dataToBeSent {
     roomId: string;
@@ -78,7 +81,7 @@ const LandingPage: React.FC = () => {
       userId,
       userName: name,
       isadmin: false,
-      avatarID: currentImage.slice(10),
+      avatarID: currentImage,
       isPublic: true,
     });
   });
@@ -108,9 +111,11 @@ const LandingPage: React.FC = () => {
       nouns[Math.floor(Math.random() * nouns.length)];
     setUserName(randomizeduUserName);
   }
-  const handleImageChange = (newImage) => {
-    setCurrentImage(newImage);
+  const handleImageChange = (newImage, indexed) => {
+    setCurrentImage(indexed);
   };
+  console.log(currentImage);
+
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
       <Header />
@@ -120,7 +125,12 @@ const LandingPage: React.FC = () => {
         <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5  shadow-lg ">
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
             {/*<div className="w-[250px] h-[337px] bg-white rounded-lg"></div>*/}
-            <Carousel images={images} onImageChange={handleImageChange} />
+            <Carousel
+              // images={(Fimages, Mimages)}
+              Fimages={Fimages}
+              Mimages={Mimages}
+              onImageChange={handleImageChange}
+            />
             <div className="flex flex-col  items-center gap-3">
               <button
                 onClick={handleJoinPublicRoom}
@@ -136,7 +146,10 @@ const LandingPage: React.FC = () => {
                         userName: randomizeUserName(),
                         avatarID: currentImage.slice(10),
                       }
-                    : { userName: userName, avatarID: currentImage.slice(10) }
+                    : {
+                        userName: userName,
+                        avatarID: currentImage.slice(10),
+                      }
                 }
                 className="flex justify-center items-center border-solid bg-button-background-3 border-black border-[1px]  text-[36px]  leading-10  text-white rounded-[30px] lg:w-[260px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
               >
@@ -150,9 +163,12 @@ const LandingPage: React.FC = () => {
                   userName.length <= 0
                     ? {
                         userName: randomizeUserName(),
-                        avatarID: currentImage.slice(10),
+                        // avatarID: currentImage.slice(10),
                       }
-                    : { userName: userName, avatarID: currentImage.slice(10) }
+                    : {
+                        userName: userName,
+                        // avatarID: currentImage.slice(10)
+                      }
                 }
                 className=" border-solid bg-button-background-2 lg:p-0 p-3 border-black border-[1px]  text-[32px]  leading-8  text-white rounded-[30px] lg:w-[278px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)]"
               >

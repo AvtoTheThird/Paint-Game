@@ -144,11 +144,11 @@ const LandingPage: React.FC = () => {
                   userName.length <= 0
                     ? {
                         userName: randomizeUserName(),
-                        avatarID: currentImage.slice(10),
+                        avatarID: currentImage,
                       }
                     : {
                         userName: userName,
-                        avatarID: currentImage.slice(10),
+                        avatarID: currentImage,
                       }
                 }
                 className="flex justify-center items-center border-solid bg-button-background-3 border-black border-[1px]  text-[36px]  leading-10  text-white rounded-[30px] lg:w-[260px] lg:h-[100px] drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]  transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)] "
@@ -163,10 +163,14 @@ const LandingPage: React.FC = () => {
                   userName.length <= 0
                     ? {
                         userName: randomizeUserName(),
+                        avatarID: currentImage,
+
                         // avatarID: currentImage.slice(10),
                       }
                     : {
                         userName: userName,
+                        avatarID: currentImage,
+
                         // avatarID: currentImage.slice(10)
                       }
                 }

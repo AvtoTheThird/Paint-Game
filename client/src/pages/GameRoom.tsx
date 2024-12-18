@@ -76,7 +76,7 @@ function GameRoom() {
     setAvatarID(location.state.avatarID);
     setIsPublic(location.state.isPublic);
   }, [location]);
-  // console.log(avatarID);
+  console.log(avatarID);
   console.log(location.state);
 
   useEffect(() => {
@@ -121,7 +121,7 @@ function GameRoom() {
   const sendMessage = (e: Event) => {
     e.preventDefault();
 
-    if (hasGuesed && message === guessedWord) {
+    if (hasGuesed && message.replace(/\s/g, "") === guessedWord) {
       setMessage("");
       return;
     }

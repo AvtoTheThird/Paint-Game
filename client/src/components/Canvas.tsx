@@ -309,7 +309,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("newDrawer", () => {
       const Hand_Start_AUDIO = new Audio(Hand_Start);
       Hand_Start_AUDIO.play().catch((err) => console.log(err));
-      Hand_Start_AUDIO.onended = () => {Hand_Start_AUDIO.remove()};
+      Hand_Start_AUDIO.onended = () => {
+        Hand_Start_AUDIO.remove();
+      };
     });
     socket.on("undo", (updatedHistory) => {
       setHistory(updatedHistory); // Update the local history state
@@ -319,18 +321,19 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       floodFill(startX, startY, fillColor, false);
     });
     socket.on("handEnded", (data) => {
+      // console.log("recived handEnded", data);
+
       setCurrentDrawer(data.currentDrawer);
       setOldWord(data.Word);
       setCanDraw(false);
       setIsGamePaused(true);
       setPauseTime(5);
-      // console.log(data);
     });
     socket.on("MaxRoundsReached", () => {
       setMaxRoundsReached(true);
     });
     socket.on("requestCanvasDataFromClient", (roomId, id) => {
-      console.log("recived requestCanvasData", id);
+      // console.log("recived requestCanvasData", id);
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -346,7 +349,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
       const data = { base64Image, id, roomId };
       socket.emit("sendCanvasDataToServer", data);
-      console.log("sent data to server", base64Image, id);
+      // console.log("sent data to server", base64Image, id);
     });
 
     return () => {
@@ -357,12 +360,15 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("newDrawer");
       socket.off("fill");
     };
-  }, []);
+  }, [userId]);
   socket.on("gameStarted", () => {
     setIsGamePaused(false);
     setMaxRoundsReached(false);
   });
-
+  // console.log(isGamePaused);
+  socket.on("MaxRoundsReached", () => {
+    setMaxRoundsReached(true);
+  });
   socket.on("newDrawer", (data) => {
     setIsGamePaused(false);
     console.log("new drawer");
@@ -604,23 +610,23 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
             ))}
           </div>
           <button onClick={clearCanvas}>
-            <img alt="clear canvas" width="30px" src="/trash.png"/>
+            <img alt="clear canvas" width="30px" src="/trash.png" />
           </button>
 
           <button onClick={undoLastAction} disabled={history.length === 0}>
-            <img alt="undo" width="30px" src="/undo.png"/>
+            <img alt="undo" width="30px" src="/undo.png" />
           </button>
           <button
-              onClick={() => setTool("draw")}
+            onClick={() => setTool("draw")}
             className={tool === "draw" ? "text-blue-800" : "text-black"}
           >
-            <img alt="draw tool" width="30px" src="/draw.png"/>
+            <img alt="draw tool" width="30px" src="/draw.png" />
           </button>
           <button
             onClick={() => setTool("fill")}
             className={tool === "fill" ? "text-blue-800" : "text-black"}
           >
-            <img alt="fill tool" width="30px" src="/fill.png"/>
+            <img alt="fill tool" width="30px" src="/fill.png" />
           </button>
           <input
             type="range"

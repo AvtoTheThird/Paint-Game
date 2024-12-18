@@ -108,7 +108,7 @@ const Carousel: React.FC<CarouselProps> = ({
         <input
           type="checkbox"
           checked={gender === "female" ? false : true}
-          onClick={() => {
+          onChange={() => {
             setGender(gender === "female" ? "male" : "female");
             localStorage.setItem(
               "gender",

@@ -99,7 +99,7 @@ function changeDrawer(roomId, isPublic = false) {
     currentDrawer: room.users[room.currentDrawerIndex]?.name,
     Word: oldWord,
   });
-  console.log("function call")
+  console.log("function call");
   setTimeout(() => {
     io.to(roomId).emit("newDrawer", {
       currentDrawer: room.users[room.currentDrawerIndex]?.name,
@@ -108,7 +108,7 @@ function changeDrawer(roomId, isPublic = false) {
       time: room.time,
       currentRound: room.currentRound,
     });
-    console.log("settimout called")
+    console.log("settimout called");
     startTurnTimer(roomId, isPublic);
   }, 5000);
 }
@@ -183,7 +183,7 @@ io.on("connection", (socket) => {
   // console.log(publicRooms);
 
   ensurePublicRoomAvailable();
-  socket.on("join_public_room", ({ name,avatarID }) => {
+  socket.on("join_public_room", ({ name, avatarID }) => {
     const roomId = getAvailablePublicRoom();
     const room = publicRooms[roomId];
     const userData = {
@@ -193,7 +193,7 @@ io.on("connection", (socket) => {
       roomId: roomId,
       score: 0,
       hasGuessed: false,
-      avatarID
+      avatarID,
     };
     room.users.push(userData);
 
@@ -242,7 +242,6 @@ io.on("connection", (socket) => {
       score: 0,
       hasGuessed: false,
       avatarID,
-
     };
     room.users.push(userData);
 
@@ -321,13 +320,20 @@ io.on("connection", (socket) => {
       changeDrawer(roomId, isPublic);
     }
   });
+
+  socket.on("message", ({ roomId, message, userName }) => {
+    if (message !== rooms[roomId]?.currentWord) {
+      io.to(roomId).emit("message", { message, userName });
+    }
+  });
+
   socket.on("guess", ({ roomId, guess, timeLeft }) => {
-    console.log(roomId, guess, timeLeft);
+    // console.log(roomId, guess, timeLeft);
 
     const isPublic = roomId.startsWith("public-");
     const room = isPublic ? publicRooms[roomId] : rooms[roomId];
     if (!room) return;
-    console.log(room.currentWord);
+    // console.log(room.currentWord);
 
     const guesser = room.users.find((user) => user.id === socket.id);
     if (!guesser) return;
@@ -336,6 +342,7 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("correctGuess", {
         guesser: guesser.name,
         guesserId: guesser.id,
+        word: guess,
       });
 
       if (!guesser.hasGuessed) {
@@ -389,12 +396,6 @@ io.on("connection", (socket) => {
         });
         // You might want to handle room cleanup or allow players to start a new game here
       }
-    }
-  });
-
-  socket.on("message", ({ roomId, message, userName }) => {
-    if (message !== rooms[roomId]?.currentWord) {
-      io.to(roomId).emit("message", { message, userName });
     }
   });
 
@@ -503,7 +504,7 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT =  3000;
+const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   createPublicRoom();

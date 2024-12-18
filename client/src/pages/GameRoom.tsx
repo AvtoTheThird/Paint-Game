@@ -56,6 +56,7 @@ function GameRoom() {
   const [maxRounds, setMaxRounds] = useState<number>();
   const [avatarID, setAvatarID] = useState<string>("/avatars/1-1.svg");
   const [isPublic, setIsPublic] = useState<boolean>();
+  const [guessedWord, setGuessedWord] = useState<string>("");
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -120,6 +121,10 @@ function GameRoom() {
   const sendMessage = (e: Event) => {
     e.preventDefault();
 
+    if (hasGuesed && message === guessedWord) {
+      setMessage("");
+      return;
+    }
     if (!hasGuesed && !canDraw) {
       console.log(`guess: ${message}`);
 
@@ -128,6 +133,9 @@ function GameRoom() {
         guess: message,
         timeLeft: timeLeft,
       });
+      setMessage("");
+
+      return;
     }
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
@@ -235,27 +243,33 @@ function GameRoom() {
       setDrawWord(word);
     });
 
-    socket.on("correctGuess", (guesser) => {
-      if (guesser.guesserId == userId) {
+    socket.on("correctGuess", ({ guesser, guesserId, word }) => {
+      if (guesserId === userId) {
         setHasGuesed(true);
       }
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+
+      console.log(guesser, guesserId, word);
+      setGuessedWord(word);
+      // confetti({
+      //   particleCount: 100,
+      //   spread: 70,
+      //   origin: { y: 0.6 },
+      // });
       const Correct_Guess_Audio = new Audio(Correct_Guess);
       Correct_Guess_Audio.play().catch((err) => console.log(err));
       Correct_Guess_Audio.onended = () => {
         Correct_Guess_Audio.remove();
       };
-      socket.on("handEnded", (data) => {
-        setCanDraw(false);
-        setIsGamePaused(true);
-        console.log(data);
+
+      setJoinedUsers((prevUsers) => {
+        const updatedUsers = { ...prevUsers };
+        if (updatedUsers[guesser.guesserId])
+          updatedUsers[guesser.guesserId] = {
+            ...updatedUsers[guesser.guesserId],
+            hasGuessed: true,
+          };
+        return updatedUsers;
       });
-      joinedUsers[guesser.guesserId].hasGuessed = true;
-      console.log(joinedUsers);
     });
     socket.on("MaxRoundsReached", () => {
       setIsGameStarted(false);
@@ -278,7 +292,7 @@ function GameRoom() {
       socket.off("newDrawer");
       socket.off("newWord");
     };
-  }, [isGameStarted]);
+  }, [isGameStarted, socket, userId]);
 
   // const handleButtonClick = () => {};
   socket.on("SendCanvasDataToClient", (data) => {

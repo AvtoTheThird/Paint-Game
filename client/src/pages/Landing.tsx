@@ -73,9 +73,9 @@ const LandingPage: React.FC = () => {
     });
   }
   socket.on("joined_public_room", ({ roomId, roomName, userId, name }) => {
-    console.log(
-      `Joined public room: (roomname: ${roomName} )(ID: ${roomId}) (userid: ${userId})`
-    );
+    // console.log(
+    //   `Joined public room: (roomname: ${roomName} )(ID: ${roomId}) (userid: ${userId})`
+    // );
     setDataToBeSent({
       roomId,
       userId,

@@ -14,6 +14,8 @@ export default {
         "bg-pink": "rgba(255,53,245,0.85)",
 
         "bg-pink-opacity": "rgba(255, 112, 245, 0.8)",
+        "transparant-blabk": "rgba(0, 0, 0, 0.65)",
+
         "modal-pink": "#AB41D4",
         "light-purupe": "#CC90E4",
         "dark-purupe": "#923CB4",

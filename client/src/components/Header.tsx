@@ -22,12 +22,12 @@ const Header: React.FC = () => {
           </Link>
         </div>
         <div className="lg:w-1/3 flex justify-end items-center lg:space-x-4 space-x-0 gap-16 lg:pt-3 pt-0">
-          <a
-            href="#home"
+          <Link
+            to="/rules"
             className="hidden lg:block text-white hover:text-pink  text-xl transition-all duration-200 ease-in-out"
           >
             თამაშის წესები
-          </a>
+          </Link>
           <a
             href="#about"
             className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"

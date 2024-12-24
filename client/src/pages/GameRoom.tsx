@@ -49,11 +49,11 @@ function GameRoom() {
   const [secretWord, setSecretWord] = useState<string>("");
   const [currentDrawer, setCurrentDrawer] = useState<string>("");
   const [currentDrawerId, setCurrentDrawerId] = useState<string>("");
-  const [currentRound, setCurrentRound] = useState<number>();
+  const [currentRound, setCurrentRound] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isGamePaused, setIsGamePaused] = useState<boolean>(false);
-  const [maxRounds, setMaxRounds] = useState<number>();
+  const [maxRounds, setMaxRounds] = useState<number>(0);
   const [avatarID, setAvatarID] = useState<string>("/avatars/1-1.svg");
   const [isPublic, setIsPublic] = useState<boolean>();
   const [guessedWord, setGuessedWord] = useState<string>("");
@@ -76,8 +76,8 @@ function GameRoom() {
     setAvatarID(location.state.avatarID);
     setIsPublic(location.state.isPublic);
   }, [location]);
-  console.log(avatarID);
-  console.log(location.state);
+  // console.log(avatarID);
+  // console.log(location.state);
 
   useEffect(() => {
     // This function will run when the component mounts
@@ -126,7 +126,7 @@ function GameRoom() {
       return;
     }
     if (!hasGuesed && !canDraw) {
-      console.log(`guess: ${message}`);
+      // console.log(`guess: ${message}`);
 
       socket.emit("guess", {
         roomId: roomId,
@@ -152,7 +152,7 @@ function GameRoom() {
 
   useEffect(() => {
     let timer: number | undefined;
-    console.log(hasGuesed);
+    // console.log(hasGuesed);
     if (isGameStarted && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
@@ -193,12 +193,12 @@ function GameRoom() {
     });
     socket.on(
       "gameStarted",
-      ({ currentDrawer, currentDrawerId, maxRounds }) => {
+      ({ currentDrawer, currentDrawerId, maxRounds, time }) => {
+        setMaxRounds(maxRounds);
         setIsGameStarted(true);
-
+        setTimeLeft(time);
         setCurrentDrawer(currentDrawer);
         setCurrentDrawerId(currentDrawerId);
-        setMaxRounds(maxRounds);
       }
     );
 
@@ -248,7 +248,7 @@ function GameRoom() {
         setHasGuesed(true);
       }
 
-      console.log(guesser, guesserId, word);
+      // console.log(guesser, guesserId, word);
       setGuessedWord(word);
       // confetti({
       //   particleCount: 100,
@@ -296,7 +296,7 @@ function GameRoom() {
 
   // const handleButtonClick = () => {};
   socket.on("SendCanvasDataToClient", (data) => {
-    console.log(data);
+    // console.log(data);
     setIsGameStarted(true);
     setCurrentDrawer(data.currentDrawer);
     setCurrentDrawerId(data.currentDrawerId);
@@ -305,7 +305,7 @@ function GameRoom() {
     setCurrentRound(data.currentRound);
     setMaxRounds(data.maxRounds);
   });
-  console.log(joinedUsers);
+  // console.log(joinedUsers);
 
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">

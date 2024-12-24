@@ -6,6 +6,7 @@ import Landing from "./pages/Landing";
 import CreateRoom from "./pages/CreateRoom";
 import JoinRoom from "./pages/JoinRoom";
 import GameRoom from "./pages/GameRoom";
+import Rules from "./pages/Rules";
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
         <Route path="/create-room" element={<CreateRoom />} />
         <Route path="/join-room" element={<JoinRoom />} />
         <Route path="/game-room/:roomId" element={<GameRoom />} />
+        <Route path="/rules" element={<Rules />} />
       </Routes>
     </Router>
   );

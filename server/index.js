@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const DEFAULT_SCORE = 10;
 const rooms = {};
 const publicRooms = {};
-
+let activeUsers = 0;
 app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
 
 const io = new Server(server, {
@@ -18,6 +18,48 @@ const io = new Server(server, {
 
 app.use(express.static("public"));
 
+let totalReceivedBytes = 0;
+let totalEmittedBytes = 0;
+
+io.use((socket, next) => {
+  socket.onAny((event, ...args) => {
+    const messageSize = Buffer.byteLength(
+      JSON.stringify({ event, args }),
+      "utf8"
+    );
+    totalReceivedBytes += messageSize; // Accumulate received bytes
+    console.log(`Received: ${messageSize} bytes for event: ${event}`);
+  });
+
+  const originalEmit = socket.emit;
+  socket.emit = function (event, ...args) {
+    const messageSize = Buffer.byteLength(
+      JSON.stringify({ event, args }),
+      "utf8"
+    );
+    totalEmittedBytes += messageSize; // Accumulate emitted bytes
+    console.log(`Emitted: ${messageSize} bytes for event: ${event}`);
+    originalEmit.apply(socket, [event, ...args]);
+  };
+
+  next();
+});
+
+// // Periodically log totals for monitoring
+// setInterval(() => {
+//   console.log(`Total Received Bytes: ${totalReceivedBytes}`);
+//   console.log(`Total Emitted Bytes: ${totalEmittedBytes}`);
+// }, 10000); // Logs every 10 seconds
+
+app.get("/allRooms", (req, res) => {
+  res.json({ rooms, publicRooms });
+});
+app.get("/dataRate", (req, res) => {
+  res.json({ totalReceivedBytes, totalEmittedBytes });
+});
+app.get("/activeUsers", (req, res) => {
+  res.json({ activeUsers });
+});
 const calculateScore = (maxTime, timeOfGuessing) =>
   timeOfGuessing >= maxTime * 0.9
     ? DEFAULT_SCORE * 10
@@ -154,7 +196,8 @@ const handleLateJoin = (roomId, id, isPublic = false) => {
 
 io.on("connection", (socket) => {
   ensurePublicRoomAvailable();
-
+  activeUsers++;
+  io.emit("activeUsersUpdate", { activeUsers });
   socket.on("join_public_room", ({ name, avatarID }) => {
     const roomId = getAvailablePublicRoom();
     const room = publicRooms[roomId];
@@ -334,6 +377,7 @@ io.on("connection", (socket) => {
   socket.on("draw", ({ roomId, x0, y0, x1, y1, color }) =>
     io.to(roomId).emit("draw", { x0, y0, x1, y1, color })
   );
+
   socket.on("undo", ({ newHistory, roomId }) =>
     io.to(roomId).emit("undo", newHistory)
   );
@@ -386,6 +430,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    activeUsers--;
+    io.emit("activeUsersUpdate", { activeUsers });
     for (const roomId in { ...rooms, ...publicRooms }) {
       const isPublic = roomId in publicRooms;
       const room = isPublic ? publicRooms[roomId] : rooms[roomId];

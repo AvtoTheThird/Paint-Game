@@ -35,6 +35,9 @@ export default {
       },
       colors: {
         "black-70": "rgba(0, 0, 0, 0.7)",
+        // pink: "FE96DF",
+        "dark-pink": "#FF00B3",
+        "modal-pink": "FE96DF",
       },
       textColor: {
         pink: "#FF70F5",

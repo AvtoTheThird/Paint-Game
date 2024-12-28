@@ -559,7 +559,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   //   window.innerWidth || 0
   // );
   const EndOFHandScreenData = { oldWord, currentDrawer };
-  const EndOFGameScreenData = { oldWord, currentDrawer };
+  // const EndOFGameScreenData = { oldWord, currentDrawer };
   const handleColorClick = (newColor: string) => {
     setColor(`#${newColor}`);
     console.log(newColor);
@@ -591,9 +591,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         </button>
         {isGamePaused ? (
           <EndOFHandScreen endOFHandScreenData={EndOFHandScreenData} />
-        ) : null}
-        {maxRoundsReached ? (
-          <EndOFGameScreen endOFGameScreenData={EndOFGameScreenData} />
         ) : null}
       </div>
 

@@ -12,6 +12,8 @@ import Negative_Hand_Finish from "/sounds/Negative_Hand_Finish.mp3";
 import Player_Join from "/sounds/Player_Join.mp3";
 import Positive_Hand_Finish from "/sounds/Positive_Hand_Finish.mp3";
 import Tick_Clock from "/sounds/Tick_Clock.mp3";
+import EndOFGameScreen from "../components/EndOfGameScreen";
+// import React from "react";
 interface Message {
   roomId: string;
   message: string;
@@ -57,6 +59,8 @@ function GameRoom() {
   const [avatarID, setAvatarID] = useState<string>("/avatars/1-1.svg");
   const [isPublic, setIsPublic] = useState<boolean>();
   const [guessedWord, setGuessedWord] = useState<string>("");
+  const [maxRoundsReached, setMaxRoundsReached] = useState<boolean>(false);
+
   const messagesEndRef = useRef(null);
 
   const location = useLocation();
@@ -194,6 +198,8 @@ function GameRoom() {
     socket.on(
       "gameStarted",
       ({ currentDrawer, currentDrawerId, maxRounds, time }) => {
+        setMaxRoundsReached(false);
+
         setMaxRounds(maxRounds);
         setIsGameStarted(true);
         setTimeLeft(time);
@@ -272,6 +278,8 @@ function GameRoom() {
       });
     });
     socket.on("MaxRoundsReached", () => {
+      setMaxRoundsReached(true);
+
       setIsGameStarted(false);
       const End_Of_Game_Audio = new Audio(End_Of_Game);
       End_Of_Game_Audio.play().catch((err) => console.log(err));
@@ -306,6 +314,7 @@ function GameRoom() {
     setMaxRounds(data.maxRounds);
   });
   // console.log(joinedUsers);
+  const EndOFGameScreenData = joinedUsers;
 
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden">
@@ -451,8 +460,11 @@ function GameRoom() {
             ) : null}
           </div>
 
-          <div className="w-full max-w-screen-lg mx-auto">
+          <div className="w-full max-w-screen-lg mx-auto relative">
             <Canvas canvasData={canvasData} />
+            {maxRoundsReached ? (
+              <EndOFGameScreen endOFGameScreenData={EndOFGameScreenData} />
+            ) : null}
           </div>
         </div>
 

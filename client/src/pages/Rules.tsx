@@ -3,13 +3,13 @@ import Header from "../components/Header";
 
 function Rules() {
   return (
-    <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-start text-white">
+    <main className="font-eurostile-normal   lg:h-screen flex flex-col justify-center items-start text-white">
       <Header />
       <div className="bg-transparant-blabk w-[90vw] rounded-r-[2rem] px-24 py-12">
         <h1 className="text-6xl">
           <span className="text-light-pink">ხელოვნიკი</span> (წესები და სხვანი)
         </h1>
-        <p>
+        <p className="">
           "ხელოვნიკი" არის ფერადი, მხიარული და თქვენი გულის მომპარავი თამაში,
           რომელიც ყველაზე მგელ ენაზეა შექმნილი.
         </p>

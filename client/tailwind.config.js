@@ -29,6 +29,9 @@ export default {
       fontFamily: {
         "ge-black": ["GEFontBlack", "sans-serif"],
         "ge-bold": ["GEFontBold", "sans-serif"],
+        "eurostile-bold": ["eurostile-bold", "sans-serif"],
+        "eurostile-demi": ["eurostile-demi", "sans-serif"],
+        "eurostile-normal": ["eurostile-normal", "sans-serif"],
       },
       gridTemplateColumns: {
         13: "repeat(13, minmax(0, 1fr))",

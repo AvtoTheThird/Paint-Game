@@ -46,6 +46,9 @@ export default {
         pink: "#FF70F5",
         "light-pink": "#FFA4E4",
       },
+      borderColor: {
+        gray: "#707070",
+      },
     },
   },
   plugins: [

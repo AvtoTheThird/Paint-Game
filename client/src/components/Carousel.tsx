@@ -250,6 +250,7 @@ const Carousel: React.FC<CarouselProps> = ({
       <div className="carousel-images">
         <AnimatePresence>
           <motion.img
+            className="bg-white"
             key={currentIndex}
             src={cachedImage || ""}
             initial={direction === "right" ? "hiddenRight" : "hiddenLeft"}
@@ -264,28 +265,24 @@ const Carousel: React.FC<CarouselProps> = ({
             className="left"
             onClick={handlePrevious}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="20"
-              viewBox="0 96 960 960"
-              width="20"
-            >
-              <path d="M400 976 0 576l400-400 56 57-343 343 343 343-56 57Z" />
-            </svg>
+            <img
+              className="w-[20px] h-7"
+              width={"20px"}
+              src="/left.png"
+              alt=""
+            />
           </motion.div>
           <motion.div
             whileHover={{ scale: 1.2 }}
             className="right"
             onClick={handleNext}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="20"
-              viewBox="0 96 960 960"
-              width="20"
-            >
-              <path d="m304 974-56-57 343-343-343-343 56-57 400 400-400 400Z" />
-            </svg>
+            <img
+              className="w-[20px] h-7 rotate-180"
+              width={"20px"}
+              src="/left.png"
+              alt=""
+            />
           </motion.div>
         </div>
       </div>

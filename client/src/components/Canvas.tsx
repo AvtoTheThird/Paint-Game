@@ -569,11 +569,11 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   return (
     <div
       style={{ aspectRatio: `${800} / ${600}` }}
-      className="flex flex-col items-center justify-center"
+      className="flex flex-col items-center justify-center gap-1"
     >
       <div className="relative w-full h-full">
         <canvas
-          className={`w-full h-full block border-2 border-black bg-white cursor-${cursorStyle}`}
+          className={`w-full h-full block border-[1px] border-slate-900 bg-white cursor-${cursorStyle}`}
           ref={canvasRef}
           onMouseDown={canDraw ? startDrawing : undefined}
           onMouseUp={canDraw ? stopDrawing : undefined}
@@ -595,7 +595,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       </div>
 
       {canDraw ? (
-        <div className="flex flex-wrap flex-row lg:gap-4 gap-x-3  bg-white lg:p-2 p-0 justify-center lg:w-full w-[95vw] relative shadow-lg rounded-b-md ">
+        <div className="flex flex-wrap flex-row lg:gap-4 gap-x-3 bg-white lg:p-2 p-0 justify-center lg:w-full w-[95vw] relative shadow-lg rounded-b-md ">
           <div className="relative grid grid-cols-13">
             {colorList.map((c) => (
               <div

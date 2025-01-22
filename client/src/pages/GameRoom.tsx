@@ -129,6 +129,7 @@ function GameRoom() {
       setMessage("");
       return;
     }
+
     if (!hasGuesed && !canDraw) {
       // console.log(`guess: ${message}`);
 
@@ -138,9 +139,8 @@ function GameRoom() {
         timeLeft: timeLeft,
       });
       setMessage("");
-
-      return;
     }
+
     if (message.trim() && roomId) {
       const messageData: Message = { roomId, message, userName };
       // console.log(messageData);

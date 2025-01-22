@@ -231,26 +231,26 @@ const Carousel: React.FC<CarouselProps> = ({
     );
   };
   return (
-    <div className="w-[250px] h-[337px] rounded-lg">
-      <label className="rocker">
-        <input
-          type="checkbox"
-          checked={gender === "female" ? false : true}
-          onChange={() => {
-            setGender(gender === "female" ? "male" : "female");
-            localStorage.setItem(
-              "gender",
-              gender === "female" ? "male" : "female"
-            );
-          }}
-        />
-        <span className="switch-left">კ</span>
-        <span className="switch-right">ქ</span>
-      </label>
+    <div className="w-[250px] h-[337px] rounded-lg  ">
+      <div
+        className={`gender-toggle ${gender == "female" ? "female" : "male"}`}
+        onClick={() => {
+          setGender(gender === "female" ? "male" : "female");
+          localStorage.setItem(
+            "gender",
+            gender === "female" ? "male" : "female"
+          );
+        }}
+      >
+        <input type="hidden" value={gender == "female" ? "1" : "0"} />
+        <div className="gender-toggle-slider"></div>
+        <div className="gender-toggle-female"></div>
+        <div className="gender-toggle-male"></div>
+      </div>
       <div className="carousel-images">
         <AnimatePresence>
           <motion.img
-            className="bg-white"
+            className="bg-slate-200 "
             key={currentIndex}
             src={cachedImage || ""}
             initial={direction === "right" ? "hiddenRight" : "hiddenLeft"}

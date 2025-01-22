@@ -158,142 +158,111 @@ body {
   padding: 0.5em 3.5em 0.5em 0.5em;
 }
 
-.mid {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-top: 1em;
-}
+/* ------------------------------------------------------------------------------------------------- */
 
-.rocker {
-  display: inline-block;
+.gender-toggle {
+  scale: 0.5;
+  margin: auto;
+  border: 0.4rem solid #e5e9ea;
+  height: 5rem;
+  width: 11.25rem;
+  border-radius: 5rem;
+  background: #fff;
   position: relative;
-
-  font-size: 15px;
-  font-weight: bold;
-  text-align: center;
-  text-transform: uppercase;
-  color: #888;
-  width: 7em;
-  height: 4em;
-  overflow: hidden;
-  border-bottom: 0.5em solid #eee;
-}
-
-.rocker-small {
-  font-size: 0.75em; /* Sizes the switch */
-  margin: 1em;
-}
-
-.rocker::before {
-  content: "";
-  position: absolute;
-  top: 0.5em;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #999;
-  border: 0.5em solid #eee;
-  border-bottom: 0;
-}
-
-.rocker input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.switch-left,
-.switch-right {
   cursor: pointer;
+}
+
+.gender-toggle-slider {
+  height: 5rem;
+  width: 5rem;
+  border-radius: 50%;
+  border: 0.4rem solid #e5e9ea;
   position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 2.5em;
-  width: 3em;
-  transition: 0.2s;
+  top: -0.4rem;
+  left: -0.4rem;
+  z-index: 5;
+  transition: all 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
+  transform-origin: right center;
 }
 
-.switch-left {
-  height: 2.4em;
-  width: 2.75em;
-  left: 0.85em;
-  bottom: 0.4em;
-  background-color: #ddd;
-  transform: rotate(15deg) skewX(15deg);
+.gender-toggle-female,
+.gender-toggle-male {
+  position: absolute;
 }
 
-.switch-right {
-  right: 0.5em;
-  bottom: 0;
-  background-color: #bd5757;
-  color: #fff;
-}
-
-.switch-left::before,
-.switch-right::before {
+.gender-toggle-female:before,
+.gender-toggle-female:after,
+.gender-toggle-male:before {
   content: "";
+  background: #e5e9ea;
+  display: block;
+  transition: background 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
   position: absolute;
-  width: 0.4em;
-  height: 2.45em;
-  bottom: -0.45em;
-  background-color: #ccc;
-  transform: skewY(-65deg);
 }
 
-.switch-left::before {
-  left: -0.4em;
+.gender-toggle-female {
+  left: 0;
+  top: 100%;
+  margin-top: 0.4rem;
 }
 
-.switch-right::before {
-  right: -0.375em;
-  background-color: transparent;
-  transform: skewY(65deg);
+.gender-toggle-female:before {
+  width: 0.4rem;
+  height: 2rem;
+  left: 1.9rem;
 }
 
-input:checked + .switch-left {
-  background-color: #0084d0;
-  color: #fff;
-  bottom: 0px;
-  left: 0.5em;
-  height: 2.5em;
-  width: 3em;
-  transform: rotate(0deg) skewX(0deg);
+.gender-toggle-female:after {
+  height: 0.4rem;
+  width: 2rem;
+  left: 0;
+  top: 0.9rem;
+  transform: translateX(1.15rem);
 }
 
-input:checked + .switch-left::before {
-  background-color: transparent;
-  width: 3.0833em;
+.gender-toggle-male {
+  border-top: 0.4rem solid #e5e9ea;
+  border-right: 0.4rem solid #e5e9ea;
+  width: 1.5rem;
+  height: 1.5rem;
+  right: -1.375rem;
+  bottom: 100%;
+  transition: border-color 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
 }
 
-input:checked + .switch-left + .switch-right {
-  background-color: #ddd;
-  color: #888;
-  bottom: 0.4em;
-  right: 0.8em;
-  height: 2.4em;
-  width: 2.75em;
-  transform: rotate(-15deg) skewX(-15deg);
+.gender-toggle-male:before {
+  width: 2.1rem;
+  left: -0.625rem;
+  height: 0.4rem;
+  bottom: 0.25rem;
+  transform: rotate(-45deg);
 }
 
-input:checked + .switch-left + .switch-right::before {
-  background-color: #ccc;
+/* Female state */
+.gender-toggle.female .gender-toggle-slider {
+  border-color: #f470a8;
+  background: #f8a0c9;
 }
 
-/* Keyboard Users */
-input:focus + .switch-left {
-  color: #333;
+.gender-toggle.female .gender-toggle-female:before,
+.gender-toggle.female .gender-toggle-female:after {
+  background: #f470a8;
+  transition-delay: 0.15s;
 }
 
-input:checked:focus + .switch-left {
-  color: #fff;
+/* Male state */
+.gender-toggle.male .gender-toggle-slider {
+  border-color: #a0c3dc;
+  background: #cde1ee;
+  transform: translateX(6.25rem);
 }
 
-input:focus + .switch-left + .switch-right {
-  color: #fff;
+.gender-toggle.male .gender-toggle-male {
+  border-color: #a0c3dc;
+  transition-delay: 0.15s;
 }
 
-input:checked:focus + .switch-left + .switch-right {
-  color: #333;
+.gender-toggle.male .gender-toggle-male:before {
+  background: #a0c3dc;
+  transition-delay: 0.15s;
 }

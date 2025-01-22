@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import socket from "../components/socket";
-import { adjectives, nouns } from "../components/words";
+import { adjectives, nouns, premade } from "../components/words";
 import Carousel from "../components/Carousel.tsx";
 import Header from "../components/Header.tsx";
 const Fimages = [
@@ -97,18 +97,27 @@ const LandingPage: React.FC = () => {
   }, [dataToBeSent]);
 
   function randomizeUserName() {
-    return (
-      adjectives[Math.floor(Math.random() * adjectives.length)] +
-      "_" +
-      nouns[Math.floor(Math.random() * nouns.length)]
-    );
+    if (Math.random() < 0.1) {
+      return premade[Math.floor(Math.random() * premade.length)];
+    } else {
+      return (
+        adjectives[Math.floor(Math.random() * adjectives.length)] +
+        "_" +
+        nouns[Math.floor(Math.random() * nouns.length)]
+      );
+    }
   }
   function generateRandomizedUserName() {
     let randomizeduUserName = "";
-    randomizeduUserName =
-      adjectives[Math.floor(Math.random() * adjectives.length)] +
-      "_" +
-      nouns[Math.floor(Math.random() * nouns.length)];
+    if (Math.random() < 0.1) {
+      randomizeduUserName = premade[Math.floor(Math.random() * premade.length)];
+    } else {
+      randomizeduUserName =
+        adjectives[Math.floor(Math.random() * adjectives.length)] +
+        "_" +
+        nouns[Math.floor(Math.random() * nouns.length)];
+    }
+
     setUserName(randomizeduUserName);
   }
   const handleImageChange = (newImage, indexed) => {

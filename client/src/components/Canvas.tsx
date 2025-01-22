@@ -97,28 +97,67 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     const startColor = getPixelColor(imageData, startX, startY);
     const fillColorRgb = hexToRgb(fillColor);
 
-    // Check if the fill color is the same as the start color
     if (colorMatch(startColor, fillColorRgb)) {
       console.log("Area is already filled with the selected color");
       return;
     }
 
-    const pixelsToCheck = [[startX, startY]];
-    const maxPixels = canvas.width * canvas.height;
-    let pixelsChecked = 0;
-    const maxIterations = Math.min(maxPixels, 200000); // Limit to prevent hanging
+    const stack: [number, number][] = [[startX, startY]];
+    const maxIterations = canvas.width * canvas.height; // Remove arbitrary limit
 
-    while (pixelsToCheck.length > 0 && pixelsChecked < maxIterations) {
-      const [x, y] = pixelsToCheck.pop()!;
+    const processed = new Uint8Array(canvas.width * canvas.height); // Track processed pixels
 
-      if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) continue;
+    while (stack.length > 0) {
+      const [x, y] = stack.pop()!;
+      const index = y * canvas.width + x;
 
-      if (colorMatch(getPixelColor(imageData, x, y), startColor)) {
-        setPixelColor(imageData, x, y, fillColorRgb);
-        pixelsChecked++;
+      // Skip out of bounds or already processed pixels
+      if (
+        x < 0 ||
+        x >= canvas.width ||
+        y < 0 ||
+        y >= canvas.height ||
+        processed[index]
+      )
+        continue;
 
-        // Use 4-way flood fill for better performance
-        pixelsToCheck.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      // Find west and east boundaries
+      let westX = x;
+      while (
+        westX >= 0 &&
+        colorMatch(getPixelColor(imageData, westX, y), startColor) &&
+        !processed[y * canvas.width + westX]
+      ) {
+        westX--;
+      }
+      westX++;
+
+      let eastX = x;
+      while (
+        eastX < canvas.width &&
+        colorMatch(getPixelColor(imageData, eastX, y), startColor) &&
+        !processed[y * canvas.width + eastX]
+      ) {
+        eastX++;
+      }
+      eastX--;
+
+      // Fill and mark as processed
+      for (let fillX = westX; fillX <= eastX; fillX++) {
+        setPixelColor(imageData, fillX, y, fillColorRgb);
+        processed[y * canvas.width + fillX] = 1;
+      }
+
+      // Check adjacent rows
+      for (const dy of [-1, 1]) {
+        const newY = y + dy;
+        if (newY < 0 || newY >= canvas.height) continue;
+
+        for (let fillX = westX; fillX <= eastX; fillX++) {
+          if (colorMatch(getPixelColor(imageData, fillX, newY), startColor)) {
+            stack.push([fillX, newY]);
+          }
+        }
       }
     }
 
@@ -128,34 +167,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     if (emitEvent) {
       socket.emit("fill", { roomId, startX, startY, fillColor });
     }
-
-    if (pixelsChecked >= maxIterations) {
-      console.log("Fill operation stopped to prevent hanging");
-    }
-  };
-  const downloadCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Create a new temporary canvas
-    const tempCanvas = document.createElement("canvas");
-    const context = tempCanvas.getContext("2d");
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-
-    // Fill the temp canvas with white background
-    if (!context) return;
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-    // Draw the original canvas content onto the temp canvas
-    context.drawImage(canvas, 0, 0);
-
-    // Download the temp canvas as an image
-    const link = document.createElement("a");
-    link.href = tempCanvas.toDataURL("image/png");
-    link.download = "firosmoney.png";
-    link.click();
   };
 
   const getPixelColor = (
@@ -192,6 +203,31 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
         ]
       : [0, 0, 0, 255];
   };
+  const downloadCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Create a new temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    const context = tempCanvas.getContext("2d");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+
+    // Fill the temp canvas with white background
+    if (!context) return;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    // Draw the original canvas content onto the temp canvas
+    context.drawImage(canvas, 0, 0);
+
+    // Download the temp canvas as an image
+    const link = document.createElement("a");
+    link.href = tempCanvas.toDataURL("image/png");
+    link.download = "firosmoney.png";
+    link.click();
+  };
+
   useEffect(() => {
     // Update cursor style when tool changes
     if (canDraw) {

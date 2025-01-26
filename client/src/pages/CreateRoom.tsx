@@ -25,7 +25,9 @@ function CreateRoom() {
 
     const dataToBeSent = { roomId: roomData.id, name: userName, avatarID };
 
-    socket.emit("join_room", dataToBeSent);
+    setTimeout(() => {
+      socket.emit("join_room", dataToBeSent);
+    }, 500);
 
     socket.on("userJoined", (data) => {
       console.log(data);

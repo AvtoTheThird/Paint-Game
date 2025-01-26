@@ -195,6 +195,7 @@ function GameRoom() {
 
       setJoinedUsers(data);
     });
+
     socket.on(
       "gameStarted",
       ({ currentDrawer, currentDrawerId, maxRounds, time }) => {

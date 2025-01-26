@@ -10,10 +10,18 @@ const server = http.createServer(app);
 const rooms = {};
 const publicRooms = {};
 let activeUsers = 0;
-app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
 const DEFAULT_SCORE = 10;
-const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"], credentials: false },
+
+app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
+// const io = new Server(server, {
+//   cors: { origin: "*",
+//      methods: ["GET", "POST"], credentials: false },
+// });
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
 });
 
 app.use(express.static("public"));

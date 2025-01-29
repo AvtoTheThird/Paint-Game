@@ -134,12 +134,12 @@ const getAvailablePublicRoom = async () => {
   try {
     // Fetch all keys matching the pattern "room:public-*"
     const roomKeys = await redisClient.client.keys("room:public-*");
-    console.log("Room keys:", roomKeys);
+    // console.log("Room keys:", roomKeys);
 
     // Check each room to find one with available slots
     for (const key of roomKeys) {
       const room = await redisClient.hgetall(key);
-      console.log("Room data from Redis:", room);
+      // console.log("Room data from Redis:", room);
 
       if (!room) {
         console.log("Room data is empty or invalid:", key);
@@ -256,6 +256,12 @@ const changeDrawer = async (roomId) => {
   room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
   room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
   room.currentWord = selectRandomWord();
+
+  room.users.map((user) => {
+    console.log(user);
+
+    user.hasGuessed = false;
+  });
 
   await saveRoom(roomId, room);
 
@@ -630,7 +636,7 @@ io.on("connection", (socket) => {
     const guesser = room.users.find((user) => user.id === socket.id);
     if (!guesser) return;
 
-    if (guess.toLowerCase() === room.currentWord?.toLowerCase()) {
+    if (guess === room.currentWord) {
       io.to(roomId).emit("correctGuess", {
         guesser: guesser.name,
         guesserId: guesser.id,
@@ -657,6 +663,7 @@ io.on("connection", (socket) => {
       const allGuessed = room.users.every(
         (user) => user.hasGuessed || user.id === room.currentDrawer
       );
+      // console.log(room.users);
 
       if (allGuessed) {
         await changeDrawer(roomId);
@@ -665,7 +672,11 @@ io.on("connection", (socket) => {
         io.to(roomId).emit("allGuessed");
       }
     } else {
-      io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
+      io.to(roomId).emit("message", {
+        message: guess,
+        userName: guesser.name,
+      });
+      // io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
     }
 
     if (room.currentRound >= room.maxRounds) {
@@ -686,65 +697,6 @@ io.on("connection", (socket) => {
       }
     }
   });
-  // socket.on("guess", ({ roomId, guess, timeLeft }) => {
-  //   const isPublic = roomId.startsWith("public-");
-  //   const room = isPublic ? publicRooms[roomId] : rooms[roomId];
-  //   if (!room) return;
-
-  //   const guesser = room.users.find((user) => user.id === socket.id);
-  //   if (!guesser) return;
-
-  //   if (guess.toLowerCase() === room.currentWord?.toLowerCase()) {
-  //     io.to(roomId).emit("correctGuess", {
-  //       guesser: guesser.name,
-  //       guesserId: guesser.id,
-  //       word: guess,
-  //     });
-  //     if (!guesser.hasGuessed)
-  //       io.to(roomId).emit("message", {
-  //         message: `${guesser.name}-მ გამოიცნო`,
-  //         userName: "game",
-  //       });
-
-  //     guesser.hasGuessed = true;
-  //     const score = calculateScore(room.time, timeLeft);
-  //     guesser.score += score;
-
-  //     const drawer = room.users.find((user) => user.id === room.currentDrawer);
-  //     if (drawer) drawer.score += Math.floor(0.2 * score);
-
-  //     io.to(roomId).emit("updateUserList", room.users);
-  //     const allGuessed = room.users.every(
-  //       (user) => user.hasGuessed || user.id === room.currentDrawer
-  //     );
-
-  //     if (allGuessed) {
-  //       changeDrawer(roomId, isPublic);
-  //       room.handsPlayed++;
-  //       room.users.forEach((user) => (user.hasGuessed = false));
-  //       io.to(roomId).emit("allGuessed");
-  //     }
-  //   } else {
-  //     io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
-  //   }
-
-  //   if (room.currentRound >= room.maxRounds) {
-  //     if (isPublic) {
-  //       room.currentRound = 0;
-  //       room.handsPlayed = 0;
-  //       room.users.forEach((user) => (user.score = 0));
-  //       io.to(roomId).emit("gameReset", {
-  //         message: "Game has been reset. Starting a new game!",
-  //       });
-  //       startGame(roomId, true);
-  //     } else {
-  //       io.to(roomId).emit("gameEnded", {
-  //         message: "Game has ended. Final scores:",
-  //         scores: room.users.map((u) => ({ name: u.name, score: u.score })),
-  //       });
-  //     }
-  //   }
-  // });
 
   socket.on("draw", ({ roomId, x0, y0, x1, y1, color }) =>
     io.to(roomId).emit("draw", { x0, y0, x1, y1, color })

@@ -124,21 +124,37 @@ function GameRoom() {
   }
   const sendMessage = (e: Event) => {
     e.preventDefault();
-
+    if (message.trim() === "") return;
     if (hasGuesed && message.replace(/\s/g, "") === guessedWord) {
+      setMessage("");
+      return;
+    }
+
+    if (canDraw && message === drawWord) {
+      interface Message {
+        roomId: string;
+        message: string;
+        userName: string;
+      }
+
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { roomid: roomId, message: "ნუ კარნახობ", userName: "code1" },
+      ]);
+
       setMessage("");
       return;
     }
 
     if (!hasGuesed && !canDraw) {
       // console.log(`guess: ${message}`);
-
       socket.emit("guess", {
         roomId: roomId,
         guess: message,
         timeLeft: timeLeft,
       });
       setMessage("");
+      return;
     }
 
     if (message.trim() && roomId) {
@@ -147,6 +163,7 @@ function GameRoom() {
 
       socket.emit("message", messageData);
       setMessage("");
+      return;
     }
 
     // console.log(roomData);
@@ -200,25 +217,21 @@ function GameRoom() {
       "gameStarted",
       ({ currentDrawer, currentDrawerId, maxRounds, time }) => {
         setMaxRoundsReached(false);
-
         setMaxRounds(maxRounds);
         setIsGameStarted(true);
         setTimeLeft(time);
         setCurrentDrawer(currentDrawer);
         setCurrentDrawerId(currentDrawerId);
+        if (currentDrawerId == location.state.userId) {
+          setCanDraw(true);
+        }
       }
     );
 
     socket.on(
       "newDrawer",
       ({ currentDrawer, currentDrawerId, secretWord, time, currentRound }) => {
-        // console.log("----gameroom-----");
-
-        // console.log(currentDrawer);
-        // console.log(currentDrawerId);
-        // console.log("----gameroom-----");
         setCurrentRound(currentRound);
-        // console.log(currentRound);
         setCurrentDrawerId(currentDrawerId);
 
         setTimeLeft(time);
@@ -226,8 +239,6 @@ function GameRoom() {
         setSecretWord(secretWord);
         setHasGuesed(false);
         setIsGamePaused(false);
-        // console.log(currentDrawerId, "------", userId);
-        // console.log(location.state.userId);
 
         if (currentDrawerId != location.state.userId) {
           setDrawWord(null);
@@ -539,10 +550,18 @@ function GameRoom() {
                     <div key={index}>
                       <p
                         className={`text-sm break-all ${
-                          msg.userName === "game" ? "bg-green-600" : ""
+                          msg.userName === "game"
+                            ? "bg-green-600"
+                            : msg.userName === "code1"
+                            ? "bg-red-600"
+                            : ""
                         }`}
                       >
-                        {msg.userName === "game" ? null : msg.userName + ":"}
+                        {msg.userName === "game"
+                          ? null
+                          : msg.userName === "code1"
+                          ? null
+                          : `${msg.userName}: `}
                         {msg.message}
                       </p>
                       <hr />

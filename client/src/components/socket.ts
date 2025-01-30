@@ -2,7 +2,7 @@
 import { io } from "socket.io-client";
 
 const socket = io(
-  "https://7974-2a0b-6204-4e3-1500-bcf7-4577-3379-af8f.ngrok-free.app",
+  "https://7d3f-2a0b-6204-4e3-1500-793c-1f22-3860-38a9.ngrok-free.app",
   {
     transports: ["websocket"], // Force WebSocket transport
     secure: true, // Use HTTPS

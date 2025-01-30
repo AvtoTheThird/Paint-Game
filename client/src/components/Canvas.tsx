@@ -369,7 +369,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setMaxRoundsReached(true);
     });
     socket.on("requestCanvasDataFromClient", (roomId, id) => {
-      // console.log("recived requestCanvasData", id);
+      console.log("recived requestCanvasData", id);
       const canvas = canvasRef.current;
       if (!canvas) return;
 

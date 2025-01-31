@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.tsx";
+import Links from "../components/Links.tsx";
 // import { arsebiti, zedsartavi } from "../components/words";
 function CreateRoom() {
   const navigate = useNavigate();
@@ -62,6 +63,10 @@ function CreateRoom() {
   //   setRoomData({ ...roomData, id: password });
   //   console.log(roomData);
   // }
+
+  const goBack = () => {
+    navigate("/");
+  };
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       <Header />
@@ -99,7 +104,7 @@ function CreateRoom() {
                 <button
                   // onClick={randomizePassword}
                   type="button"
-                  className=" bg-blue-500 text-white px-2  rounded-md"
+                  className=" bg-blue-500 text-white px-2  rounded-md hidden"
                 >
                   R
                 </button>
@@ -172,15 +177,23 @@ function CreateRoom() {
               />
             </div>
           </div>
-
-          <button
-            type="submit"
-            className=" border-solid bg-button-background-1 border-black border-[1px]  text-[36px]   text-white rounded-[30px] lg:w-[200px] lg:h-[80px]  drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]"
-          >
-            თამაში
-          </button>
+          <div className="flex gap-10">
+            <button
+              className=" border-solid bg-button-background-1 border-black border-[1px]  text-[36px]   text-white rounded-[30px] lg:w-[200px] lg:h-[80px]  drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)] transition transform active:scale-95 active:shadow-[inset_4px_4px_4px_rgba(0,0,0,0.4)]"
+              onClick={goBack}
+            >
+              უკან
+            </button>
+            <button
+              type="submit"
+              className=" border-solid bg-button-background-1 border-black border-[1px]  text-[36px]   text-white rounded-[30px] lg:w-[200px] lg:h-[80px]  drop-shadow-[-4px_4px_0_rgba(0,0,0,0.2)]"
+            >
+              თამაში
+            </button>
+          </div>
         </form>
       </div>
+      <Links />
     </main>
   );
 }

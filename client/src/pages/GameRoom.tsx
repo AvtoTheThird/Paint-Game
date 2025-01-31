@@ -4,7 +4,7 @@ import socket from "../components/socket";
 import confetti from "canvas-confetti";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-
+import Links from "../components/Links";
 import Correct_Guess from "/sounds/Correct_Guess.mp3";
 import End_Of_Game from "/sounds/End_Of_Game.mp3";
 import Hand_Start from "/sounds/Hand_Start.mp3";
@@ -330,7 +330,6 @@ function GameRoom() {
 
   return (
     <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden relative">
-      {" "}
       <header className="group fixed top-0 w-full z-50 h-[80px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
         <div className="container mx-auto    h-full flex items-center justify-evenly">
           <div className="lg:w-1/3 lg:block hidden"></div>
@@ -366,7 +365,7 @@ function GameRoom() {
         </div>
       </header>
       <div className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 mt-0 ">
-        <div className="bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden h-[680px] w-[300px] 2xl:w-[320px] overflow-y-auto text-center mb-auto mt-2">
+        <div className="bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden h-[679px] w-[300px] 2xl:w-[320px] overflow-y-auto text-center mb-auto mt-2">
           {Object.values(joinedUsers)
             .sort((a, b) => b.score - a.score)
             .map((user: any, index: number) => (
@@ -436,7 +435,7 @@ function GameRoom() {
                 onClick={() => {
                   startGame();
                 }}
-                className="  bg-light-pink w-[50px] h-[50px] text-md text-white rounded-[5px] "
+                className="  bg-light-pink w-[50px] h-[50px] text-md text-white rounded-[5px] border-[1px] border-gray"
               >
                 <img
                   alt="დაიწყე თამაში"
@@ -533,7 +532,7 @@ function GameRoom() {
           </div>
           <div
             id="chat"
-            className="flex-grow lg:flex-grow-0 flex flex-col lg:h-[682px] lg:w-[300px] justify-evenly items-center bg-light-pink border-gray border-[1px] lg:mr-8 rounded-[3px]  2xl:w-[320px] pb-5 "
+            className=" flex-grow lg:flex-grow-0 flex flex-col lg:h-[679px] lg:w-[300px] justify-evenly items-center bg-light-pink border-gray border-[1px] lg:mr-8 rounded-[3px]  2xl:w-[320px] pb-5 "
           >
             <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
               <img
@@ -544,7 +543,10 @@ function GameRoom() {
               />
 
               <div className="bg-white border-gray border-[1px] lg:h-[561px] w-full lg:w-[295px] h-[30vh] m-2 rounded-[3px]  flex flex-col overflow-hidden">
-                <div className="overflow-y-auto h-full p-2 flex flex-col">
+                <div
+                  className="overflow-y-auto h-full p-2 flex flex-col "
+                  id="style-2"
+                >
                   <div className="flex-grow"></div>
                   {messages.map((msg, index) => (
                     <div key={index}>
@@ -595,6 +597,7 @@ function GameRoom() {
       <div className="fixed bottom-2 left-2 bg-black bg-opacity-70 text-white text-sm px-3 py-1 rounded z-50">
         პაროლი: <span className="text-light-pink">{roomId}</span>
       </div>
+      <Links />
     </main>
   );
 }

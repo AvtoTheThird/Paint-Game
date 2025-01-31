@@ -5,6 +5,7 @@ import socket from "../components/socket";
 import { adjectives, nouns, premade } from "../components/words";
 import Carousel from "../components/Carousel.tsx";
 import Header from "../components/Header.tsx";
+import Links from "../components/Links.tsx";
 const Fimages = [
   "/avatars/F/F1",
   "/avatars/F/F2",
@@ -213,6 +214,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <Links />
     </main>
   );
 };

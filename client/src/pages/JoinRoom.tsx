@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import socket from "../components/socket";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Header from "../components/Header.tsx";
+import Links from "../components/Links.tsx";
 // import { nouns, adjectives } from "../components/words";
 
 function CreateRoom() {
@@ -98,6 +99,7 @@ function CreateRoom() {
           </div>
         </div>
       </div>
+      <Links />
     </main>
   );
 }

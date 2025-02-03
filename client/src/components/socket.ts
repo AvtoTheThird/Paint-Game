@@ -1,7 +1,7 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("https://paint-game.onrender.com", {
+const socket = io("https://f927-149-3-44-48.ngrok-free.app", {
   transports: ["websocket"], // Force WebSocket transport
   secure: true, // Use HTTPS
   reconnection: true,

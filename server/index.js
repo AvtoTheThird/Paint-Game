@@ -19,7 +19,7 @@ app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
 // });
 const io = require("socket.io")(server, {
   cors: {
-    origin: "https://your-netlify-app.netlify.app",
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });

@@ -408,6 +408,18 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("fill");
     };
   }, [socket, userId]);
+  socket.on("newDrawer", (data) => {
+    setIsGamePaused(false);
+    console.log("new drawer");
+    setLineWidth(5);
+    setHistory([]);
+    clearCanvas();
+    if (data.currentDrawerId !== userIdRef.current) {
+      setCanDraw(false);
+    } else {
+      setCanDraw(true);
+    }
+  });
   socket.on("gameStarted", () => {
     setIsGamePaused(false);
     setMaxRoundsReached(false);

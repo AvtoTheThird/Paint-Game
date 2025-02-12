@@ -342,7 +342,18 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("newLineWidth", (data) => {
       setLineWidth(data.newLineWidth);
     });
-    socket.on("newDrawer", () => {
+
+    socket.on("newDrawer", (data) => {
+      setIsGamePaused(false);
+      console.log("new drawer");
+      setLineWidth(5);
+      setHistory([]);
+      clearCanvas();
+      if (data.currentDrawerId !== userIdRef.current) {
+        setCanDraw(false);
+      } else {
+        setCanDraw(true);
+      }
       const Hand_Start_AUDIO = new Audio(Hand_Start);
       Hand_Start_AUDIO.play().catch((err) => console.log(err));
       Hand_Start_AUDIO.onended = () => {
@@ -396,7 +407,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("newDrawer");
       socket.off("fill");
     };
-  }, [userId]);
+  }, [socket, userId]);
   socket.on("gameStarted", () => {
     setIsGamePaused(false);
     setMaxRoundsReached(false);
@@ -405,18 +416,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   socket.on("MaxRoundsReached", () => {
     setMaxRoundsReached(true);
   });
-  socket.on("newDrawer", (data) => {
-    setIsGamePaused(false);
-    console.log("new drawer");
-    setLineWidth(5);
-    setHistory([]);
-    clearCanvas();
-    if (data.currentDrawerId !== userIdRef.current) {
-      setCanDraw(false);
-    } else {
-      setCanDraw(true);
-    }
-  });
+
   socket.on("SendCanvasDataToClient", (data) => {
     const base64Image = data.base64Image;
     setCurrentDrawer(data.currentDrawer);

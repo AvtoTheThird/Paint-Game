@@ -184,7 +184,7 @@ input {
   top: -0.4rem;
   left: -0.4rem;
   z-index: 5;
-  transition: all 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
+  transition: all 0.1s cubic-bezier(1, 0.03, 0.92, 0.96);
   transform-origin: right center;
 }
 
@@ -199,7 +199,7 @@ input {
   content: "";
   background: #e5e9ea;
   display: block;
-  transition: background 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
+  transition: background 0.1s cubic-bezier(1, 0.03, 0.92, 0.96);
   position: absolute;
 }
 
@@ -230,7 +230,7 @@ input {
   height: 1.5rem;
   right: -1.375rem;
   bottom: 100%;
-  transition: border-color 0.3s cubic-bezier(1, 0.03, 0.92, 0.96);
+  transition: border-color 0.1s cubic-bezier(1, 0.03, 0.92, 0.96);
 }
 
 .gender-toggle-male:before {
@@ -243,30 +243,30 @@ input {
 
 /* Female state */
 .gender-toggle.female .gender-toggle-slider {
-  border-color: #f470a8;
-  background: #f8a0c9;
+  border-color: #dfdfe6;
+  background: #b20088;
 }
 
 .gender-toggle.female .gender-toggle-female:before,
 .gender-toggle.female .gender-toggle-female:after {
-  background: #f470a8;
+  /* background: #f470a8; */
   transition-delay: 0.15s;
 }
 
 /* Male state */
 .gender-toggle.male .gender-toggle-slider {
-  border-color: #a0c3dc;
-  background: #cde1ee;
+  border-color: #dfdfe6;
+  background: #4403ca;
   transform: translateX(6.25rem);
 }
 
 .gender-toggle.male .gender-toggle-male {
-  border-color: #a0c3dc;
+  border-color: #dfdfe6;
   transition-delay: 0.15s;
 }
 
 .gender-toggle.male .gender-toggle-male:before {
-  background: #a0c3dc;
+  background: #dfdfe6;
   transition-delay: 0.15s;
 }
 /* SCROLBAR */
@@ -285,5 +285,5 @@ input {
 #style-2::-webkit-scrollbar-thumb {
   border-radius: 10px;
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  background-color: #d62994;
+  background-color: #b20088;
 }

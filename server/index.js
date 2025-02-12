@@ -613,7 +613,7 @@ io.on("connection", (socket) => {
 const PORT = 3000;
 (async () => {
   await flushAllRedisData(); // Clean up Redis data
-  server.listen(PORT, () => {
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
     createPublicRoom(); // Create an initial public room
   });

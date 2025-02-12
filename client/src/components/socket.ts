@@ -1,7 +1,7 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("http://xelovniki.zapto.org", {
+const socket = io("https://xelovniki.zapto.org", {
   transports: ["websocket"], // Force WebSocket transport
   secure: true, // Use HTTPS
   reconnection: true,

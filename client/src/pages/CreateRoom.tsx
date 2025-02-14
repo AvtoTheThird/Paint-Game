@@ -91,6 +91,9 @@ function CreateRoom() {
                       "სახელი უნდა იყოს ცოტა დიდი."
                     );
                   }}
+                  onInput={(e) => {
+                    (e.target as HTMLInputElement).setCustomValidity("");
+                  }}
                   required
                   className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"
                   type="text"
@@ -116,6 +119,9 @@ function CreateRoom() {
                   (e.target as HTMLInputElement).setCustomValidity(
                     "მაქსიმუმ 16, მინიმუმ 2."
                   );
+                }}
+                onInput={(e) => {
+                  (e.target as HTMLInputElement).setCustomValidity("");
                 }}
                 required
                 className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"
@@ -143,6 +149,9 @@ function CreateRoom() {
                     "მაქსიმუმ 300 წამი, მინიმუმ 20 წამი."
                   );
                 }}
+                onInput={(e) => {
+                  (e.target as HTMLInputElement).setCustomValidity("");
+                }}
                 required
                 className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"
                 type="number"
@@ -168,6 +177,9 @@ function CreateRoom() {
                   (e.target as HTMLInputElement).setCustomValidity(
                     "მაქსიმუმ 8 რაუნდი, მინიმუმ 1 რაუნდი."
                   );
+                }}
+                onInput={(e) => {
+                  (e.target as HTMLInputElement).setCustomValidity("");
                 }}
                 required
                 className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"

@@ -74,6 +74,7 @@ function CreateRoom() {
       <div className="h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  ">
         <form
           onSubmit={createRoom}
+          autoComplete="off"
           className=" relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[750px] lg:h-[550px] px-5 border-[2px] border-red-600 border-dotted shadow-[-5px_5px_3px_0px_rgba(109,40,217)]"
         >
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 left-4 border-[1px] border-black "></div>
@@ -87,6 +88,13 @@ function CreateRoom() {
               </p>
               <input
                 required
+                minLength={3}
+                onInvalid={(e) => {
+                  (e.target as HTMLInputElement).setCustomValidity(
+                    "სახელი უნდა იყოს ცოტა დიდი."
+                  );
+                }}
+                maxLength={15}
                 className="h-[50px] border-2 border-solid border-red-800	rounded-[15px] w-[350px]"
                 type="text"
                 name="roomName"

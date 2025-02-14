@@ -13,7 +13,6 @@ import Player_Join from "/sounds/Player_Join.mp3";
 import Positive_Hand_Finish from "/sounds/Positive_Hand_Finish.mp3";
 import Tick_Clock from "/sounds/Tick_Clock.mp3";
 import EndOFGameScreen from "../components/EndOfGameScreen";
-// import React from "react";
 interface Message {
   roomId: string;
   message: string;
@@ -27,7 +26,6 @@ interface JoinedUsers {
   id: string;
   name: string;
   roomId: string;
-  roomName: string;
   score: number;
   hasGuessed: boolean;
 }
@@ -42,7 +40,6 @@ function GameRoom() {
   const [userName, setUserName] = useState<string>("");
   const [messages, setMessages] = useState<RecivedMessage[]>([]);
   const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
-  // const [roomName, setRoomName] = useState<string>("");
   const [drawWord, setDrawWord] = useState<never>();
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);

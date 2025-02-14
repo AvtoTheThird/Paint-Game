@@ -129,18 +129,15 @@ const LandingPage: React.FC = () => {
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
       <Header />
-      <div className="my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
-        {/* <div className=" relative flex flex-col border-[2px] border-red-600 border-dotted  items-center justify-between bg-bg-pink w-[95vw] lg:w-[780px] lg:h-[580px]   rounded-3xl lg:p-10  p-5 shadow-[-5px_5px_0px_0px_rgba(109,40,217)]"> */}
-
-        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5  shadow-lg ">
-          <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center">
-            {/*<div className="w-[250px] h-[337px] bg-white rounded-lg"></div>*/}
+      <div className="xl:scale-90 2xl:scale-100 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
+        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10  p-5  shadow-lg ">
+          <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center gap-16">
             <Carousel
-              // images={(Fimages, Mimages)}
               Fimages={Fimages}
               Mimages={Mimages}
               onImageChange={handleImageChange}
             />
+
             <div className="flex flex-col  items-center gap-3">
               <button
                 onClick={handleJoinPublicRoom}

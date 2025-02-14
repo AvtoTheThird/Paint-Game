@@ -266,7 +266,7 @@ const Carousel: React.FC<CarouselProps> = ({
             onClick={handlePrevious}
           >
             <img
-              className="w-[20px] h-7"
+              className="w-[20px] h-7 rotate-180"
               width={"20px"}
               src="/left.png"
               alt=""
@@ -278,7 +278,7 @@ const Carousel: React.FC<CarouselProps> = ({
             onClick={handleNext}
           >
             <img
-              className="w-[20px] h-7 rotate-180"
+              className="w-[20px] h-7 "
               width={"20px"}
               src="/left.png"
               alt=""

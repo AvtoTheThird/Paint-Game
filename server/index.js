@@ -70,7 +70,6 @@ const getRoom = async (roomId) => {
 const saveRoom = async (roomId, roomData) => {
   try {
     await redisClient.hset(`room:${roomId}`, {
-      name: roomData.name,
       maxPlayers: roomData.maxPlayers.toString(),
       maxRounds: roomData.maxRounds.toString(),
       users: JSON.stringify(roomData.users), // Convert array to string
@@ -339,7 +338,6 @@ io.on("connection", (socket) => {
     const userData = {
       id: socket.id,
       name,
-      roomName: room.name,
       roomId,
       score: 0,
       hasGuessed: false,
@@ -357,39 +355,34 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("userJoined", userData);
     socket.emit("joined_public_room", {
       roomId,
-      roomName: room.name,
       userId: socket.id,
       name,
     });
   });
 
-  socket.on(
-    "create_room",
-    async ({ name, id, maxPlayers, time, maxRounds }) => {
-      const existingRoom = await getRoom(id);
-      if (existingRoom) {
-        return socket.emit("roomError", { error: "Room ID already exists." });
-      }
-
-      const roomData = {
-        name,
-        maxPlayers,
-        maxRounds,
-        users: [],
-        time,
-        currentDrawerIndex: 0,
-        currentRound: 0,
-        handsPlayed: 0,
-        currentDrawer: null,
-        currentWord: null,
-        isGameStarted: false,
-        isPublic: false,
-      };
-
-      await saveRoom(id, roomData);
-      socket.emit("roomCreated", { id, name, maxPlayers, time });
+  socket.on("create_room", async ({ id, maxPlayers, time, maxRounds }) => {
+    const existingRoom = await getRoom(id);
+    if (existingRoom) {
+      return socket.emit("roomError", { error: "Room ID already exists." });
     }
-  );
+
+    const roomData = {
+      maxPlayers,
+      maxRounds,
+      users: [],
+      time,
+      currentDrawerIndex: 0,
+      currentRound: 0,
+      handsPlayed: 0,
+      currentDrawer: null,
+      currentWord: null,
+      isGameStarted: false,
+      isPublic: false,
+    };
+
+    await saveRoom(id, roomData);
+    socket.emit("roomCreated", { id, maxPlayers, time });
+  });
 
   // Modified join_room handler
   socket.on("join_room", async ({ roomId, name, avatarID }) => {
@@ -406,7 +399,7 @@ io.on("connection", (socket) => {
     const userData = {
       id: socket.id,
       name,
-      roomName: room.name,
+
       roomId,
       score: 0,
       hasGuessed: false,

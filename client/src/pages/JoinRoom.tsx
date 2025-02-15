@@ -10,7 +10,6 @@ function CreateRoom() {
   const [userName, setUserName] = useState<string>("");
   const [roomData, setRoomData] = useState<any>({});
   const [avatarID, setAvatarID] = useState<string>("");
-  const [roomName, setRoomName] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +35,6 @@ function CreateRoom() {
       socket.on("userJoined", (data) => {
         console.log(data);
         setUserId(data.id);
-        setRoomName(data.roomName);
         setRoomData({ ...roomData, id: data.roomId });
       });
       // console.log(roomData);

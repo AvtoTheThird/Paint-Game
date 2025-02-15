@@ -28,6 +28,25 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const userIdRef = useRef<string>(""); // Create refs for userId and roomId
   const roomIdRef = useRef<string>("");
   // console.log(canvasData);
+  const [showSlider, setShowSlider] = useState(false);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+
+  // Handle clicks outside the slider to close it
+  useEffect(() => {
+    function handleClickOutside(event: any) {
+      if (sliderRef.current && !sliderRef.current.contains(event.target)) {
+        setShowSlider(false);
+      }
+    }
+
+    if (showSlider) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showSlider]);
 
   const colorList = [
     "FFFFFF",
@@ -430,6 +449,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   });
 
   socket.on("SendCanvasDataToClient", (data) => {
+    console.log("AAAAAAAAAAAAASendCanvasDataToClient");
+
     const base64Image = data.base64Image;
     setCurrentDrawer(data.currentDrawer);
     const canvas = canvasRef.current;
@@ -648,38 +669,71 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
             {colorList.map((c) => (
               <div
                 key={c}
-                className="lg:w-6 lg:h-6 w-4 h-4 border cursor-pointer hover:border-black"
+                className="lg:w-6 lg:h-6 w-4 h-4 xl:h-4 xl:w-4 border cursor-pointer hover:border-black"
                 style={{ backgroundColor: `#${c}` }}
                 onClick={() => handleColorClick(c)}
               ></div>
             ))}
           </div>
           <button onClick={clearCanvas}>
-            <img alt="clear canvas" width="30px" src="/trash.png" />
+            <img
+              alt="clear canvas"
+              className="w-[30px] xl:w-[20px]"
+              src="/trash.png"
+            />
           </button>
-
           <button onClick={undoLastAction} disabled={history.length === 0}>
-            <img alt="undo" width="30px" src="/undo.png" />
+            <img alt="undo" className="w-[30px] xl:w-[20px]" src="/undo.png" />
           </button>
           <button
             onClick={() => setTool("draw")}
             className={tool === "draw" ? "text-blue-800" : "text-black"}
           >
-            <img alt="draw tool" width="30px" src="/draw.png" />
+            <img
+              alt="draw tool"
+              className="w-[30px] xl:w-[20px]"
+              src="/draw.png"
+            />
           </button>
           <button
             onClick={() => setTool("fill")}
             className={tool === "fill" ? "text-blue-800" : "text-black"}
           >
-            <img alt="fill tool" width="30px" src="/fill.png" />
+            <img
+              alt="fill tool"
+              className="w-[30px] xl:w-[20px]"
+              src="/fill.png"
+            />
           </button>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            value={lineWidth}
-            onChange={handleLineWithChange}
-          />
+          <button onClick={() => setShowSlider((prev) => !prev)}>
+            <img
+              src="/line-width.webp"
+              className="w-[30px] xl:w-[20px]"
+              alt=""
+            />{" "}
+          </button>
+
+          {showSlider && (
+            <div
+              ref={sliderRef}
+              style={{
+                right: "10px",
+                bottom: "50px",
+                position: "absolute",
+                background: "#fff",
+                padding: "10px",
+                boxShadow: "0 0 10px rgba(0,0,0,0.2)",
+              }}
+            >
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={lineWidth}
+                onChange={handleLineWithChange}
+              />
+            </div>
+          )}
         </div>
       ) : null}
     </div>

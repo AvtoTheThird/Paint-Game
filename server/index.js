@@ -1,6 +1,5 @@
 const express = require("express");
 const http = require("http");
-const { Server } = require("socket.io");
 const cors = require("cors");
 const redisClient = require("./utils/redisClient");
 const words = require("./words");
@@ -319,7 +318,7 @@ const startTurnTimer = async (roomId, isPublic = false) => {
   }
 };
 
-const handleLateJoin = async (roomId, id, isPublic = false) => {
+const handleLateJoin = async (roomId, id) => {
   // console.log("gotta handleLateJoin");
   const room = await getRoom(roomId);
 
@@ -349,7 +348,7 @@ io.on("connection", (socket) => {
 
     socket.join(roomId);
     if (room.users.length >= 2 && !room.isGameStarted) await startGame(roomId);
-
+    if (room.isGameStarted) await handleLateJoin(roomId, socket.id);
     setTimeout(() => io.to(roomId).emit("updateUserList", room.users), 500);
 
     io.to(roomId).emit("userJoined", userData);
@@ -552,7 +551,7 @@ io.on("connection", (socket) => {
     io.to(id).emit("SendCanvasDataToClient", dataForClient);
   });
   socket.on("kickPlayer", async ({ roomId, playerId }) => {
-    const room = rooms[roomId];
+    const room = await getRoom(roomId);
     if (!room) return;
 
     const playerIndex = room.users.findIndex((user) => user.id === playerId);

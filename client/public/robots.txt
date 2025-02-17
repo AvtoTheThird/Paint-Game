@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://khelovniki.com/sitemap.xml

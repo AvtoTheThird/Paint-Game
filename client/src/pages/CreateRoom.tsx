@@ -3,7 +3,6 @@ import socket from "../components/socket";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header.tsx";
 import Links from "../components/Links.tsx";
-// import { arsebiti, zedsartavi } from "../components/words";
 function CreateRoom() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,11 +16,9 @@ function CreateRoom() {
     setUserName(location.state.userName);
     setAvatarID(location.state.avatarID);
   }, []);
-  console.log(location.state);
 
   const createRoom = (event: any) => {
     event.preventDefault();
-
     socket.emit("create_room", { ...roomData });
 
     const dataToBeSent = { roomId: roomData.id, name: userName, avatarID };
@@ -59,12 +56,11 @@ function CreateRoom() {
   return (
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       <Header />
-
       <div className="h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  ">
         <form
           onSubmit={createRoom}
           autoComplete="off"
-          className="xl:scale-90 2xl:scale-100 relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[750px] lg:h-[550px] px-5 border-[2px] border-2 border-black "
+          className="xl:scale-90 2xl:scale-100 relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[750px] lg:h-[550px] px-5  border-2 border-black "
         >
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 left-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 right-4 border-[1px] border-black "></div>

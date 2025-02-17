@@ -3,7 +3,7 @@ import Canvas from "../components/Canvas";
 import socket from "../components/socket";
 import confetti from "canvas-confetti";
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Links from "../components/Links";
 import Correct_Guess from "/sounds/Correct_Guess.mp3";
 import End_Of_Game from "/sounds/End_Of_Game.mp3";
@@ -13,6 +13,7 @@ import Player_Join from "/sounds/Player_Join.mp3";
 import Positive_Hand_Finish from "/sounds/Positive_Hand_Finish.mp3";
 import Tick_Clock from "/sounds/Tick_Clock.mp3";
 import EndOFGameScreen from "../components/EndOfGameScreen";
+
 interface Message {
   roomId: string;
   message: string;
@@ -59,6 +60,7 @@ function GameRoom() {
   const [maxRoundsReached, setMaxRoundsReached] = useState<boolean>(false);
 
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
 
   const location = useLocation();
   //   const [roomData, setRoomData] = useState<any>(location.state?.roomData || {});
@@ -114,9 +116,6 @@ function GameRoom() {
     socket.emit("skipTurn", { roomId });
   }
   function kickPlayer(playerId: string) {
-    // console.log(roomId, playerId);
-    // console.log(joinedUsers);
-
     socket.emit("kickPlayer", { roomId, playerId });
   }
   const sendMessage = (e: Event) => {
@@ -257,7 +256,10 @@ function GameRoom() {
     socket.on("newWord", (word) => {
       setDrawWord(word);
     });
-
+    socket.on("youWereKicked", () => {
+      navigate("/", { replace: true });
+      window.location.reload();
+    });
     socket.on("correctGuess", ({ guesser, guesserId, word }) => {
       if (guesserId === userId) {
         setHasGuesed(true);
@@ -361,8 +363,8 @@ function GameRoom() {
           </div>
         </div>
       </header>
-      <div className="  lg:w-[100vw] lg:h-[760px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 mt-0 ">
-        <div className="bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden h-[679px] w-[300px] 2xl:w-[320px] overflow-y-auto text-center mb-auto mt-2">
+      <div className="  lg:w-[100vw] 2xl:h-[760px] xl:h-[550px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 xl:mt-16 mt-0 ">
+        <div className="  bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden 2xl:h-[679px] xl:h-[484px]  w-[300px] 2xl:w-[320px] overflow-y-auto text-center mb-auto mt-2">
           {Object.values(joinedUsers)
             .sort((a, b) => b.score - a.score)
             .map((user: any, index: number) => (
@@ -408,7 +410,7 @@ function GameRoom() {
         {/* shuala plani */}
 
         <div className="  flex flex-col justify-center items-center mb-auto mt-2  gap-1">
-          <div className="flex bg-white lg:h-[74px] w-full  rounded-[3px] justify-between items-center px-5  border-[1px] border-gray">
+          <div className="flex bg-white 2xl:h-[74px] xl:h-[55px] w-full  rounded-[3px] justify-between items-center px-5  border-[1px] border-gray">
             {isGameStarted ? (
               <div className="flex  gap-3">
                 <span className="bg-light-pink font-bold text-3xl rounded-[5px] h-[50px] w-[50px] flex items-center justify-center text-white text-shadow ">
@@ -461,7 +463,7 @@ function GameRoom() {
             ) : null}
           </div>
 
-          <div className="w-full max-w-screen-lg mx-auto relative">
+          <div className="w-full max-w-screen-lg mx-auto relative xl:w-[566px] 2xl:w-[800px]">
             <Canvas canvasData={canvasData} />
             {maxRoundsReached ? (
               <EndOFGameScreen endOFGameScreenData={EndOFGameScreenData} />
@@ -529,7 +531,7 @@ function GameRoom() {
           </div>
           <div
             id="chat"
-            className=" flex-grow lg:flex-grow-0 flex flex-col lg:h-[679px] lg:w-[300px] justify-evenly items-center bg-light-pink border-gray border-[1px] lg:mr-8 rounded-[3px]  2xl:w-[320px] pb-5 "
+            className=" flex-grow lg:flex-grow-0 flex flex-col 2xl:h-[679px] xl:h-[484px] lg:w-[300px] justify-evenly items-center bg-light-pink border-gray border-[1px] lg:mr-8 rounded-[3px]  2xl:w-[320px] pb-5 "
           >
             <div className="lg:w-[280px] w-[40vw] lg:h-[80vh] h-[30vh] flex items-center justify-evenly flex-col">
               <img
@@ -539,7 +541,7 @@ function GameRoom() {
                 alt={".."}
               />
 
-              <div className="bg-white border-gray border-[1px] lg:h-[561px] w-full lg:w-[295px] h-[30vh] m-2 rounded-[3px]  flex flex-col overflow-hidden">
+              <div className="bg-white border-gray border-[1px] 2xl:h-[561px] xl:h-[380px] w-full lg:w-[295px] h-[30vh] m-2 rounded-[3px]  flex flex-col overflow-hidden">
                 <div
                   className="overflow-y-auto h-full p-2 flex flex-col "
                   id="style-2"

@@ -8,6 +8,7 @@ interface CounterState {
 }
 
 const Counter: React.FC = () => {
+  const [activeUsers, setActiveUsers] = useState<number>(0);
   const [state, setState] = useState<CounterState>({
     number: 0, // Initial number
     shuffle: true, // Shuffle state to trigger animation
@@ -24,19 +25,24 @@ const Counter: React.FC = () => {
     fetch("/activeUsers")
       .then((res) => res.json())
       .then((data) => {
-        setState((prevState) => ({
-          number: data.activeUsers,
-          shuffle: !prevState.shuffle,
-        }));
+        setActiveUsers(data.activeUsers);
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+        // setState(
+        //   (prevState) => ({
+        //   number: data.activeUsers,
+        //   shuffle: !prevState.shuffle,
+        // }));
       })
       .catch(console.error);
 
     // Listen for active users updates
     socket.on("activeUsersUpdate", ({ activeUsers }) => {
-      setState((prevState) => ({
-        number: activeUsers,
-        shuffle: !prevState.shuffle,
-      }));
+      setActiveUsers(activeUsers);
+      // setState((prevState) => ({
+      //   number: activeUsers,
+      //   shuffle: !prevState.shuffle,
+      // }));
     });
 
     // Cleanup socket listener
@@ -59,7 +65,8 @@ const Counter: React.FC = () => {
 
   return (
     <div>
-      <div className="flipClock">
+      <span className="text-white text-3xl"> {activeUsers}</span>
+      {/* <div className="flipClock">
         <div className="flipUnitContainer">
           <div className="upperCard">
             <span>{currentDigit}</span>
@@ -76,7 +83,7 @@ const Counter: React.FC = () => {
         </div>
       </div>
 
-      <button onClick={incrementNumber}>Increment</button>
+      <button onClick={incrementNumber}>Increment</button> */}
     </div>
   );
 };

@@ -6,7 +6,9 @@ const Header: React.FC = () => {
   return (
     <header className="lg:fixed top-0 w-full z-50  xl:h-[100px] bg-gradient-to-b from-black/50 to-transparent ">
       <div className="container mx-auto px-4   h-full flex items-center lg:justify-between justify-between lg:mt-[-1.75rem] mt-0">
-        <div className="lg:w-1/3 lg:block hidden">{/* <Counter /> */}</div>
+        <div className="lg:w-1/3 lg:block hidden">
+          <Counter />
+        </div>
         <a
           href="#home"
           className="block lg:hidden text-white text-sm hover:text-pink  lg:text-xl text-md transition-all duration-200 ease-in-out"

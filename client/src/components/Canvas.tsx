@@ -669,7 +669,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
             {colorList.map((c) => (
               <div
                 key={c}
-                className="lg:w-6 lg:h-6 w-4 h-4 xl:h-4 xl:w-4 border cursor-pointer hover:border-black"
+                className="2xl:w-6 2xl:h-6 w-4 h-4 xl:h-4 xl:w-4 border cursor-pointer hover:border-black"
                 style={{ backgroundColor: `#${c}` }}
                 onClick={() => handleColorClick(c)}
               ></div>
@@ -678,12 +678,16 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           <button onClick={clearCanvas}>
             <img
               alt="clear canvas"
-              className="w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px]"
               src="/trash.png"
             />
           </button>
           <button onClick={undoLastAction} disabled={history.length === 0}>
-            <img alt="undo" className="w-[30px] xl:w-[20px]" src="/undo.png" />
+            <img
+              alt="undo"
+              className="2xl:w-[30px] xl:w-[20px]"
+              src="/undo.png"
+            />
           </button>
           <button
             onClick={() => setTool("draw")}
@@ -691,7 +695,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           >
             <img
               alt="draw tool"
-              className="w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px]"
               src="/draw.png"
             />
           </button>
@@ -701,14 +705,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           >
             <img
               alt="fill tool"
-              className="w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px]"
               src="/fill.png"
             />
           </button>
           <button onClick={() => setShowSlider((prev) => !prev)}>
             <img
               src="/line-width.webp"
-              className="w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px]"
               alt=""
             />{" "}
           </button>

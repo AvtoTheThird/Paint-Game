@@ -127,10 +127,10 @@ const LandingPage: React.FC = () => {
   console.log(currentImage);
 
   return (
-    <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center ">
+    <main className="font-ge-bold  h-[100vh]  flex flex-col justify-start items-center ">
       <Header />
-      <div className="xl:scale-75 2xl:scale-100 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
-        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10  p-5  shadow-lg ">
+      <div className="xl:scale-75  2xl:scale-100 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
+        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10 xl:mt-[40px]  p-5  shadow-lg ">
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center gap-16">
             <Carousel
               Fimages={Fimages}

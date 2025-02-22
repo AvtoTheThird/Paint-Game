@@ -63,8 +63,8 @@ function CreateRoom() {
     <main className="font-ge-bold   lg:h-screen flex flex-col justify-center items-center h-[100svh]">
       <Header />
 
-      <div className="h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  ">
-        <div className="xl:scale-90 2xl:scale-100 relative flex flex-col  border-2 border-black  items-center justify-between bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5 ">
+      <div className=" h-[100svh]  lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center  ">
+        <div className="xl:scale-75 2xl:scale-100 relative flex flex-col  border-2 border-black  items-center justify-between bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]   rounded-3xl lg:p-10  p-5 ">
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 left-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 right-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full bottom-4 right-4 border-[1px] border-black "></div>

@@ -4,7 +4,7 @@ import Counter from "./Counter";
 
 const Header: React.FC = () => {
   return (
-    <header className="lg:fixed top-0 w-full z-50  xl:h-[100px] bg-gradient-to-b from-black/50 to-transparent ">
+    <header className="lg:fixed top-0 w-full z-50  xl:h-[100px] md:pt-[35px] bg-gradient-to-b from-black/50 to-transparent ">
       <div className="container mx-auto px-4   h-full flex items-center lg:justify-between justify-between lg:mt-[-1.75rem] mt-0">
         <div className="lg:w-1/3 lg:block hidden">{/* <Counter /> */}</div>
         <a
@@ -18,7 +18,7 @@ const Header: React.FC = () => {
             <img
               src="/xelovniki.png"
               alt="Logo"
-              className="2xl:w-[220px] 2xl:pt-[110px]  xl:w-[200px] xl:pt-[80px] w-[180px] pt-[10px] "
+              className="2xl:w-[220px] 2xl:pt-[110px]  xl:w-[200px] xl:pt-[50px] w-[180px] pt-[10px] "
             />
           </Link>
         </div>

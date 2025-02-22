@@ -678,14 +678,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           <button onClick={clearCanvas}>
             <img
               alt="clear canvas"
-              className="2xl:w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px]"
               src="/trash.png"
             />
           </button>
           <button onClick={undoLastAction} disabled={history.length === 0}>
             <img
               alt="undo"
-              className="2xl:w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px]"
               src="/undo.png"
             />
           </button>
@@ -695,7 +695,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           >
             <img
               alt="draw tool"
-              className="2xl:w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px]"
               src="/draw.png"
             />
           </button>
@@ -705,14 +705,14 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           >
             <img
               alt="fill tool"
-              className="2xl:w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px] "
               src="/fill.png"
             />
           </button>
           <button onClick={() => setShowSlider((prev) => !prev)}>
             <img
               src="/line-width.webp"
-              className="2xl:w-[30px] xl:w-[20px]"
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px]"
               alt=""
             />{" "}
           </button>

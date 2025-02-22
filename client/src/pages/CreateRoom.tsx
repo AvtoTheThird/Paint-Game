@@ -60,7 +60,7 @@ function CreateRoom() {
         <form
           onSubmit={createRoom}
           autoComplete="off"
-          className="xl:scale-90 2xl:scale-100 relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[750px] lg:h-[550px] px-5  border-2 border-black "
+          className="xl:scale-75 2xl:scale-100 relative flex flex-col items-center justify-evenly bg-bg-pink rounded-3xl w-[95vw] lg:w-[750px] lg:h-[550px] px-5  border-2 border-black "
         >
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 left-4 border-[1px] border-black "></div>
           <div className="absolute w-3.5 h-3.5 bg-white rounded-full top-4 right-4 border-[1px] border-black "></div>

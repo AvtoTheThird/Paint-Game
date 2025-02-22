@@ -10,6 +10,7 @@ const rooms = {};
 const publicRooms = {};
 let activeUsers = 0;
 const DEFAULT_SCORE = 10;
+const drawThrottle = new Map();
 
 app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
 // const io = new Server(server, {
@@ -25,8 +26,8 @@ const io = require("socket.io")(server, {
 
 app.use(express.static("public"));
 
-let totalReceivedBytes = 0;
-let totalEmittedBytes = 0;
+let totalOutgoing = 0;
+let totalIncoming = 0;
 const selectRandomWord = () => words[Math.floor(Math.random() * words.length)];
 redisClient.client.on("connect", () => {
   console.log("Redis is connected. Starting server...");
@@ -139,11 +140,42 @@ const calculateScore = (maxTime, timeOfGuessing) => {
     : DEFAULT_SCORE *
         Math.floor(9 - ((maxTime - timeOfGuessing) / maxTime) * 8);
 };
-app.get("/allRooms", (req, res) => {
-  res.json({ rooms, publicRooms });
+// Add this endpoint with other routes (around line 78)
+app.get("/activeRooms", async (req, res) => {
+  try {
+    // Get all room keys from Redis
+    const roomKeys = await redisClient.client.keys("room:*");
+
+    // Fetch and parse data for each room
+    const activeRooms = [];
+    for (const key of roomKeys) {
+      const roomId = key.replace("room:", "");
+      const room = await getRoom(roomId);
+      if (room) {
+        activeRooms.push({
+          id: roomId,
+          name: room.name,
+          players: room.users.length,
+          maxPlayers: room.maxPlayers,
+          isPublic: room.isPublic,
+          isGameStarted: room.isGameStarted,
+          currentRound: room.currentRound,
+          maxRounds: room.maxRounds,
+        });
+      }
+    }
+
+    res.json({ success: true, rooms: activeRooms });
+  } catch (err) {
+    console.error("Error fetching active rooms:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to retrieve rooms",
+    });
+  }
 });
 app.get("/dataRate", (req, res) => {
-  res.json({ totalReceivedBytes, totalEmittedBytes });
+  res.json({ totalOutgoing, totalIncoming });
 });
 app.get("/activeUsers", (req, res) => {
   res.json({ activeUsers });
@@ -187,10 +219,6 @@ const ensurePublicRoomAvailable = async () => {
   }
 };
 const changeDrawer = async (roomId) => {
-  if (activeTimers.has(roomId)) {
-    clearTimeout(activeTimers.get(roomId));
-    activeTimers.delete(roomId);
-  }
   const room = await getRoom(roomId);
   if (!room) return;
 
@@ -201,10 +229,9 @@ const changeDrawer = async (roomId) => {
   room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
   room.currentWord = selectRandomWord();
 
-  room.users.map((user) => {
+  room.users.forEach((user) => {
     user.hasGuessed = false;
   });
-
   await saveRoom(roomId, room);
 
   io.to(room.currentDrawer).emit("newWord", room.currentWord);
@@ -223,7 +250,6 @@ const changeDrawer = async (roomId) => {
       time: room.time,
       currentRound: room.currentRound,
     });
-
     await startTurnTimer(roomId);
   }, 5000);
 };
@@ -277,46 +303,31 @@ const startTurnTimer = async (roomId, isPublic = false) => {
     if (room.currentRound >= room.maxRounds) {
       room.isGameStarted = false;
       await saveRoom(roomId, room);
-
       io.to(roomId).emit("MaxRoundsReached");
-      room.users.map((user) => {
+      room.users.forEach((user) => {
         user.hasGuessed = false;
         user.score = 0;
       });
-      if (isPublic) {
-        setTimeout(async () => {
-          await startGame(roomId);
-        }, 5000);
-      }
+
+      if (isPublic) setTimeout(() => startGame(roomId), 5000);
       return;
     }
 
-    // Clear existing timer if any
-    if (activeTimers.has(roomId)) {
-      clearTimeout(activeTimers.get(roomId));
-      activeTimers.delete(roomId);
-    }
+    // Clear existing timer and set new one in Redis
+    await redisClient.del(`timer:${roomId}`);
+    await redisClient.set(`timer:${roomId}`, "1", "EX", room.time);
 
-    // Create new timer
-    const timer = setTimeout(async () => {
-      try {
-        await changeDrawer(roomId, isPublic);
-        activeTimers.delete(roomId);
-      } catch (error) {
-        console.error("Timer callback error:", error);
-      }
-    }, room.time * 1000);
-
-    // Store timer reference
-    activeTimers.set(roomId, timer);
-
-    // Update room state without timer reference
-    room.turnTimer = true; // Just mark that a timer is active
+    room.turnTimer = true;
     await saveRoom(roomId, room);
   } catch (error) {
     console.error("startTurnTimer error:", error);
   }
 };
+
+// Handle Redis timer expiration
+redisClient.on("timerExpired", async (roomId) => {
+  await changeDrawer(roomId);
+});
 
 const handleLateJoin = async (roomId, id) => {
   // console.log("gotta handleLateJoin");
@@ -327,6 +338,29 @@ const handleLateJoin = async (roomId, id) => {
 };
 
 io.on("connection", (socket) => {
+  //TEST FOR DATA THROUGHTPUT
+  // const originalEmit = socket.emit;
+
+  // socket.use((packet, next) => {
+  //   const size = Buffer.byteLength(JSON.stringify(packet));
+  //   totalIncoming += size;
+  //   console.log(
+  //     `Incoming packet: ${size} bytes (Total: ${totalIncoming} bytes)`
+  //   );
+  //   next();
+  // });
+  // socket.emit = function (event, ...args) {
+  //   // Create a packet array similar to what Socket.IO sends
+  //   const packet = [event, ...args];
+  //   const size = Buffer.byteLength(JSON.stringify(packet));
+  //   totalOutgoing += size;
+  //   console.log(
+  //     `Outgoing packet: ${size} bytes (Total: ${totalOutgoing} bytes)`
+  //   );
+
+  //   // Call the original emit function
+  //   originalEmit.apply(socket, [event, ...args]);
+  // };
   ensurePublicRoomAvailable();
   activeUsers++;
   io.emit("activeUsersUpdate", { activeUsers });

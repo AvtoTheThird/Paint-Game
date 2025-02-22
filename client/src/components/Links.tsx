@@ -25,7 +25,7 @@ function Links() {
   const [hovered, setHovered] = useState<any>(null);
 
   return (
-    <div className="fixed flex bottom-2 right-2 bg-white bg-opacity-20 text-white text-sm px-1 py-1 rounded z-50">
+    <div className="fixed  bottom-2 right-2 bg-white bg-opacity-20 text-white text-sm px-1 py-1 rounded z-50 hidden lg:flex">
       {socialLinks.map((link, index) => (
         <a
           key={index}

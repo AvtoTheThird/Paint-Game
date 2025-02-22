@@ -421,7 +421,7 @@ function GameRoom() {
                     {timeLeft}
                   </span>
                   <span className="bg-light-pink font-bold text-white  text-2xl rounded-[5px] flex items-center justify-center px-2  text-shadow   ">
-                    რაუნდი - {currentRound}/{maxRounds}
+                    რაუნდი - {currentRound + 1}/{maxRounds}
                   </span>
                 </div>
               ) : null}
@@ -492,7 +492,7 @@ function GameRoom() {
                         : "bg-white "
                     } text-lg `}
                   >
-                    <p className="text-base">
+                    <p className="text-sm">
                       {user.name}
                       {user.name == userName ? "(შენ)" : null}
                     </p>

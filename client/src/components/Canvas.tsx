@@ -705,7 +705,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           >
             <img
               alt="fill tool"
-              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px] "
+              className="2xl:w-[30px] xl:w-[20px] md:w-[20px] w-[20px]"
               src="/fill.png"
             />
           </button>

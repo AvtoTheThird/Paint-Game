@@ -9,12 +9,12 @@ function Rules() {
       <header className="top-0 w-full z-50 h-[100px] lg:h-[200px] bg-gradient-to-b from-black/50 to-transparent font-ge-bold">
         <div className="container mx-auto px-4   h-full flex items-center lg:justify-between justify-between lg:mt-[-1.75rem] mt-0">
           <div className="lg:w-1/3 lg:block hidden">{/* <Counter /> */}</div>
-          <a
-            href="#home"
+          <Link
+            to="/rules"
             className="block lg:hidden text-white text-sm hover:text-pink  lg:text-xl text-md transition-all duration-200 ease-in-out"
           >
             წესები
-          </a>
+          </Link>
           <div className="flex items-center">
             <Link to="/">
               <img

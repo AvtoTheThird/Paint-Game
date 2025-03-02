@@ -298,14 +298,14 @@ function GameRoom() {
     <>
       {" "}
       <header className=" font-ge-bold group fixed top-0 w-full z-50 h-[80px] bg-gradient-to-b from-black/50 to-transparent  hover:h-[150px] hover:top-[-15px]  text-xl transition-all duration-200 ease-in-out  ">
-        <div className="container mx-auto    h-full flex items-center justify-evenly">
+        <div className="container mx-auto h-full flex items-center justify-evenly">
           <div className="lg:w-1/3 lg:block hidden"></div>
-          <a
-            href="#home"
+          <Link
+            to="/rules"
             className="block lg:hidden text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
           >
             წესები
-          </a>
+          </Link>
           <div className="flex items-center">
             <Link to="/">
               <img

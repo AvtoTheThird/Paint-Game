@@ -316,18 +316,19 @@ function GameRoom() {
             </Link>
           </div>
           <div className="lg:w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
-            <a
-              href="#home"
-              className="hidden lg:block text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
+            <Link
+              to="/rules"
+              className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
             >
               თამაშის წესები
-            </a>
-            <a
-              href="#about"
-              className="text-white text-sm hover:text-pink group-hover:text-xl  transition-all duration-200 ease-in-out"
+            </Link>
+
+            <Link
+              to="/contact"
+              className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
             >
               კონტაქტი
-            </a>
+            </Link>
           </div>
         </div>
       </header>

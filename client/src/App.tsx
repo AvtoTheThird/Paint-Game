@@ -7,6 +7,7 @@ import CreateRoom from "./pages/CreateRoom";
 import JoinRoom from "./pages/JoinRoom";
 import GameRoom from "./pages/GameRoom";
 import Rules from "./pages/Rules";
+import Contact from "./pages/Contact";
 
 const App: React.FC = () => {
   return (
@@ -17,6 +18,7 @@ const App: React.FC = () => {
         <Route path="/join-room" element={<JoinRoom />} />
         <Route path="/game-room/:roomId" element={<GameRoom />} />
         <Route path="/rules" element={<Rules />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
     </Router>
   );

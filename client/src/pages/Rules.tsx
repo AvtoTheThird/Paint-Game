@@ -31,12 +31,12 @@ function Rules() {
             >
               თამაშის წესები
             </Link>
-            <a
-              href="#about"
+            <Link
+              to="/contact"
               className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
             >
               კონტაქტი
-            </a>
+            </Link>
           </div>
         </div>
       </header>

@@ -7,11 +7,9 @@ const words = require("./words");
 const app = express();
 const server = http.createServer(app);
 const rooms = {};
-const publicRooms = {};
 let activeUsers = 0;
 const DEFAULT_SCORE = 10;
-const drawThrottle = new Map();
-
+let socketConnectionCount = 0;
 app.use(cors({ origin: "*", methods: ["GET", "POST"], credentials: true }));
 // const io = new Server(server, {
 //   cors: { origin: "*",
@@ -165,7 +163,12 @@ app.get("/activeRooms", async (req, res) => {
       }
     }
 
-    res.json({ success: true, rooms: activeRooms });
+    res.json({
+      activeUsers,
+      socketConnectionCount,
+      success: true,
+      rooms: activeRooms,
+    });
   } catch (err) {
     console.error("Error fetching active rooms:", err);
     res.status(500).json({
@@ -361,6 +364,7 @@ io.on("connection", (socket) => {
   //   // Call the original emit function
   //   originalEmit.apply(socket, [event, ...args]);
   // };
+  socketConnectionCount++;
   ensurePublicRoomAvailable();
   activeUsers++;
   io.emit("activeUsersUpdate", { activeUsers });

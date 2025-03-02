@@ -67,6 +67,7 @@ const LandingPage: React.FC = () => {
     avatarID: string;
   }
   const [userName, setUserName] = useState<string>("");
+  const [showBetaPopup, setShowBetaPopup] = useState(false);
   const [dataToBeSent, setDataToBeSent] = useState<dataToBeSent>({
     roomId: "",
     userId: "",
@@ -74,6 +75,13 @@ const LandingPage: React.FC = () => {
     isadmin: false,
     avatarID: "",
   });
+  useEffect(() => {
+    const hasSeenPopup = sessionStorage.getItem("betaPopupShown");
+    if (!hasSeenPopup) {
+      setShowBetaPopup(true);
+      sessionStorage.setItem("betaPopupShown", "true");
+    }
+  }, []);
   // const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
   socket.connected = true;
@@ -140,6 +148,32 @@ const LandingPage: React.FC = () => {
 
   return (
     <main className="font-ge-bold    flex flex-col justify-start items-center ">
+      {showBetaPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
+          <div className="bg-dark-purupe border-4 border-black rounded-3xl p-8 max-w-[90%] text-center shadow-xl">
+            <h2 className="text-4xl mb-4 text-white text-shadow">
+              BETA VERSION
+            </h2>
+            <p className="text-2xl sm:text-md text-white mb-6">
+              მადლობა რომ ეწვიეთ ხელოვნიკის ონლაინ დოჯოს!
+              <br /> გთხოვთ გაითვალისწინოთ, პროდუქტი Beta-შია!
+              <br /> თუ რაიმე ხარვეზი აღმოაჩინეთ, გთხოვთ ნუ შეიკავებთ თავს
+              კონტაქტისგან.
+              <br /> მადლობა.
+              <br /> Unpaid Labor Studios Team
+            </p>
+            <button
+              onClick={() => setShowBetaPopup(false)}
+              className="bg-button-background-1 text-white px-8 py-3 rounded-2xl text-2xl 
+                       border-2 border-black hover:scale-95 transition-transform
+                       shadow-[-4px_4px_0_rgba(0,0,0,0.2)]"
+            >
+              UNDERSTOOD
+            </button>
+          </div>
+        </div>
+      )}
+
       <Header />
       <div className="xl:scale-75   2xl:scale-90 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
         <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10 xl:mt-[40px]  p-5   shadow-lg ">

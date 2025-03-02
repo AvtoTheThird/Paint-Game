@@ -4,8 +4,8 @@ import Counter from "./Counter";
 
 const Header: React.FC = () => {
   return (
-    <header className="lg:fixed top-0 w-full z-50  xl:h-[100px] md:pt-[35px] bg-gradient-to-b from-black/50 to-transparent ">
-      <div className="container mx-auto px-4   h-full flex items-center lg:justify-between justify-between lg:mt-[-1.75rem] mt-0">
+    <header className="lg:fixed top-0 w-full z-50 xl:h-[180px] md:pt-[50px] bg-gradient-to-b from-black/80 to-transparent h-[150px]">
+      <div className="container mx-auto px-4 h-full flex items-center lg:justify-between justify-between lg:mt-[-2rem]">
         <div className="lg:w-1/3 lg:block hidden">{/* <Counter /> */}</div>
         <a
           href="#home"
@@ -18,11 +18,11 @@ const Header: React.FC = () => {
             <img
               src="/xelovniki.png"
               alt="Logo"
-              className="2xl:w-[220px] 2xl:pt-[110px]  xl:w-[200px] xl:pt-[50px] w-[180px] pt-[10px] "
+              className="2xl:w-[220px] 2xl:pt-[0px]  xl:w-[200px] xl:pt-[50px] w-[180px] pt-[10px] "
             />
           </Link>
         </div>
-        <div className="lg:w-1/3 flex justify-end items-center lg:space-x-4 space-x-0 gap-16 lg:pt-3 2xl:pt-[120px] xl:pt-[90px]">
+        <div className="lg:w-1/3 flex justify-end items-center lg:space-x-4 space-x-0 gap-16 lg:pt-3 2xl:pt-[13px] xl:pt-[90px]">
           <Link
             to="/rules"
             className="hidden lg:block text-white hover:text-pink  text-xl transition-all duration-200 ease-in-out"

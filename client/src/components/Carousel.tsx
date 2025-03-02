@@ -230,6 +230,18 @@ const Carousel: React.FC<CarouselProps> = ({
       prevIndex - 1 < 0 ? currentImages.length - 1 : prevIndex - 1
     );
   };
+  useEffect(() => {
+    // Determine the current set of images based on gender
+    const imagesToPreload = gender === "female" ? Fimages : Mimages;
+
+    // Preload each image by creating a new Image object.
+    imagesToPreload.forEach((path) => {
+      // Append the correct extension if needed.
+      // In your fetchImage you do `fetch(`.${imagePath}.svg`)`, so here too.
+      const img = new Image();
+      img.src = `.${path}.svg`;
+    });
+  }, [gender, Fimages, Mimages]);
   return (
     <div className="w-[250px] h-[337px] rounded-lg  ">
       <div

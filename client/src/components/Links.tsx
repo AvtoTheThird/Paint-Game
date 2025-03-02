@@ -3,13 +3,13 @@ import React, { useState } from "react";
 const socialLinks = [
   {
     name: "Facebook",
-    url: "https://www.facebook.com",
+    url: "https://www.facebook.com/profile.php?id=61571847909354",
     bwLogo: "/facebook.png",
     colorLogo: "/facebook-color.png",
   },
   {
     name: "Instagram",
-    url: "https://www.instagram.com",
+    url: "https://www.instagram.com/khelovniki/",
     bwLogo: "/instagram.png",
     colorLogo: "/instagram-color.png",
   },

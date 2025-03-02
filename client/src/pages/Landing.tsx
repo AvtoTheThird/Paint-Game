@@ -23,6 +23,12 @@ const Fimages = [
   "/avatars/F/F14",
   "/avatars/F/F15",
   "/avatars/F/F16",
+  "/avatars/F/F17",
+  "/avatars/F/F18",
+  "/avatars/F/F19",
+  "/avatars/F/F20",
+  "/avatars/F/F21",
+  "/avatars/F/F22",
 ];
 const Mimages = [
   "/avatars/M/M1",
@@ -41,7 +47,13 @@ const Mimages = [
   "/avatars/M/M14",
   "/avatars/M/M15",
   "/avatars/M/M16",
+  "/avatars/M/M17",
+  "/avatars/M/M18",
+  "/avatars/M/M19",
+  "/avatars/M/M20",
+  "/avatars/M/M21",
 ];
+
 const LandingPage: React.FC = () => {
   // const [roomId, setRoomId] = useState("");
   const [currentImage, setCurrentImage] = useState("");
@@ -129,8 +141,8 @@ const LandingPage: React.FC = () => {
   return (
     <main className="font-ge-bold    flex flex-col justify-start items-center ">
       <Header />
-      <div className="xl:scale-75  2xl:scale-100 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
-        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10 xl:mt-[40px]  p-5  shadow-lg ">
+      <div className="xl:scale-75   2xl:scale-90 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
+        <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10 xl:mt-[40px]  p-5   shadow-lg ">
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center gap-16">
             <Carousel
               Fimages={Fimages}

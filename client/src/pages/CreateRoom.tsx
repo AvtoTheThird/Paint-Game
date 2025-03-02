@@ -19,6 +19,7 @@ function CreateRoom() {
 
   const createRoom = (event: any) => {
     event.preventDefault();
+
     socket.emit("create_room", { ...roomData });
 
     const dataToBeSent = { roomId: roomData.id, name: userName, avatarID };

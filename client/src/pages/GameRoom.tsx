@@ -5,13 +5,7 @@ import confetti from "canvas-confetti";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Links from "../components/Links";
-import Correct_Guess from "/sounds/Correct_Guess.mp3";
-import End_Of_Game from "/sounds/End_Of_Game.mp3";
-import Hand_Start from "/sounds/Hand_Start.mp3";
-import Negative_Hand_Finish from "/sounds/Negative_Hand_Finish.mp3";
-import Player_Join from "/sounds/Player_Join.mp3";
-import Positive_Hand_Finish from "/sounds/Positive_Hand_Finish.mp3";
-import Tick_Clock from "/sounds/Tick_Clock.mp3";
+
 import EndOFGameScreen from "../components/EndOfGameScreen";
 
 interface Message {
@@ -174,24 +168,6 @@ function GameRoom() {
       timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
-    } else if (isGameStarted && timeLeft === 0) {
-      switch (hasGuesed) {
-        case true: {
-          const POSITIVE_HAND_FINISH_AUDIO = new Audio(Positive_Hand_Finish);
-          POSITIVE_HAND_FINISH_AUDIO.play().catch((err) => console.log(err));
-          POSITIVE_HAND_FINISH_AUDIO.onended = () => {
-            POSITIVE_HAND_FINISH_AUDIO.remove();
-          };
-          break;
-        }
-        case false: {
-          const NEGATIVE_HAND_FINISH_AUDIO = new Audio(Negative_Hand_Finish);
-          NEGATIVE_HAND_FINISH_AUDIO.play().catch((err) => console.log(err));
-          NEGATIVE_HAND_FINISH_AUDIO.onended = () => {
-            NEGATIVE_HAND_FINISH_AUDIO.remove();
-          };
-        }
-      }
     }
     // console.log(hasGuesed)
 
@@ -272,11 +248,6 @@ function GameRoom() {
       //   spread: 70,
       //   origin: { y: 0.6 },
       // });
-      const Correct_Guess_Audio = new Audio(Correct_Guess);
-      Correct_Guess_Audio.play().catch((err) => console.log(err));
-      Correct_Guess_Audio.onended = () => {
-        Correct_Guess_Audio.remove();
-      };
 
       setJoinedUsers((prevUsers) => {
         const updatedUsers = { ...prevUsers };
@@ -292,11 +263,7 @@ function GameRoom() {
       setMaxRoundsReached(true);
 
       setIsGameStarted(false);
-      const End_Of_Game_Audio = new Audio(End_Of_Game);
-      End_Of_Game_Audio.play().catch((err) => console.log(err));
-      End_Of_Game_Audio.onended = () => {
-        End_Of_Game_Audio.remove();
-      };
+
       console.log("MaxRoundsReached");
       // console.log(setIsGameStarted);
     });
@@ -535,7 +502,7 @@ function GameRoom() {
               id="chat"
               className=" flex-grow lg:flex-grow-0 flex flex-col 2xl:h-[679px] xl:h-[484px] lg:w-[300px] justify-evenly items-center bg-light-pink border-gray border-[1px] lg:mr-8 rounded-[3px]  2xl:w-[320px] pb-5 "
             >
-              <div className="lg:w-[280px] w-[40vw] lg:h-[550px] h-[30vh] flex items-center justify-evenly flex-col">
+              <div className="lg:w-[280px] w-[40vw] 2xl:h-[597px] lg:h-[550px] h-[30vh] flex items-center  flex-col">
                 <img
                   width={"40px"}
                   className="ml-auto"
@@ -543,7 +510,7 @@ function GameRoom() {
                   alt={".."}
                 />
 
-                <div className="bg-white border-gray border-[1px] 2xl:h-[561px] xl:h-[380px]  lg:w-[295px] h-[30vh] m-2 rounded-[3px] w-[98%] flex flex-col overflow-hidden">
+                <div className="bg-white border-gray border-[1px] 2xl:h-[600px] xl:h-[380px]  lg:w-[295px] h-[30vh] m-2 rounded-[3px] w-[98%] flex flex-col overflow-hidden">
                   <div
                     className="overflow-y-auto h-full p-2 flex flex-col "
                     id="style-2"

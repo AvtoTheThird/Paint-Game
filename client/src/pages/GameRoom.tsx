@@ -180,8 +180,6 @@ function GameRoom() {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
     socket.on("updateUserList", (data) => {
-      // console.log(data);
-
       setJoinedUsers(data);
     });
 
@@ -261,7 +259,6 @@ function GameRoom() {
     });
     socket.on("MaxRoundsReached", () => {
       setMaxRoundsReached(true);
-
       setIsGameStarted(false);
 
       console.log("MaxRoundsReached");

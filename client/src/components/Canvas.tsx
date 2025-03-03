@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import socket from "./socket"; // Use the same socket instance
 import EndOFHandScreen from "./EndOFHandScreen";
 import EndOFGameScreen from "./EndOfGameScreen";
@@ -255,7 +255,138 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       setCursorStyle("default");
     }
   }, [tool, canDraw]);
+  const handleNewDrawer = useCallback(
+    (data: any) => {
+      setIsGamePaused(false);
+      setLineWidth(5);
+      setHistory([]);
+      clearCanvas();
+      if (data.currentDrawerId !== userIdRef.current) {
+        setCanDraw(false);
+      } else {
+        setCanDraw(true);
+      }
+    },
+    [userIdRef]
+  );
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
+    // Socket event handlers
+    const handleDraw = ({
+      x0,
+      y0,
+      x1,
+      y1,
+      color,
+    }: {
+      x0: number;
+      y0: number;
+      x1: number;
+      y1: number;
+      color: string;
+    }) => {
+      if (!ctxRef.current) return;
+      ctxRef.current.strokeStyle = color;
+      ctxRef.current.beginPath();
+      ctxRef.current.moveTo(x0, y0);
+      ctxRef.current.lineTo(x1, y1);
+      ctxRef.current.stroke();
+    };
+
+    const handleClear = () => {
+      ctxRef.current?.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const handleNewDrawer = (data: any) => {
+      setIsGamePaused(false);
+
+      setLineWidth(5);
+      setHistory([]);
+      clearCanvas();
+      if (data.currentDrawerId !== userIdRef.current) {
+        setCanDraw(false);
+      } else {
+        setCanDraw(true);
+      }
+    };
+
+    const handleUndo = (updatedHistory: string[]) => {
+      setHistory(updatedHistory);
+      redrawCanvas(updatedHistory);
+    };
+
+    const handleFill = ({
+      startX,
+      startY,
+      fillColor,
+    }: {
+      startX: number;
+      startY: number;
+      fillColor: string;
+    }) => {
+      floodFill(startX, startY, fillColor, false);
+    };
+
+    const handleHandEnded = (data: { currentDrawer: string; Word: string }) => {
+      setCurrentDrawer(data.currentDrawer);
+      setOldWord(data.Word);
+      setCanDraw(false);
+      setIsGamePaused(true);
+      setPauseTime(5);
+    };
+
+    const handleCanvasDataRequest = (roomId: string, id: string) => {
+      const base64Image = canvas.toDataURL("image/png");
+      socket.emit("sendCanvasDataToServer", { base64Image, id, roomId });
+    };
+
+    const handleMaxRounds = () => setMaxRoundsReached(true);
+    const handleGameStarted = () => {
+      setIsGamePaused(false);
+      setMaxRoundsReached(false);
+    };
+
+    const handleCanvasDataReceive = (data: {
+      base64Image: string;
+      currentDrawer: string;
+    }) => {
+      const img = new Image();
+      img.src = data.base64Image;
+      img.onload = () =>
+        ctxRef.current?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setCurrentDrawer(data.currentDrawer);
+    };
+
+    // Register all socket listeners
+    socket.on("draw", handleDraw);
+    socket.on("clear", handleClear);
+    socket.on("newDrawer", handleNewDrawer);
+    socket.on("undo", handleUndo);
+    socket.on("fill", handleFill);
+    socket.on("handEnded", handleHandEnded);
+    socket.on("MaxRoundsReached", handleMaxRounds);
+    socket.on("requestCanvasDataFromClient", handleCanvasDataRequest);
+    socket.on("gameStarted", handleGameStarted);
+    socket.on("SendCanvasDataToClient", handleCanvasDataReceive);
+    socket.on("newLineWidth", setLineWidth);
+
+    // Cleanup function
+    return () => {
+      socket.off("draw", handleDraw);
+      socket.off("clear", handleClear);
+      socket.off("newDrawer", handleNewDrawer);
+      socket.off("undo", handleUndo);
+      socket.off("fill", handleFill);
+      socket.off("handEnded", handleHandEnded);
+      socket.off("MaxRoundsReached", handleMaxRounds);
+      socket.off("requestCanvasDataFromClient", handleCanvasDataRequest);
+      socket.off("gameStarted", handleGameStarted);
+      socket.off("SendCanvasDataToClient", handleCanvasDataReceive);
+      socket.off("newLineWidth", setLineWidth);
+    };
+  }, [socket, roomId, userId, isGamePaused]);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -317,163 +448,156 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     userIdRef.current = canvasData.userId; // Update the refs whenever canvasData changes
     roomIdRef.current = canvasData.roomId;
   }, [canvasData]);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  // useEffect(() => {
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    if (ctxRef.current) {
-      ctxRef.current.fillStyle = "white";
-    }
-    ctxRef.current = ctx;
+  //   const ctx = canvas.getContext("2d");
+  //   if (!ctx) return;
+  //   if (ctxRef.current) {
+  //     ctxRef.current.fillStyle = "white";
+  //   }
+  //   ctxRef.current = ctx;
 
-    socket.on(
-      "draw",
-      ({
-        x0,
-        y0,
-        x1,
-        y1,
-        color,
-      }: {
-        x0: number;
-        y0: number;
-        x1: number;
-        y1: number;
-        color: string;
-      }) => {
-        if (!ctxRef.current) return;
+  //   socket.on(
+  //     "draw",
+  //     ({
+  //       x0,
+  //       y0,
+  //       x1,
+  //       y1,
+  //       color,
+  //     }: {
+  //       x0: number;
+  //       y0: number;
+  //       x1: number;
+  //       y1: number;
+  //       color: string;
+  //     }) => {
+  //       if (!ctxRef.current) return;
 
-        ctxRef.current.strokeStyle = color; // Use the color from the server
-        ctxRef.current.beginPath();
-        ctxRef.current.moveTo(x0, y0);
-        ctxRef.current.lineTo(x1, y1);
-        ctxRef.current.stroke();
-      }
-    );
+  //       ctxRef.current.strokeStyle = color; // Use the color from the server
+  //       ctxRef.current.beginPath();
+  //       ctxRef.current.moveTo(x0, y0);
+  //       ctxRef.current.lineTo(x1, y1);
+  //       ctxRef.current.stroke();
+  //     }
+  //   );
 
-    socket.on("clear", () => {
-      if (ctxRef.current) {
-        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    });
-    socket.on("newLineWidth", (data) => {
-      setLineWidth(data.newLineWidth);
-    });
+  //   socket.on("clear", () => {
+  //     if (ctxRef.current) {
+  //       ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
+  //     }
+  //   });
+  //   socket.on("newLineWidth", (data) => {
+  //     setLineWidth(data.newLineWidth);
+  //   });
 
-    socket.on("newDrawer", (data) => {
-      setIsGamePaused(false);
-      console.log("new drawer");
-      setLineWidth(5);
-      setHistory([]);
-      clearCanvas();
-      if (data.currentDrawerId !== userIdRef.current) {
-        setCanDraw(false);
-      } else {
-        setCanDraw(true);
-      }
-      const Hand_Start_AUDIO = new Audio(Hand_Start);
-      Hand_Start_AUDIO.play().catch((err) => console.log(err));
-      Hand_Start_AUDIO.onended = () => {
-        Hand_Start_AUDIO.remove();
-      };
-    });
-    socket.on("undo", (updatedHistory) => {
-      setHistory(updatedHistory); // Update the local history state
-      redrawCanvas(updatedHistory); // Redraw the canvas
-    });
-    socket.on("fill", ({ startX, startY, fillColor }) => {
-      floodFill(startX, startY, fillColor, false);
-    });
-    socket.on("handEnded", (data) => {
-      // console.log("recived handEnded", data);
+  // socket.on("newDrawer", (data) => {
+  //   setIsGamePaused(false);
+  //   console.log("new drawer");
+  //   setLineWidth(5);
+  //   setHistory([]);
+  //   clearCanvas();
+  //   if (data.currentDrawerId !== userIdRef.current) {
+  //     setCanDraw(false);
+  //   } else {
+  //     setCanDraw(true);
+  //   }
+  // });
+  //   socket.on("undo", (updatedHistory) => {
+  //     setHistory(updatedHistory); // Update the local history state
+  //     redrawCanvas(updatedHistory); // Redraw the canvas
+  //   });
+  //   socket.on("fill", ({ startX, startY, fillColor }) => {
+  //     floodFill(startX, startY, fillColor, false);
+  //   });
+  //   socket.on("handEnded", (data) => {
+  //     // console.log("recived handEnded", data);
 
-      setCurrentDrawer(data.currentDrawer);
-      setOldWord(data.Word);
-      setCanDraw(false);
-      setIsGamePaused(true);
-      setPauseTime(5);
-    });
-    socket.on("MaxRoundsReached", () => {
-      setMaxRoundsReached(true);
-    });
-    socket.on("requestCanvasDataFromClient", (roomId, id) => {
-      console.log("recived requestCanvasData", id);
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+  //     setCurrentDrawer(data.currentDrawer);
+  //     setOldWord(data.Word);
+  //     setCanDraw(false);
+  //     setIsGamePaused(true);
+  //     setPauseTime(5);
+  //   });
+  //   socket.on("MaxRoundsReached", () => {
+  //     setMaxRoundsReached(true);
+  //   });
+  //   socket.on("requestCanvasDataFromClient", (roomId, id) => {
+  //     console.log("recived requestCanvasData", id);
+  //     const canvas = canvasRef.current;
+  //     if (!canvas) return;
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+  //     const ctx = canvas.getContext("2d");
+  //     if (!ctx) return;
 
-      ctxRef.current = ctx;
-      if (!canvasRef.current || !ctxRef.current) return;
+  //     ctxRef.current = ctx;
+  //     if (!canvasRef.current || !ctxRef.current) return;
 
-      const base64Image = canvas.toDataURL("image/png");
+  //     const base64Image = canvas.toDataURL("image/png");
 
-      socket.emit("test");
+  //     socket.emit("test");
 
-      const data = { base64Image, id, roomId };
-      socket.emit("sendCanvasDataToServer", data);
-      // console.log("sent data to server", base64Image, id);
-    });
+  //     const data = { base64Image, id, roomId };
+  //     socket.emit("sendCanvasDataToServer", data);
+  //     // console.log("sent data to server", base64Image, id);
+  //   });
 
-    return () => {
-      socket.off("draw");
-      socket.off("clear");
-      socket.off("undo");
-      socket.off("newLineWidth");
-      socket.off("newDrawer");
-      socket.off("fill");
-    };
-  }, [socket, userId]);
-  socket.on("newDrawer", (data) => {
-    setIsGamePaused(false);
-    console.log("new drawer");
-    setLineWidth(5);
-    setHistory([]);
-    clearCanvas();
-    if (data.currentDrawerId !== userIdRef.current) {
-      setCanDraw(false);
-    } else {
-      setCanDraw(true);
-    }
-  });
-  socket.on("gameStarted", () => {
-    setIsGamePaused(false);
-    setMaxRoundsReached(false);
-  });
-  // console.log(isGamePaused);
-  socket.on("MaxRoundsReached", () => {
-    setMaxRoundsReached(true);
-  });
+  //   return () => {
+  //     socket.off("draw");
+  //     socket.off("clear");
+  //     socket.off("undo");
+  //     socket.off("newLineWidth");
+  //     socket.off("newDrawer");
+  //     socket.off("fill");
+  //   };
+  // }, [socket, userId]);
+  // socket.on("newDrawer", (data) => {
+  //   setIsGamePaused(false);
+  //   console.log("new drawer");
+  //   setLineWidth(5);
+  //   setHistory([]);
+  //   clearCanvas();
+  //   if (data.currentDrawerId !== userIdRef.current) {
+  //     setCanDraw(false);
+  //   } else {
+  //     setCanDraw(true);
+  //   }
+  // });
+  // socket.on("gameStarted", () => {
+  //   setIsGamePaused(false);
+  //   setMaxRoundsReached(false);
+  // });
+  // // console.log(isGamePaused);
+  // socket.on("MaxRoundsReached", () => {
+  //   setMaxRoundsReached(true);
+  // });
 
-  socket.on("SendCanvasDataToClient", (data) => {
-    console.log("AAAAAAAAAAAAASendCanvasDataToClient");
+  // socket.on("SendCanvasDataToClient", (data) => {
+  //   const base64Image = data.base64Image;
+  //   setCurrentDrawer(data.currentDrawer);
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
 
-    const base64Image = data.base64Image;
-    setCurrentDrawer(data.currentDrawer);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  //   const ctx = canvas.getContext("2d");
+  //   if (!ctx) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  //   // Create a new Image object
+  //   const img = new Image();
 
-    // Create a new Image object
-    const img = new Image();
+  //   // Set the src of the image to the base64 data
+  //   img.src = base64Image;
 
-    // Set the src of the image to the base64 data
-    img.src = base64Image;
+  //   // Once the image is loaded, draw it onto the canvas
+  //   img.onload = () => {
+  //     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  //   };
 
-    // Once the image is loaded, draw it onto the canvas
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    };
-
-    img.onerror = (err) => {
-      console.error("Failed to load the image", err);
-    };
-  });
+  //   img.onerror = (err) => {
+  //     console.error("Failed to load the image", err);
+  //   };
+  // });
   const startDrawing = (
     event:
       | React.MouseEvent<HTMLCanvasElement>
@@ -507,6 +631,11 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       drawing.current = true;
       lastPosition.current = { x: offsetX, y: offsetY };
       draw(event);
+    }
+    if (event.type === "mousedown") {
+      window.addEventListener("mouseup", stopDrawing, { once: true });
+    } else {
+      window.addEventListener("touchend", stopDrawing, { once: true });
     }
   };
 
@@ -591,15 +720,11 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     }
   };
   const undoLastAction = () => {
-    console.log("called undo");
-
     if (history.length === 0) return; // No history to undo
-    console.log("here");
 
     const newHistory = [...history];
     newHistory.pop(); // Remove the last saved state
     setHistory(newHistory);
-    console.log("now here");
 
     // Emit undo event to server with the updated history
     socket.emit("undo", { newHistory, roomId });
@@ -645,10 +770,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
           className={`w-full h-full block border-[1px] border-slate-900 bg-white cursor-${cursorStyle}`}
           ref={canvasRef}
           onMouseDown={canDraw ? startDrawing : undefined}
-          onMouseUp={canDraw ? stopDrawing : undefined}
+          // onMouseUp={canDraw ? stopDrawing : undefined}
           onMouseMove={canDraw ? draw : undefined}
           onTouchStart={canDraw ? startDrawing : undefined}
-          onTouchEnd={canDraw ? stopDrawing : undefined}
+          // onTouchEnd={canDraw ? stopDrawing : undefined}
           onTouchMove={canDraw ? draw : undefined}
         />
         <button

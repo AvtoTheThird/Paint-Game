@@ -107,7 +107,7 @@ const LandingPage: React.FC = () => {
     });
   });
   useEffect(() => {
-    console.log(dataToBeSent);
+    // console.log(dataToBeSent);
     if (dataToBeSent.roomId) {
       navigate(`/game-room/${dataToBeSent.roomId}`, {
         state: {
@@ -152,14 +152,14 @@ const LandingPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
           <div className="bg-dark-purupe border-4 border-black rounded-3xl p-8 max-w-[90%] text-center shadow-xl">
             <h2 className="text-4xl mb-4 text-white text-shadow">
-              BETA VERSION
+              მოგესალმებით ხელოვნიკის ბეტა ვესიაში!
             </h2>
             <p className="text-2xl sm:text-md text-white mb-6">
               მადლობა რომ ეწვიეთ ხელოვნიკის ონლაინ დოჯოს!
               <br /> გთხოვთ გაითვალისწინოთ, პროდუქტი Beta-შია!
               <br /> თუ რაიმე ხარვეზი აღმოაჩინეთ, გთხოვთ ნუ შეიკავებთ თავს
               კონტაქტისგან.
-              <br /> მადლობა.
+              <br /> პატივისცემით
               <br /> Unpaid Labor Studios Team
             </p>
             <button
@@ -168,7 +168,7 @@ const LandingPage: React.FC = () => {
                        border-2 border-black hover:scale-95 transition-transform
                        shadow-[-4px_4px_0_rgba(0,0,0,0.2)]"
             >
-              UNDERSTOOD
+              გასაგებია
             </button>
           </div>
         </div>

@@ -224,6 +224,7 @@ const ensurePublicRoomAvailable = async () => {
 const changeDrawer = async (roomId) => {
   const room = await getRoom(roomId);
   if (!room) return;
+  console.log(room.users);
 
   const oldWord = room.currentWord;
   room.handsPlayed++;
@@ -272,7 +273,7 @@ const startGame = async (roomId) => {
   io.to(room.currentDrawer).emit("newWord", room.currentWord);
   const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
-  io.to(roomId).emit("updateUserList", room.users);
+  // io.to(roomId).emit("updateUserList", room.users);
   // ================================NEEDS TO BE PROPERLY IMPLEMENTED, SETTIMEOUT IS A TEMPORARY SOLUTION================================
   setTimeout(() => {
     io.to(roomId).emit("gameStarted", {
@@ -280,7 +281,6 @@ const startGame = async (roomId) => {
       currentDrawerId: room.currentDrawer,
       maxRounds: room.maxRounds,
       secretWord: secretWord,
-
       time: room.time,
       currentRound: room.currentRound,
     });
@@ -297,7 +297,6 @@ const startGame = async (roomId) => {
   await startTurnTimer(roomId);
 };
 
-const activeTimers = new Map();
 const startTurnTimer = async (roomId, isPublic = false) => {
   try {
     const room = await getRoom(roomId);
@@ -311,7 +310,9 @@ const startTurnTimer = async (roomId, isPublic = false) => {
         user.hasGuessed = false;
         user.score = 0;
       });
-
+      io.to(roomId).emit("updateUserList", room.users);
+      console.log(room.users);
+      await saveRoom(roomId, room);
       if (isPublic) setTimeout(() => startGame(roomId), 5000);
       return;
     }

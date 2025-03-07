@@ -20,6 +20,9 @@ const io = require("socket.io")(server, {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ["websocket", "polling"],
 });
 
 app.use(express.static("public"));
@@ -34,6 +37,7 @@ redisClient.client.on("connect", () => {
 redisClient.client.on("error", (err) => {
   console.error("Redis connection error:", err);
 });
+
 const flushAllRedisData = async () => {
   try {
     await redisClient.client.flushAll(); // Delete all keys in Redis
@@ -48,21 +52,24 @@ const getRoom = async (roomId) => {
 
   if (!roomData || Object.keys(roomData).length === 0) return null;
 
-  // Parse with proper type conversion
-  return {
-    name: roomData.name,
-    maxPlayers: parseInt(roomData.maxPlayers, 10) || 8, // Fallback to default
-    maxRounds: parseInt(roomData.maxRounds, 10) || 8,
-    users: JSON.parse(roomData.users || "[]"),
-    time: parseInt(roomData.time, 10) || 90,
-    currentDrawerIndex: parseInt(roomData.currentDrawerIndex, 10) || 0,
-    currentRound: parseInt(roomData.currentRound, 10) || 0,
-    handsPlayed: parseInt(roomData.handsPlayed, 10) || 0,
-    currentDrawer: roomData.currentDrawer || null,
-    currentWord: roomData.currentWord || null,
-    isGameStarted: roomData.isGameStarted === "true",
-    isPublic: roomData.isPublic === "true",
-  };
+  try {
+    return {
+      name: roomData.name,
+      maxPlayers: parseInt(roomData.maxPlayers, 10) || 8, // Fallback to default
+      maxRounds: parseInt(roomData.maxRounds, 10) || 8,
+      users: JSON.parse(roomData.users || "[]"),
+      time: parseInt(roomData.time, 10) || 90,
+      currentDrawerIndex: parseInt(roomData.currentDrawerIndex, 10) || 0,
+      currentRound: parseInt(roomData.currentRound, 10) || 0,
+      handsPlayed: parseInt(roomData.handsPlayed, 10) || 0,
+      currentDrawer: roomData.currentDrawer || null,
+      currentWord: roomData.currentWord || null,
+      isGameStarted: roomData.isGameStarted === "true",
+      isPublic: roomData.isPublic === "true",
+    };
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const saveRoom = async (roomId, roomData) => {
@@ -88,7 +95,11 @@ const saveRoom = async (roomId, roomData) => {
 };
 
 const deleteRoom = async (roomId) => {
-  await redisClient.del(`room:${roomId}`);
+  try {
+    await redisClient.del(`room:${roomId}`);
+  } catch (error) {
+    console.log("error deleting room", error);
+  }
 };
 const getAvailablePublicRoom = async () => {
   try {
@@ -185,24 +196,28 @@ app.get("/activeUsers", (req, res) => {
 });
 
 const createPublicRoom = async () => {
-  const id = `public-${Date.now()}`;
-  const roomData = {
-    name: `Public Room ${id}`,
-    maxPlayers: 8,
-    maxRounds: 8,
-    users: [],
-    time: 90,
-    currentDrawerIndex: 0,
-    currentRound: 0,
-    handsPlayed: 0,
-    currentDrawer: null,
-    currentWord: null,
-    isGameStarted: false,
-    isPublic: true,
-  };
+  try {
+    const id = `public-${Date.now()}`;
+    const roomData = {
+      name: `Public Room ${id}`,
+      maxPlayers: 8,
+      maxRounds: 8,
+      users: [],
+      time: 90,
+      currentDrawerIndex: 0,
+      currentRound: 0,
+      handsPlayed: 0,
+      currentDrawer: null,
+      currentWord: null,
+      isGameStarted: false,
+      isPublic: true,
+    };
 
-  await saveRoom(id, roomData);
-  return id;
+    await saveRoom(id, roomData);
+    return id;
+  } catch (error) {
+    console.log("error creating public room", error);
+  }
 };
 
 // const ensurePublicRoomAvailable = () => {
@@ -222,79 +237,87 @@ const ensurePublicRoomAvailable = async () => {
   }
 };
 const changeDrawer = async (roomId) => {
-  const room = await getRoom(roomId);
-  if (!room) return;
-  console.log(room.users);
+  try {
+    const room = await getRoom(roomId);
+    if (!room) return;
+    console.log(room.users);
 
-  const oldWord = room.currentWord;
-  room.handsPlayed++;
-  room.currentRound = Math.floor(room.handsPlayed / room.users.length);
-  room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
-  room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
-  room.currentWord = selectRandomWord();
+    const oldWord = room.currentWord;
+    room.handsPlayed++;
+    room.currentRound = Math.floor(room.handsPlayed / room.users.length);
+    room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
+    room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
+    room.currentWord = selectRandomWord();
 
-  room.users.forEach((user) => {
-    user.hasGuessed = false;
-  });
-  await saveRoom(roomId, room);
+    room.users.forEach((user) => {
+      user.hasGuessed = false;
+    });
+    await saveRoom(roomId, room);
 
-  io.to(room.currentDrawer).emit("newWord", room.currentWord);
-  const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+    io.to(room.currentDrawer).emit("newWord", room.currentWord);
+    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
-  io.to(roomId).emit("handEnded", {
-    currentDrawer: room.users[room.currentDrawerIndex]?.name,
-    Word: oldWord,
-  });
-
-  setTimeout(async () => {
-    io.to(roomId).emit("newDrawer", {
+    io.to(roomId).emit("handEnded", {
       currentDrawer: room.users[room.currentDrawerIndex]?.name,
+      Word: oldWord,
+    });
+
+    setTimeout(async () => {
+      io.to(roomId).emit("newDrawer", {
+        currentDrawer: room.users[room.currentDrawerIndex]?.name,
+        currentDrawerId: room.currentDrawer,
+        secretWord: secretWord,
+        time: room.time,
+        currentRound: room.currentRound,
+      });
+      await startTurnTimer(roomId);
+    }, 5000);
+  } catch (error) {
+    console.log("error changing drawer", error);
+  }
+};
+const startGame = async (roomId) => {
+  try {
+    const room = await getRoom(roomId);
+    if (!room) return;
+
+    room.currentRound = 0;
+    room.handsPlayed = 0;
+    room.isGameStarted = true;
+    room.currentDrawerIndex = 0;
+    room.currentDrawer = room.users[0]?.id;
+    room.currentWord = selectRandomWord();
+
+    await saveRoom(roomId, room);
+
+    io.to(room.currentDrawer).emit("newWord", room.currentWord);
+    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+
+    // io.to(roomId).emit("updateUserList", room.users);
+    // ================================NEEDS TO BE PROPERLY IMPLEMENTED, SETTIMEOUT IS A TEMPORARY SOLUTION================================
+    setTimeout(() => {
+      io.to(roomId).emit("gameStarted", {
+        currentDrawer: room.users[0]?.name,
+        currentDrawerId: room.currentDrawer,
+        maxRounds: room.maxRounds,
+        secretWord: secretWord,
+        time: room.time,
+        currentRound: room.currentRound,
+      });
+    }, 500);
+
+    io.to(roomId).emit("newDrawer", {
+      currentDrawer: room.users[0]?.name,
       currentDrawerId: room.currentDrawer,
       secretWord: secretWord,
+
       time: room.time,
       currentRound: room.currentRound,
     });
     await startTurnTimer(roomId);
-  }, 5000);
-};
-const startGame = async (roomId) => {
-  const room = await getRoom(roomId);
-  if (!room) return;
-
-  room.currentRound = 0;
-  room.handsPlayed = 0;
-  room.isGameStarted = true;
-  room.currentDrawerIndex = 0;
-  room.currentDrawer = room.users[0]?.id;
-  room.currentWord = selectRandomWord();
-
-  await saveRoom(roomId, room);
-
-  io.to(room.currentDrawer).emit("newWord", room.currentWord);
-  const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-
-  // io.to(roomId).emit("updateUserList", room.users);
-  // ================================NEEDS TO BE PROPERLY IMPLEMENTED, SETTIMEOUT IS A TEMPORARY SOLUTION================================
-  setTimeout(() => {
-    io.to(roomId).emit("gameStarted", {
-      currentDrawer: room.users[0]?.name,
-      currentDrawerId: room.currentDrawer,
-      maxRounds: room.maxRounds,
-      secretWord: secretWord,
-      time: room.time,
-      currentRound: room.currentRound,
-    });
-  }, 500);
-
-  io.to(roomId).emit("newDrawer", {
-    currentDrawer: room.users[0]?.name,
-    currentDrawerId: room.currentDrawer,
-    secretWord: secretWord,
-
-    time: room.time,
-    currentRound: room.currentRound,
-  });
-  await startTurnTimer(roomId);
+  } catch (error) {
+    console.log("errr starting game", error);
+  }
 };
 
 const startTurnTimer = async (roomId, isPublic = false) => {
@@ -311,7 +334,6 @@ const startTurnTimer = async (roomId, isPublic = false) => {
         user.score = 0;
       });
       io.to(roomId).emit("updateUserList", room.users);
-      console.log(room.users);
       await saveRoom(roomId, room);
       if (isPublic) setTimeout(() => startGame(roomId), 5000);
       return;
@@ -330,15 +352,23 @@ const startTurnTimer = async (roomId, isPublic = false) => {
 
 // Handle Redis timer expiration
 redisClient.on("timerExpired", async (roomId) => {
-  await changeDrawer(roomId);
+  try {
+    await changeDrawer(roomId);
+  } catch (error) {
+    console.log("error handling timerExpired", error);
+  }
 });
 
 const handleLateJoin = async (roomId, id) => {
   // console.log("gotta handleLateJoin");
-  const room = await getRoom(roomId);
+  try {
+    const room = await getRoom(roomId);
 
-  if (room)
-    io.to(room.currentDrawer).emit("requestCanvasDataFromClient", roomId, id);
+    if (room)
+      io.to(room.currentDrawer).emit("requestCanvasDataFromClient", roomId, id);
+  } catch (error) {
+    console.log("error while handling late join", error, roomId, id);
+  }
 };
 
 io.on("connection", (socket) => {
@@ -370,89 +400,102 @@ io.on("connection", (socket) => {
   activeUsers++;
   io.emit("activeUsersUpdate", { activeUsers });
   socket.on("join_public_room", async ({ name, avatarID }) => {
-    const roomId = await getAvailablePublicRoom();
-    const room = await getRoom(roomId);
+    try {
+      const roomId = await getAvailablePublicRoom();
+      const room = await getRoom(roomId);
 
-    const userData = {
-      id: socket.id,
-      name,
-      roomId,
-      score: 0,
-      hasGuessed: false,
-      avatarID,
-    };
+      const userData = {
+        id: socket.id,
+        name,
+        roomId,
+        score: 0,
+        hasGuessed: false,
+        avatarID,
+      };
 
-    room.users.push(userData);
-    await saveRoom(roomId, room);
+      room.users.push(userData);
+      await saveRoom(roomId, room);
 
-    socket.join(roomId);
-    if (room.users.length >= 2 && !room.isGameStarted) await startGame(roomId);
-    if (room.isGameStarted) await handleLateJoin(roomId, socket.id);
-    setTimeout(() => io.to(roomId).emit("updateUserList", room.users), 500);
+      socket.join(roomId);
+      if (room.users.length >= 2 && !room.isGameStarted)
+        await startGame(roomId);
+      if (room.isGameStarted) await handleLateJoin(roomId, socket.id);
+      setTimeout(() => io.to(roomId).emit("updateUserList", room.users), 500);
 
-    io.to(roomId).emit("userJoined", userData);
-    socket.emit("joined_public_room", {
-      roomId,
-      userId: socket.id,
-      name,
-    });
+      io.to(roomId).emit("userJoined", userData);
+      socket.emit("joined_public_room", {
+        roomId,
+        userId: socket.id,
+        name,
+      });
+    } catch (error) {
+      console.log("error on join_public_room");
+    }
   });
 
   socket.on("create_room", async ({ id, maxPlayers, time, maxRounds }) => {
-    const existingRoom = await getRoom(id);
-    if (existingRoom) {
-      return socket.emit("roomError", { error: "Room ID already exists." });
+    try {
+      const existingRoom = await getRoom(id);
+      if (existingRoom) {
+        return socket.emit("roomError", { error: "Room ID already exists." });
+      }
+
+      const roomData = {
+        maxPlayers,
+        maxRounds,
+        users: [],
+        time,
+        currentDrawerIndex: 0,
+        currentRound: 0,
+        handsPlayed: 0,
+        currentDrawer: null,
+        currentWord: null,
+        isGameStarted: false,
+        isPublic: false,
+      };
+
+      await saveRoom(id, roomData);
+      socket.emit("roomCreated", { id, maxPlayers, time });
+    } catch (error) {
+      console.log("error while create_room");
     }
-
-    const roomData = {
-      maxPlayers,
-      maxRounds,
-      users: [],
-      time,
-      currentDrawerIndex: 0,
-      currentRound: 0,
-      handsPlayed: 0,
-      currentDrawer: null,
-      currentWord: null,
-      isGameStarted: false,
-      isPublic: false,
-    };
-
-    await saveRoom(id, roomData);
-    socket.emit("roomCreated", { id, maxPlayers, time });
   });
 
   // Modified join_room handler
   socket.on("join_room", async ({ roomId, name, avatarID }) => {
-    const room = await getRoom(roomId);
+    try {
+      const room = await getRoom(roomId);
 
-    if (!room) {
-      return socket.emit("roomError", { error: "Room does not exist." });
+      if (!room) {
+        return socket.emit("roomError", { error: "Room does not exist." });
+      }
+
+      if (room.users.length >= room.maxPlayers) {
+        return socket.emit("roomError", { error: "Room is full." });
+      }
+
+      const userData = {
+        id: socket.id,
+        name,
+
+        roomId,
+        score: 0,
+        hasGuessed: false,
+        avatarID,
+      };
+
+      room.users.push(userData);
+
+      await saveRoom(roomId, room);
+
+      socket.join(roomId);
+      if (room.isGameStarted) handleLateJoin(roomId, socket.id);
+
+      setTimeout(() => io.to(roomId).emit("updateUserList", room.users), 500);
+      io.to(roomId).emit("userJoined", userData);
+    } catch (error) {
+      console.log("error while join_room", error);
     }
-
-    if (room.users.length >= room.maxPlayers) {
-      return socket.emit("roomError", { error: "Room is full." });
-    }
-
-    const userData = {
-      id: socket.id,
-      name,
-
-      roomId,
-      score: 0,
-      hasGuessed: false,
-      avatarID,
-    };
-
-    room.users.push(userData);
-
-    await saveRoom(roomId, room);
-
-    socket.join(roomId);
-    if (room.isGameStarted) handleLateJoin(roomId, socket.id);
-
-    setTimeout(() => io.to(roomId).emit("updateUserList", room.users), 500);
-    io.to(roomId).emit("userJoined", userData);
   });
 
   socket.on("startGame", ({ roomId, isPublic = false }) =>
@@ -460,24 +503,28 @@ io.on("connection", (socket) => {
   );
 
   socket.on("leaveRoom", async ({ roomId, userId }) => {
-    const room = await getRoom(roomId);
-    if (!room) return;
+    try {
+      const room = await getRoom(roomId);
+      if (!room) return;
 
-    const userIndex = room.users.findIndex((user) => user.id === userId);
-    if (userIndex === -1) return;
+      const userIndex = room.users.findIndex((user) => user.id === userId);
+      if (userIndex === -1) return;
 
-    const [userData] = room.users.splice(userIndex, 1);
-    await saveRoom(roomId, room);
+      const [userData] = room.users.splice(userIndex, 1);
+      await saveRoom(roomId, room);
 
-    socket.leave(roomId);
-    io.to(roomId).emit("userLeft", userData);
-    io.to(roomId).emit("updateUserList", room.users);
-    socket.emit("leftRoom", { roomId, success: true });
+      socket.leave(roomId);
+      io.to(roomId).emit("userLeft", userData);
+      io.to(roomId).emit("updateUserList", room.users);
+      socket.emit("leftRoom", { roomId, success: true });
 
-    if (room.users.length === 0) {
-      await deleteRoom(roomId);
-    } else if (room.currentDrawer === userId) {
-      await changeDrawer(roomId);
+      if (room.users.length === 0) {
+        await deleteRoom(roomId);
+      } else if (room.currentDrawer === userId) {
+        await changeDrawer(roomId);
+      }
+    } catch (error) {
+      console.log("error while leaveRoom");
     }
   });
 
@@ -487,71 +534,77 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("guess", async ({ roomId, guess, timeLeft }) => {
-    const room = await getRoom(roomId);
-    if (!room) return;
+    try {
+      const room = await getRoom(roomId);
+      if (!room) return;
 
-    const guesser = room.users.find((user) => user.id === socket.id);
-    if (!guesser) return;
+      const guesser = room.users.find((user) => user.id === socket.id);
+      if (!guesser) return;
 
-    if (guess === room.currentWord) {
-      io.to(roomId).emit("correctGuess", {
-        guesser: guesser.name,
-        guesserId: guesser.id,
-        word: guess,
-      });
-
-      if (!guesser.hasGuessed) {
-        io.to(roomId).emit("message", {
-          message: `${guesser.name}-მ გამოიცნო`,
-          userName: "game",
+      if (guess === room.currentWord) {
+        io.to(roomId).emit("correctGuess", {
+          guesser: guesser.name,
+          guesserId: guesser.id,
+          word: guess,
         });
-      }
 
-      guesser.hasGuessed = true;
-      const score = calculateScore(room.time, timeLeft);
-      guesser.score += score;
+        if (!guesser.hasGuessed) {
+          io.to(roomId).emit("message", {
+            message: `${guesser.name}-მ გამოიცნო`,
+            userName: "game",
+          });
+        }
 
-      const drawer = room.users.find((user) => user.id === room.currentDrawer);
-      if (drawer) drawer.score += Math.floor(0.2 * score);
+        guesser.hasGuessed = true;
+        const score = calculateScore(room.time, timeLeft);
+        guesser.score += score;
 
-      await saveRoom(roomId, room);
-      io.to(roomId).emit("updateUserList", room.users);
+        const drawer = room.users.find(
+          (user) => user.id === room.currentDrawer
+        );
+        if (drawer) drawer.score += Math.floor(0.2 * score);
 
-      const allGuessed = room.users.every(
-        (user) => user.hasGuessed || user.id === room.currentDrawer
-      );
-      // console.log(room.users);
-
-      if (allGuessed) {
-        await changeDrawer(roomId);
-        room.handsPlayed++;
-        room.users.forEach((user) => (user.hasGuessed = false));
-        io.to(roomId).emit("allGuessed");
-      }
-    } else {
-      io.to(roomId).emit("message", {
-        message: guess,
-        userName: guesser.name,
-      });
-      // io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
-    }
-
-    if (room.currentRound >= room.maxRounds) {
-      if (room.isPublic) {
-        room.currentRound = 0;
-        room.handsPlayed = 0;
-        room.users.forEach((user) => (user.score = 0));
         await saveRoom(roomId, room);
-        io.to(roomId).emit("gameReset", {
-          message: "Game has been reset. Starting a new game!",
-        });
-        await startGame(roomId);
+        io.to(roomId).emit("updateUserList", room.users);
+
+        const allGuessed = room.users.every(
+          (user) => user.hasGuessed || user.id === room.currentDrawer
+        );
+        // console.log(room.users);
+
+        if (allGuessed) {
+          await changeDrawer(roomId);
+          room.handsPlayed++;
+          room.users.forEach((user) => (user.hasGuessed = false));
+          io.to(roomId).emit("allGuessed");
+        }
       } else {
-        io.to(roomId).emit("gameEnded", {
-          message: "Game has ended. Final scores:",
-          scores: room.users.map((u) => ({ name: u.name, score: u.score })),
+        io.to(roomId).emit("message", {
+          message: guess,
+          userName: guesser.name,
         });
+        // io.to(roomId).emit("incorrectGuess", { guesser: guesser.name, guess });
       }
+
+      if (room.currentRound >= room.maxRounds) {
+        if (room.isPublic) {
+          room.currentRound = 0;
+          room.handsPlayed = 0;
+          room.users.forEach((user) => (user.score = 0));
+          await saveRoom(roomId, room);
+          io.to(roomId).emit("gameReset", {
+            message: "Game has been reset. Starting a new game!",
+          });
+          await startGame(roomId);
+        } else {
+          io.to(roomId).emit("gameEnded", {
+            message: "Game has ended. Final scores:",
+            scores: room.users.map((u) => ({ name: u.name, score: u.score })),
+          });
+        }
+      }
+    } catch (error) {
+      console.log("error while guess", error);
     }
   });
 
@@ -574,70 +627,84 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("fill", { startX, startY, fillColor })
   );
   socket.on("sendCanvasDataToServer", async ({ base64Image, id, roomId }) => {
-    const room = await getRoom(roomId);
+    try {
+      const room = await getRoom(roomId);
 
-    const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
-    const dataForClient = {
-      currentDrawer: room.currentDrawer,
-      currentDrawerId: room.users[room.currentDrawerIndex].id,
-      secretWord: secretWord,
-      base64Image: base64Image,
-      time: room.time,
-      currentRound: room.currentRound,
-      maxRounds: room.maxRounds,
-    };
+      const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
+      const dataForClient = {
+        currentDrawer: room.currentDrawer,
+        currentDrawerId: room.users[room.currentDrawerIndex].id,
+        secretWord: secretWord,
+        base64Image: base64Image,
+        time: room.time,
+        currentRound: room.currentRound,
+        maxRounds: room.maxRounds,
+      };
 
-    io.to(id).emit("SendCanvasDataToClient", dataForClient);
+      io.to(id).emit("SendCanvasDataToClient", dataForClient);
+    } catch (error) {
+      console.log("error on sendCanvasDataToServer", error);
+    }
   });
   socket.on("kickPlayer", async ({ roomId, playerId }) => {
-    const room = await getRoom(roomId);
-    if (!room) return;
+    try {
+      const room = await getRoom(roomId);
+      if (!room) return;
 
-    const playerIndex = room.users.findIndex((user) => user.id === playerId);
-    if (playerIndex === -1) return;
+      const playerIndex = room.users.findIndex((user) => user.id === playerId);
+      if (playerIndex === -1) return;
 
-    const userData = room.users[playerIndex];
-    room.users.splice(playerIndex, 1);
+      const userData = room.users[playerIndex];
+      room.users.splice(playerIndex, 1);
 
-    io.to(roomId).emit("userKicked", userData);
-    io.to(playerId).emit("youWereKicked");
-    io.sockets.sockets.get(playerId)?.disconnect(true);
+      io.to(roomId).emit("userKicked", userData);
+      io.to(playerId).emit("youWereKicked");
+      io.sockets.sockets.get(playerId)?.disconnect(true);
 
-    io.to(roomId).emit("updateUserList", room.users);
+      io.to(roomId).emit("updateUserList", room.users);
 
-    if (!room.users.length) {
-      delete rooms[roomId];
-    } else if (room.currentDrawer === playerId) {
-      await changeDrawer(roomId);
+      if (!room.users.length) {
+        delete rooms[roomId];
+      } else if (room.currentDrawer === playerId) {
+        await changeDrawer(roomId);
+      }
+    } catch (error) {
+      console.log("error while kickPlayer", error);
     }
   });
-
+  socket.on("ping", (_, callback) => {
+    callback(); // Just respond immediately
+  });
   socket.on("disconnect", async () => {
-    activeUsers--;
-    io.emit("activeUsersUpdate", { activeUsers });
+    try {
+      activeUsers--;
+      io.emit("activeUsersUpdate", { activeUsers });
 
-    const allRoomsKeys = await redisClient.scan("room:*");
-    for (const roomKey of allRoomsKeys) {
-      const roomId = roomKey.replace("room:", "");
-      const room = await getRoom(roomId);
-      const userIndex = room.users.findIndex((user) => user.id === socket.id);
+      const allRoomsKeys = await redisClient.scan("room:*");
+      for (const roomKey of allRoomsKeys) {
+        const roomId = roomKey.replace("room:", "");
+        const room = await getRoom(roomId);
+        const userIndex = room.users.findIndex((user) => user.id === socket.id);
 
-      if (userIndex !== -1) {
-        const [userData] = room.users.splice(userIndex, 1);
-        await saveRoom(roomId, room);
+        if (userIndex !== -1) {
+          const [userData] = room.users.splice(userIndex, 1);
+          await saveRoom(roomId, room);
 
-        io.to(roomId).emit("userDisconnected", userData);
-        io.to(roomId).emit("updateUserList", room.users);
+          io.to(roomId).emit("userDisconnected", userData);
+          io.to(roomId).emit("updateUserList", room.users);
 
-        if (room.users.length === 0) {
-          await deleteRoom(roomId);
-        } else if (room.currentDrawer === socket.id) {
-          await changeDrawer(roomId);
+          if (room.users.length === 0) {
+            await deleteRoom(roomId);
+          } else if (room.currentDrawer === socket.id) {
+            await changeDrawer(roomId);
+          }
+          break;
         }
-        break;
       }
+      await ensurePublicRoomAvailable();
+    } catch (error) {
+      console.log("error while disconect");
     }
-    await ensurePublicRoomAvailable();
   });
 });
 

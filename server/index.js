@@ -613,7 +613,9 @@ io.on("connection", (socket) => {
   );
 
   socket.on("undo", ({ newHistory, roomId }) =>
-    io.to(roomId).emit("undo", newHistory)
+    {io.to(roomId).emit("undo", newHistory); console.log("undid");
+    }
+
   );
   socket.on("lineWidthChange", ({ newLineWidth, roomId }) =>
     io.to(roomId).emit("newLineWidth", { newLineWidth })

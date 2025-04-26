@@ -179,6 +179,7 @@ function GameRoom() {
     socket.on("message", (message: RecivedMessage) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     });
+
     socket.on("updateUserList", (data) => {
       setJoinedUsers(data);
     });
@@ -203,7 +204,6 @@ function GameRoom() {
       ({ currentDrawer, currentDrawerId, secretWord, time, currentRound }) => {
         setCurrentRound(currentRound);
         setCurrentDrawerId(currentDrawerId);
-
         setTimeLeft(time);
         setCurrentDrawer(currentDrawer);
         setSecretWord(secretWord);
@@ -224,29 +224,22 @@ function GameRoom() {
           return updatedUsers;
         });
       }
-
-      // Set hasGuessed to false for all joinedUsers
     );
+
     socket.on("newWord", (word) => {
       setDrawWord(word);
     });
+
     socket.on("youWereKicked", () => {
       navigate("/", { replace: true });
       window.location.reload();
     });
+
     socket.on("correctGuess", ({ guesser, guesserId, word }) => {
       if (guesserId === userId) {
         setHasGuesed(true);
       }
-
-      // console.log(guesser, guesserId, word);
       setGuessedWord(word);
-      // confetti({
-      //   particleCount: 100,
-      //   spread: 70,
-      //   origin: { y: 0.6 },
-      // });
-
       setJoinedUsers((prevUsers) => {
         const updatedUsers = { ...prevUsers };
         if (updatedUsers[guesser.guesserId])
@@ -257,38 +250,38 @@ function GameRoom() {
         return updatedUsers;
       });
     });
+
     socket.on("MaxRoundsReached", () => {
       setMaxRoundsReached(true);
       setIsGameStarted(false);
-
-      console.log("MaxRoundsReached");
-      // console.log(setIsGameStarted);
     });
 
-    // Clean up when the component unmounts
+    // Add the SendCanvasDataToClient listener here
+    socket.on("SendCanvasDataToClient", (data) => {
+      setIsGameStarted(true);
+      setCurrentDrawer(data.currentDrawer);
+      setCurrentDrawerId(data.currentDrawerId);
+      setSecretWord(data.secretWord);
+      setTimeLeft(data.time);
+      setCurrentRound(data.currentRound);
+      setMaxRounds(data.maxRounds);
+    });
+
+    // Clean up all socket listeners when component unmounts
     return () => {
       socket.off("message");
-      socket.off("room_not_found");
-      socket.off("room_not_exist");
       socket.off("updateUserList");
       socket.off("gameStarted");
       socket.off("newDrawer");
       socket.off("newWord");
+      socket.off("youWereKicked");
+      socket.off("correctGuess");
+      socket.off("MaxRoundsReached");
+      socket.off("SendCanvasDataToClient"); // Add cleanup for this listener
     };
-  }, [isGameStarted, socket, userId]);
+  }, [userId, location.state.userId]); // Only depend on values that should trigger re-registration
 
   // const handleButtonClick = () => {};
-  socket.on("SendCanvasDataToClient", (data) => {
-    // console.log(data);
-    setIsGameStarted(true);
-    setCurrentDrawer(data.currentDrawer);
-    setCurrentDrawerId(data.currentDrawerId);
-    setSecretWord(data.secretWord);
-    setTimeLeft(data.time);
-    setCurrentRound(data.currentRound);
-    setMaxRounds(data.maxRounds);
-  });
-  // console.log(joinedUsers);
   const EndOFGameScreenData = joinedUsers;
 
   return (

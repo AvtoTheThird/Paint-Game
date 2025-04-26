@@ -1,7 +1,7 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("xelovniki.zapto.org", {
+const socket = io("http://localhost:3000", {
   transports: ["websocket", "polling"], // Force WebSocket transport
   secure: true, // Use HTTPS
   reconnection: true,

@@ -1,11 +1,23 @@
 const express = require("express");
 const http = require("http");
+const https = require("https");
+const fs = require("fs");
 const cors = require("cors");
 const redisClient = require("./utils/redisClient");
 const words = require("./words");
 // const { getAvailablePublicRoom, calculateScore } = require("./utils/utils.js");
 const app = express();
-const server = http.createServer(app);
+
+// Define HTTPS options
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/api.khelovniki.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/api.khelovniki.com/fullchain.pem')
+};
+
+// Create HTTPS server
+const server = https.createServer(options, app);
+// const server = http.createServer(app); // Previous HTTP server
+
 const rooms = {};
 let activeUsers = 0;
 const DEFAULT_SCORE = 10;

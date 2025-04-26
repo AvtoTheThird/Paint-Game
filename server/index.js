@@ -8,15 +8,26 @@ const words = require("./words");
 // const { getAvailablePublicRoom, calculateScore } = require("./utils/utils.js");
 const app = express();
 
-// Define HTTPS options
-const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/api.khelovniki.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/api.khelovniki.com/fullchain.pem')
-};
+// Define paths for certificate files
+const keyPath = '/etc/letsencrypt/live/api.khelovniki.com/privkey.pem';
+const certPath = '/etc/letsencrypt/live/api.khelovniki.com/fullchain.pem';
 
-// Create HTTPS server
-const server = https.createServer(options, app);
-// const server = http.createServer(app); // Previous HTTP server
+let server;
+
+// Check if certificate files exist
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+  // Production environment (or local with certs): Use HTTPS
+  const options = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath)
+  };
+  server = https.createServer(options, app);
+  console.log("Starting server with HTTPS.");
+} else {
+  // Development environment (or local without certs): Use HTTP
+  server = http.createServer(app);
+  console.log("Certificate files not found. Starting server with HTTP.");
+}
 
 const rooms = {};
 let activeUsers = 0;

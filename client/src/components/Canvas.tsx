@@ -15,7 +15,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   const [color, setColor] = useState<string>("#000000"); // Default color is black
   const [lineWidth, setLineWidth] = useState<number>(5);
   const [canDraw, setCanDraw] = useState<boolean>(false);
-  const [history, setHistory] = useState<string[]>([]); // To keep track of canvas states for undo
+  const [history, setHistory] = useState<string[]>([]);
   const [tool, setTool] = useState<"draw" | "fill">("draw"); // 'draw' or 'fill'
   const [userId, setUserId] = useState<string>("");
   const [roomId, setRoomId] = useState<string>("");
@@ -30,6 +30,9 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
   // console.log(canvasData);
   const [showSlider, setShowSlider] = useState(false);
   const sliderRef = useRef<HTMLDivElement | null>(null);
+  const [isUndoing, setIsUndoing] = useState<boolean>(false);
+  const historyRef = useRef<string[]>([]);
+  const lastSavedStateRef = useRef<string>("");
 
   // Handle clicks outside the slider to close it
   useEffect(() => {
@@ -113,67 +116,75 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     if (!canvas || !ctx) return;
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const startColor = getPixelColor(imageData, startX, startY);
+    const data = imageData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Convert hex color to RGBA
     const fillColorRgb = hexToRgb(fillColor);
+    const startColor = [
+      data[(startY * width + startX) * 4],
+      data[(startY * width + startX) * 4 + 1],
+      data[(startY * width + startX) * 4 + 2],
+      data[(startY * width + startX) * 4 + 3]
+    ];
 
+    // Check if already filled with same color
     if (colorMatch(startColor, fillColorRgb)) {
       console.log("Area is already filled with the selected color");
       return;
     }
 
+    // Use TypedArray for better performance
+    const processed = new Uint8Array(width * height);
     const stack: [number, number][] = [[startX, startY]];
-    const maxIterations = canvas.width * canvas.height; // Remove arbitrary limit
-
-    const processed = new Uint8Array(canvas.width * canvas.height); // Track processed pixels
 
     while (stack.length > 0) {
       const [x, y] = stack.pop()!;
-      const index = y * canvas.width + x;
+      const index = y * width + x;
 
-      // Skip out of bounds or already processed pixels
-      if (
-        x < 0 ||
-        x >= canvas.width ||
-        y < 0 ||
-        y >= canvas.height ||
-        processed[index]
-      )
-        continue;
+      if (x < 0 || x >= width || y < 0 || y >= height || processed[index]) continue;
 
       // Find west and east boundaries
       let westX = x;
-      while (
-        westX >= 0 &&
-        colorMatch(getPixelColor(imageData, westX, y), startColor) &&
-        !processed[y * canvas.width + westX]
-      ) {
+      while (westX >= 0 && !processed[y * width + westX] && 
+             data[(y * width + westX) * 4] === startColor[0] &&
+             data[(y * width + westX) * 4 + 1] === startColor[1] &&
+             data[(y * width + westX) * 4 + 2] === startColor[2]) {
         westX--;
       }
       westX++;
 
       let eastX = x;
-      while (
-        eastX < canvas.width &&
-        colorMatch(getPixelColor(imageData, eastX, y), startColor) &&
-        !processed[y * canvas.width + eastX]
-      ) {
+      while (eastX < width && !processed[y * width + eastX] && 
+             data[(y * width + eastX) * 4] === startColor[0] &&
+             data[(y * width + eastX) * 4 + 1] === startColor[1] &&
+             data[(y * width + eastX) * 4 + 2] === startColor[2]) {
         eastX++;
       }
       eastX--;
 
-      // Fill and mark as processed
+      // Fill the line and mark as processed
       for (let fillX = westX; fillX <= eastX; fillX++) {
-        setPixelColor(imageData, fillX, y, fillColorRgb);
-        processed[y * canvas.width + fillX] = 1;
+        const pixelIndex = (y * width + fillX) * 4;
+        data[pixelIndex] = fillColorRgb[0];
+        data[pixelIndex + 1] = fillColorRgb[1];
+        data[pixelIndex + 2] = fillColorRgb[2];
+        data[pixelIndex + 3] = fillColorRgb[3];
+        processed[y * width + fillX] = 1;
       }
 
       // Check adjacent rows
       for (const dy of [-1, 1]) {
         const newY = y + dy;
-        if (newY < 0 || newY >= canvas.height) continue;
+        if (newY < 0 || newY >= height) continue;
 
         for (let fillX = westX; fillX <= eastX; fillX++) {
-          if (colorMatch(getPixelColor(imageData, fillX, newY), startColor)) {
+          const pixelIndex = (newY * width + fillX) * 4;
+          if (!processed[newY * width + fillX] && 
+              data[pixelIndex] === startColor[0] &&
+              data[pixelIndex + 1] === startColor[1] &&
+              data[pixelIndex + 2] === startColor[2]) {
             stack.push([fillX, newY]);
           }
         }
@@ -312,11 +323,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       }
     };
 
-    const handleUndo = (updatedHistory: string[]) => {
-      setHistory(updatedHistory);
-      redrawCanvas(updatedHistory);
-    };
-
     const handleFill = ({
       startX,
       startY,
@@ -363,7 +369,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("draw", handleDraw);
     socket.on("clear", handleClear);
     socket.on("newDrawer", handleNewDrawer);
-    socket.on("undo", handleUndo);
     socket.on("fill", handleFill);
     socket.on("handEnded", handleHandEnded);
     socket.on("MaxRoundsReached", handleMaxRounds);
@@ -377,7 +382,6 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("draw", handleDraw);
       socket.off("clear", handleClear);
       socket.off("newDrawer", handleNewDrawer);
-      socket.off("undo", handleUndo);
       socket.off("fill", handleFill);
       socket.off("handEnded", handleHandEnded);
       socket.off("MaxRoundsReached", handleMaxRounds);
@@ -448,156 +452,7 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     userIdRef.current = canvasData.userId; // Update the refs whenever canvasData changes
     roomIdRef.current = canvasData.roomId;
   }, [canvasData]);
-  // useEffect(() => {
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
 
-  //   const ctx = canvas.getContext("2d");
-  //   if (!ctx) return;
-  //   if (ctxRef.current) {
-  //     ctxRef.current.fillStyle = "white";
-  //   }
-  //   ctxRef.current = ctx;
-
-  //   socket.on(
-  //     "draw",
-  //     ({
-  //       x0,
-  //       y0,
-  //       x1,
-  //       y1,
-  //       color,
-  //     }: {
-  //       x0: number;
-  //       y0: number;
-  //       x1: number;
-  //       y1: number;
-  //       color: string;
-  //     }) => {
-  //       if (!ctxRef.current) return;
-
-  //       ctxRef.current.strokeStyle = color; // Use the color from the server
-  //       ctxRef.current.beginPath();
-  //       ctxRef.current.moveTo(x0, y0);
-  //       ctxRef.current.lineTo(x1, y1);
-  //       ctxRef.current.stroke();
-  //     }
-  //   );
-
-  //   socket.on("clear", () => {
-  //     if (ctxRef.current) {
-  //       ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-  //     }
-  //   });
-  //   socket.on("newLineWidth", (data) => {
-  //     setLineWidth(data.newLineWidth);
-  //   });
-
-  // socket.on("newDrawer", (data) => {
-  //   setIsGamePaused(false);
-  //   console.log("new drawer");
-  //   setLineWidth(5);
-  //   setHistory([]);
-  //   clearCanvas();
-  //   if (data.currentDrawerId !== userIdRef.current) {
-  //     setCanDraw(false);
-  //   } else {
-  //     setCanDraw(true);
-  //   }
-  // });
-  //   socket.on("undo", (updatedHistory) => {
-  //     setHistory(updatedHistory); // Update the local history state
-  //     redrawCanvas(updatedHistory); // Redraw the canvas
-  //   });
-  //   socket.on("fill", ({ startX, startY, fillColor }) => {
-  //     floodFill(startX, startY, fillColor, false);
-  //   });
-  //   socket.on("handEnded", (data) => {
-  //     // console.log("recived handEnded", data);
-
-  //     setCurrentDrawer(data.currentDrawer);
-  //     setOldWord(data.Word);
-  //     setCanDraw(false);
-  //     setIsGamePaused(true);
-  //     setPauseTime(5);
-  //   });
-  //   socket.on("MaxRoundsReached", () => {
-  //     setMaxRoundsReached(true);
-  //   });
-  //   socket.on("requestCanvasDataFromClient", (roomId, id) => {
-  //     console.log("recived requestCanvasData", id);
-  //     const canvas = canvasRef.current;
-  //     if (!canvas) return;
-
-  //     const ctx = canvas.getContext("2d");
-  //     if (!ctx) return;
-
-  //     ctxRef.current = ctx;
-  //     if (!canvasRef.current || !ctxRef.current) return;
-
-  //     const base64Image = canvas.toDataURL("image/png");
-
-  //     socket.emit("test");
-
-  //     const data = { base64Image, id, roomId };
-  //     socket.emit("sendCanvasDataToServer", data);
-  //     // console.log("sent data to server", base64Image, id);
-  //   });
-
-  //   return () => {
-  //     socket.off("draw");
-  //     socket.off("clear");
-  //     socket.off("undo");
-  //     socket.off("newLineWidth");
-  //     socket.off("newDrawer");
-  //     socket.off("fill");
-  //   };
-  // }, [socket, userId]);
-  // socket.on("newDrawer", (data) => {
-  //   setIsGamePaused(false);
-  //   console.log("new drawer");
-  //   setLineWidth(5);
-  //   setHistory([]);
-  //   clearCanvas();
-  //   if (data.currentDrawerId !== userIdRef.current) {
-  //     setCanDraw(false);
-  //   } else {
-  //     setCanDraw(true);
-  //   }
-  // });
-  // socket.on("gameStarted", () => {
-  //   setIsGamePaused(false);
-  //   setMaxRoundsReached(false);
-  // });
-  // // console.log(isGamePaused);
-  // socket.on("MaxRoundsReached", () => {
-  //   setMaxRoundsReached(true);
-  // });
-
-  // socket.on("SendCanvasDataToClient", (data) => {
-  //   const base64Image = data.base64Image;
-  //   setCurrentDrawer(data.currentDrawer);
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
-
-  //   const ctx = canvas.getContext("2d");
-  //   if (!ctx) return;
-
-  //   // Create a new Image object
-  //   const img = new Image();
-
-  //   // Set the src of the image to the base64 data
-  //   img.src = base64Image;
-
-  //   // Once the image is loaded, draw it onto the canvas
-  //   img.onload = () => {
-  //     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  //   };
-
-  //   img.onerror = (err) => {
-  //     console.error("Failed to load the image", err);
-  //   };
-  // });
   const startDrawing = (
     event:
       | React.MouseEvent<HTMLCanvasElement>
@@ -712,46 +567,88 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.emit("lineWidthChange", data); // Notify other clients
     // console.log("emited shit");
   };
-  const saveCanvasState = () => {
+  const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const canvasData = canvas.toDataURL();
-      setHistory((prevHistory) => [...prevHistory, canvasData]);
-    }
-  };
-  const undoLastAction = () => {
-    if (history.length === 0) return; // No history to undo
+    if (!canvas || isUndoing) return;
 
-    const newHistory = [...history];
+    const canvasData = canvas.toDataURL();
+    // Only save if the state has actually changed
+    if (canvasData !== lastSavedStateRef.current) {
+      lastSavedStateRef.current = canvasData;
+      setHistory(prev => [...prev, canvasData]);
+      historyRef.current = [...historyRef.current, canvasData];
+    }
+  }, [isUndoing]);
+
+  const undoLastAction = useCallback(() => {
+    if (historyRef.current.length <= 1) return; // Keep at least one state
+
+    setIsUndoing(true);
+    const newHistory = [...historyRef.current];
     newHistory.pop(); // Remove the last saved state
+    historyRef.current = newHistory;
     setHistory(newHistory);
 
     // Emit undo event to server with the updated history
     socket.emit("undo", { newHistory, roomId });
 
-    redrawCanvas(newHistory);
-  };
-
-  const redrawCanvas = (history: string[]) => {
+    // Redraw the canvas with the previous state
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
-
-    if (ctx && canvas && history.length > 0) {
+    if (ctx && canvas && newHistory.length > 0) {
       const lastImage = new Image();
-      lastImage.src = history[history.length - 1];
       lastImage.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-        ctx.drawImage(lastImage, 0, 0); // Draw the previous state
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(lastImage, 0, 0);
+        setIsUndoing(false);
       };
-    } else if (ctx && canvas) {
-      // Clear canvas if no history left
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      lastImage.src = newHistory[newHistory.length - 1];
+    } else {
+      setIsUndoing(false);
     }
-  };
-  // const vw = Math.max(
-  //   document.documentElement.clientWidth || 0,
-  //   window.innerWidth || 0
-  // );
+  }, [roomId]);
+
+  // Update historyRef when history changes
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
+
+  // Initialize lastSavedStateRef
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      lastSavedStateRef.current = canvas.toDataURL();
+    }
+  }, []);
+
+  // Modify the socket event handler for undo
+  useEffect(() => {
+    const handleUndo = (updatedHistory: string[]) => {
+      setIsUndoing(true);
+      setHistory(updatedHistory);
+      historyRef.current = updatedHistory;
+      
+      const canvas = canvasRef.current;
+      const ctx = ctxRef.current;
+      if (ctx && canvas && updatedHistory.length > 0) {
+        const lastImage = new Image();
+        lastImage.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(lastImage, 0, 0);
+          setIsUndoing(false);
+        };
+        lastImage.src = updatedHistory[updatedHistory.length - 1];
+      } else {
+        setIsUndoing(false);
+      }
+    };
+
+    socket.on("undo", handleUndo);
+    return () => {
+      socket.off("undo", handleUndo);
+    };
+  }, []);
+
   const EndOFHandScreenData = { oldWord, currentDrawer };
   // const EndOFGameScreenData = { oldWord, currentDrawer };
   const handleColorClick = (newColor: string) => {

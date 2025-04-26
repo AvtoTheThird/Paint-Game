@@ -17,12 +17,13 @@ interface RecivedMessage {
   message: string;
   userName: string;
 }
-interface JoinedUsers {
+interface JoinedUser {
   id: string;
   name: string;
   roomId: string;
   score: number;
   hasGuessed: boolean;
+  avatarID: string;
 }
 interface CanvasData {
   data: { roomId: string; userId: string };
@@ -34,7 +35,7 @@ function GameRoom() {
   const [message, setMessage] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
   const [messages, setMessages] = useState<RecivedMessage[]>([]);
-  const [joinedUsers, setJoinedUsers] = useState<JoinedUsers[]>([]);
+  const [joinedUsers, setJoinedUsers] = useState<JoinedUser[]>([]);
   const [drawWord, setDrawWord] = useState<never>();
   const [userId, setUserId] = useState<string>("");
   const [canDraw, setCanDraw] = useState<boolean>(false);
@@ -181,7 +182,9 @@ function GameRoom() {
     });
 
     socket.on("updateUserList", (data) => {
-      setJoinedUsers(data);
+      // If data is an object, convert it to array
+      const userArray = Array.isArray(data) ? data : Object.values(data);
+      setJoinedUsers(userArray);
     });
 
     socket.on(
@@ -216,13 +219,13 @@ function GameRoom() {
         } else {
           setCanDraw(true);
         }
-        setJoinedUsers((prevUsers) => {
-          const updatedUsers = { ...prevUsers };
-          Object.keys(updatedUsers).forEach((userId: any) => {
-            updatedUsers[userId].hasGuessed = false;
-          });
-          return updatedUsers;
-        });
+        
+        setJoinedUsers((prevUsers) => 
+          prevUsers.map(user => ({
+            ...user,
+            hasGuessed: false
+          }))
+        );
       }
     );
 
@@ -240,15 +243,14 @@ function GameRoom() {
         setHasGuesed(true);
       }
       setGuessedWord(word);
-      setJoinedUsers((prevUsers) => {
-        const updatedUsers = { ...prevUsers };
-        if (updatedUsers[guesser.guesserId])
-          updatedUsers[guesser.guesserId] = {
-            ...updatedUsers[guesser.guesserId],
-            hasGuessed: true,
-          };
-        return updatedUsers;
-      });
+      
+      setJoinedUsers((prevUsers) => 
+        prevUsers.map(user => 
+          user.id === guesser.guesserId
+            ? { ...user, hasGuessed: true }
+            : user
+        )
+      );
     });
 
     socket.on("MaxRoundsReached", () => {
@@ -324,18 +326,18 @@ function GameRoom() {
       <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden relative touch-none overscroll-none will-change-transform">
         <div className="  lg:w-[100vw] 2xl:h-[760px] xl:h-[550px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 xl:mt-16 mt-0 ">
           <div className="  bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden 2xl:h-[679px] xl:h-[484px] lg:w-[300px] 2xl:w-[320px]   text-center mb-auto mt-2">
-            {Object.values(joinedUsers)
+            {joinedUsers
               .sort((a, b) => b.score - a.score)
-              .map((user: any, index: number) => (
+              .map((user, index) => (
                 <div
-                  key={index}
+                  key={user.id}
                   className={`relative group flex flex-row justify-start gap-2 items-center pl-2 m-2 rounded-[3px] py-2 ${
-                    user.id == currentDrawerId
+                    user.id === currentDrawerId
                       ? "bg-dark-purupe"
                       : user.hasGuessed
                       ? "bg-green-600"
-                      : "bg-gray-100 "
-                  } text-lg `}
+                      : "bg-gray-100"
+                  } text-lg`}
                 >
                   <img
                     className="w-[65px] h-[65px] bg-slate-300 rounded-[3px] border-gray-500 border-[1px]"
@@ -345,14 +347,14 @@ function GameRoom() {
                   <div className="flex flex-col justify-start items-start">
                     <p className="text-base">
                       {user.name}
-                      {user.name == userName ? "(შენ)" : null}
+                      {user.name === userName ? "(შენ)" : null}
                     </p>
                     <p className="text-sm text-light-pink">
                       ქულა: {user.score}
                     </p>
                     <p className="text-sm">#{index + 1}</p>
                   </div>
-                  {isAdmin ? (
+                  {isAdmin && (
                     <button
                       className="absolute bottom-2 right-2"
                       onClick={() => kickPlayer(user.id)}
@@ -364,7 +366,7 @@ function GameRoom() {
                         title="გააგდე"
                       />
                     </button>
-                  ) : null}
+                  )}
                 </div>
               ))}
           </div>
@@ -436,46 +438,40 @@ function GameRoom() {
 
           <div className="flex justify-between gap-3 mb-auto mt-2 w-[97vw] sm:w-auto ">
             <div className="flex-grow  overflow-y-scroll bg-light-pink rounded-[3px]   lg:h-[90vh] w-[40vw]   text-center lg:hidden border-gray border-[1px] ">
-              {Object.values(joinedUsers)
+              {joinedUsers
                 .sort((a, b) => b.score - a.score)
-                .map((user: any, index: number) => (
+                .map((user, index) => (
                   <div
-                    key={index}
+                    key={user.id}
                     className={`relative group flex flex-col items-center justify-center pl-2 m-2 rounded-[3px] py-2 ${
-                      user.id == currentDrawerId
+                      user.id === currentDrawerId
                         ? "bg-dark-purupe"
                         : user.hasGuessed
                         ? "bg-green-600"
-                        : "bg-white "
-                    } text-lg `}
+                        : "bg-white"
+                    } text-lg`}
                   >
                     <p className="text-sm">
                       {user.name}
-                      {user.name == userName ? "(შენ)" : null}
+                      {user.name === userName ? "(შენ)" : null}
                     </p>
-
-                    <div className="flex  justify-start items-start ">
+                    <div className="flex justify-start items-start">
                       <img
-                        className="w-[40px] h-[40px] bg-slate-300 rounded-[3px] border-gray-500 border-[1px] "
+                        className="w-[40px] h-[40px] bg-slate-300 rounded-[3px] border-gray-500 border-[1px]"
                         src={`${user.avatarID}.svg`}
-                        alt={".."}
-                      />{" "}
+                        alt="User Avatar"
+                      />
                       <div className="flex flex-col justify-start items-start pl-2">
-                        {" "}
                         <p className="text-sm text-light-pink">
-                          {" "}
                           ქულა: {user.score}
                         </p>
-                        <p className="text-sm ">#{index + 1}</p>
+                        <p className="text-sm">#{index + 1}</p>
                       </div>
                     </div>
-
-                    {isAdmin ? (
+                    {isAdmin && (
                       <button
                         className="absolute bottom-2 right-2"
-                        onClick={() => {
-                          kickPlayer(user.id);
-                        }}
+                        onClick={() => kickPlayer(user.id)}
                       >
                         <img
                           className="w-[35px] h-[35px] opacity-25 group-hover:opacity-100 transition-all duration-200 ease-in-out"
@@ -484,7 +480,7 @@ function GameRoom() {
                           title="გააგდე"
                         />
                       </button>
-                    ) : null}
+                    )}
                   </div>
                 ))}
             </div>

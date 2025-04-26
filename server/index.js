@@ -612,11 +612,16 @@ io.on("connection", (socket) => {
     io.to(roomId).emit("draw", { x0, y0, x1, y1, color })
   );
 
-  socket.on("undo", ({ newHistory, roomId }) =>
-    {io.to(roomId).emit("undo", newHistory); console.log("undid");
-    }
+  // Listen for drawEnd and broadcast it
+  socket.on("drawEnd", ({ roomId }) => {
+    socket.broadcast.to(roomId).emit("drawEnd");
+  });
 
-  );
+  socket.on("undo", ({ roomId }) => {
+    // Just broadcast the signal, no data needed
+    socket.broadcast.to(roomId).emit("undo");
+    console.log("undo signal broadcasted");
+  });
   socket.on("lineWidthChange", ({ newLineWidth, roomId }) =>
     io.to(roomId).emit("newLineWidth", { newLineWidth })
   );
@@ -677,8 +682,9 @@ io.on("connection", (socket) => {
   socket.on("ping", (_, callback) => {
     callback(); // Just respond immediately
   });
-  socket.on("disconnect", async () => {
+  socket.on("disconnect", async (reason) => {
     try {
+      console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
       activeUsers--;
       io.emit("activeUsersUpdate", { activeUsers });
 

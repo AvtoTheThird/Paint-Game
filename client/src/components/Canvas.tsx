@@ -297,14 +297,16 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
     const handleClear = () => {
       ctxRef.current?.clearRect(0, 0, canvas.width, canvas.height);
+      setHistory([]); // Clear history state
+      saveCanvasState(); // Save the cleared state
     };
 
     const handleNewDrawer = (data: any) => {
       setIsGamePaused(false);
 
       setLineWidth(5);
-      setHistory([]);
-      clearCanvas();
+      setHistory([]); // Clear history state for new turn
+      clearCanvas(); // This will now also save the cleared state due to the change above
       if (data.currentDrawerId !== userIdRef.current) {
         setCanDraw(false);
       } else {
@@ -312,9 +314,17 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       }
     };
 
-    const handleUndo = (updatedHistory: string[]) => {
-      setHistory(updatedHistory);
-      redrawCanvas(updatedHistory);
+    const handleUndo = () => {
+      console.log("undo");
+      console.log(history);
+      
+      setHistory((prevHistory) => {
+        if (prevHistory.length === 0) return prevHistory; // Should not happen if button is disabled, but good practice
+        const newHistory = [...prevHistory];
+        newHistory.pop();
+        redrawCanvas(newHistory); // Redraw after popping
+        return newHistory;
+      });
     };
 
     const handleFill = ({
@@ -327,6 +337,11 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       fillColor: string;
     }) => {
       floodFill(startX, startY, fillColor, false);
+    };
+
+    // Handler to save state when a drawing action finishes
+    const handleDrawEnd = () => {
+      saveCanvasState();
     };
 
     const handleHandEnded = (data: { currentDrawer: string; Word: string }) => {
@@ -371,6 +386,13 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     socket.on("gameStarted", handleGameStarted);
     socket.on("SendCanvasDataToClient", handleCanvasDataReceive);
     socket.on("newLineWidth", setLineWidth);
+    socket.on("drawEnd", handleDrawEnd); // Listen for drawEnd
+
+    const handleDisconnect = (reason: string) => {
+      console.log("Socket disconnected on client. Reason:", reason);
+      // Add any additional client-side cleanup or UI updates needed on disconnect here
+    };
+    socket.on("disconnect", handleDisconnect);
 
     // Cleanup function
     return () => {
@@ -385,6 +407,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       socket.off("gameStarted", handleGameStarted);
       socket.off("SendCanvasDataToClient", handleCanvasDataReceive);
       socket.off("newLineWidth", setLineWidth);
+      socket.off("disconnect", handleDisconnect); // Clean up disconnect listener
+      socket.off("drawEnd", handleDrawEnd); // Clean up drawEnd listener
     };
   }, [socket, roomId, userId, isGamePaused]);
   useEffect(() => {
@@ -423,6 +447,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
 
     // Initial canvas size
     resizeCanvas();
+    // Save the initial blank state
+    saveCanvasState();
 
     // Listen for window resize events
     window.addEventListener("resize", resizeCanvas);
@@ -644,8 +670,10 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     if (ctxRef.current) {
       ctxRef.current.closePath();
     }
-    saveCanvasState(); // Save state after drawing ends.
-    // console.log(history);
+    // Save state locally after the drawing action is complete
+    saveCanvasState();
+    // Notify others that the drawing action has ended
+    socket.emit("drawEnd", { roomId });
   };
 
   const draw = (
@@ -726,8 +754,8 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
     newHistory.pop(); // Remove the last saved state
     setHistory(newHistory);
 
-    // Emit undo event to server with the updated history
-    socket.emit("undo", { newHistory, roomId });
+    // Emit undo event to server - just signal the undo, don't send history
+    socket.emit("undo", { roomId });
 
     redrawCanvas(newHistory);
   };
@@ -742,6 +770,11 @@ const Canvas: React.FC<{ canvasData: { roomId: string; userId: string } }> = ({
       lastImage.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
         ctx.drawImage(lastImage, 0, 0); // Draw the previous state
+      };
+      lastImage.onerror = (error) => {
+        console.error("Error loading image for redraw:", error);
+        // Optionally clear canvas or show an error state if image fails to load
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       };
     } else if (ctx && canvas) {
       // Clear canvas if no history left

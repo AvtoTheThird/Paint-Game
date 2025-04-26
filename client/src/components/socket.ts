@@ -1,15 +1,14 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("http://51.21.219.17:3000", {
-  transports: ["websocket", "polling"], // Force WebSocket transport
-  secure: true, // Use HTTPS
+const socket = io("wss://51.21.219.17:3000", {
+  transports: ["websocket", "polling"],
   reconnection: true,
-  reconnectionAttempts: 5, // Number of retry attempts
-  reconnectionDelay: 1000, // Delay in ms between retries
-  reconnectionDelayMax: 5000, // Maximum delay between reconnection attempts
-  timeout: 20000, // Connection timeout
-  autoConnect: true, // Connect on instantiation
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  autoConnect: true,
 });
 socket.on("disconnect", () => {
   console.log("Disconnected from server");

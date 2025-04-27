@@ -1,7 +1,7 @@
 // socket.ts
 import { io } from "socket.io-client";
 
-const socket = io("wss://api.khelovniki.com", {
+const socket = io("http://51.21.219.17:3000/", {
   transports: ["websocket", "polling"],
   reconnection: true,
   reconnectionAttempts: 5,

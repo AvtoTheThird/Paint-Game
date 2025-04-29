@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .login-form {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .room-list {
+            display: none;
+        }
+        .room {
+            border: 1px solid #eee;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .room-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        .room-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .users-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        .user button {
+            padding: 2px 6px;
+            font-size: 0.8em;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .user button:hover {
+            background: #cc0000;
+        }
+        .shutdown-btn {
+            padding: 4px 8px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .shutdown-btn:hover {
+            background: #444;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-form" id="loginForm">
+        <h2>Hospital Admin Login</h2>
+        <input type="password" id="password" placeholder="Enter admin password">
+        <button onclick="login()">Login</button>
+        <div class="error" id="loginError"></div>
+    </div>
+
+    <div class="room-list" id="roomList">
+        <h2>Active Rooms</h2>
+        <div id="rooms"></div>
+    </div>
+
+    <script>
+        let adminPassword = '';
+
+        async function login() {
+            const password = document.getElementById('password').value;
+            try {
+                const response = await fetch(`/hospital/rooms?password=${password}`);
+                if (response.ok) {
+                    adminPassword = password;
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('roomList').style.display = 'block';
+                    fetchRooms();
+                } else {
+                    document.getElementById('loginError').textContent = 'Invalid password';
+                }
+            } catch (error) {
+                document.getElementById('loginError').textContent = 'Error connecting to server';
+            }
+        }
+
+        async function fetchRooms() {
+            try {
+                const response = await fetch(`/hospital/rooms?password=${adminPassword}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const roomsDiv = document.getElementById('rooms');
+                    roomsDiv.innerHTML = '';
+                    
+                    data.rooms.forEach(room => {
+                        const roomDiv = document.createElement('div');
+                        roomDiv.className = 'room';
+                        
+                        const currentDrawer = room.users.find(user => user.id === room.currentDrawer);
+                        const drawerName = currentDrawer ? (currentDrawer.name || currentDrawer.id) : 'None';
+                        
+                        roomDiv.innerHTML = `
+                            <div class="room-header">
+                                <h3>Room: ${room.id}</h3>
+                                <button class="shutdown-btn" onclick="shutdownRoom('${room.id}')">Shutdown Room</button>
+                            </div>
+                            <div class="room-info">
+                                <span>Word: ${room.currentWord || 'None'}</span>
+                                <span>Drawer: ${drawerName}</span>
+                            </div>
+                            <div class="users-container">
+                                ${room.users.map(user => `
+                                    <div class="user">
+                                        <span>${user.name || user.id}</span>
+                                        <button onclick="kickPlayer('${room.id}', '${user.id}')">Kick</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        
+                        roomsDiv.appendChild(roomDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching rooms:', error);
+            }
+        }
+
+        async function shutdownRoom(roomId) {
+            if (!confirm('Are you sure you want to shut down this room?')) return;
+            
+            try {
+                const response = await fetch(`/hospital/rooms/${roomId}/shutdown?password=${adminPassword}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    fetchRooms();
+                } else {
+                    alert('Failed to shut down room');
+                }
+            } catch (error) {
+                console.error('Error shutting down room:', error);
+            }
+        }
+
+        async function kickPlayer(roomId, playerId) {
+            if (!confirm('Are you sure you want to kick this player?')) return;
+            
+            try {
+                const response = await fetch(`/hospital/rooms/${roomId}/kick/${playerId}?password=${adminPassword}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    fetchRooms();
+                } else {
+                    alert('Failed to kick player');
+                }
+            } catch (error) {
+                console.error('Error kicking player:', error);
+            }
+        }
+
+        // Auto-refresh rooms every 5 seconds when logged in
+        setInterval(() => {
+            if (adminPassword) {
+                fetchRooms();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

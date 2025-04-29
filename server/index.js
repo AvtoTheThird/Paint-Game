@@ -5,6 +5,7 @@ const fs = require("fs");
 const cors = require("cors");
 const redisClient = require("./utils/redisClient");
 const words = require("./words");
+const adminRoutes = require('./admin/routes');
 // const { getAvailablePublicRoom, calculateScore } = require("./utils/utils.js");
 const app = express();
 
@@ -49,6 +50,18 @@ const io = require("socket.io")(server, {
 });
 
 app.use(express.static("public"));
+
+// Add Redis client to request object for admin routes
+app.use((req, res, next) => {
+  req.redisClient = redisClient.client;
+  next();
+});
+
+// Add io to app for admin routes
+app.set('io', io);
+
+// Mount admin routes
+app.use('/hospital', adminRoutes);
 
 let totalOutgoing = 0;
 let totalIncoming = 0;

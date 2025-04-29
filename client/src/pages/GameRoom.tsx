@@ -325,8 +325,8 @@ function GameRoom() {
       </header>
       <main className="font-ge-bold  lg:h-screen flex flex-col justify-center items-center h-[100svh] overflow-hidden relative touch-none overscroll-none will-change-transform">
         <div className="  lg:w-[100vw] 2xl:h-[760px] xl:h-[550px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 xl:mt-16 mt-0 ">
-          <div className="  bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden 2xl:h-[679px] xl:h-[484px] lg:w-[300px] 2xl:w-[320px]   text-center mb-auto mt-2">
-            {joinedUsers
+        <div className="bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden 2xl:h-[679px] xl:h-[484px] lg:w-[300px] 2xl:w-[320px] text-center mb-auto mt-2 overflow-y-auto">
+        {joinedUsers
               .sort((a, b) => b.score - a.score)
               .map((user, index) => (
                 <div

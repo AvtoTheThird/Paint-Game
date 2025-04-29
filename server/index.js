@@ -61,6 +61,48 @@ redisClient.client.on("error", (err) => {
   console.error("Redis connection error:", err);
 });
 
+// --- BEGIN: Redis Lock Implementation ---
+const LOCK_TIMEOUT_SECONDS = 5; // Time in seconds before a lock automatically expires
+
+/**
+ * Attempts to acquire a lock for a specific room ID.
+ * @param {string} roomId The ID of the room to lock.
+ * @returns {Promise<boolean>} True if the lock was acquired, false otherwise.
+ */
+const acquireLock = async (roomId) => {
+  const lockKey = `lock:room:${roomId}`;
+  try {
+    // SET key value NX EX seconds
+    // NX -- Only set the key if it does not already exist.
+    // EX seconds -- Set the specified expire time, in seconds.
+    const result = await redisClient.client.set(lockKey, 'locked', {
+      NX: true,       // Only set if the key doesn't exist
+      EX: LOCK_TIMEOUT_SECONDS // Set an automatic expiration
+    });
+    // SET with NX returns 'OK' on success, null if the key already exists
+    return result === 'OK';
+  } catch (error) {
+    console.error(`Error acquiring lock for room ${roomId}:`, error);
+    return false; // Assume lock acquisition failed on error
+  }
+};
+
+/**
+ * Releases the lock for a specific room ID.
+ * @param {string} roomId The ID of the room whose lock should be released.
+ */
+const releaseLock = async (roomId) => {
+  const lockKey = `lock:room:${roomId}`;
+  try {
+    await redisClient.client.del(lockKey);
+  } catch (error) {
+    // Log error but don't prevent operation from potentially continuing
+    // Releasing a non-existent lock is okay, but other errors should be logged.
+    console.error(`Error releasing lock for room ${roomId}:`, error);
+  }
+};
+// --- END: Redis Lock Implementation ---
+
 const flushAllRedisData = async () => {
   try {
     await redisClient.client.flushAll(); // Delete all keys in Redis
@@ -260,43 +302,83 @@ const ensurePublicRoomAvailable = async () => {
   }
 };
 const changeDrawer = async (roomId) => {
-  try {
-    const room = await getRoom(roomId);
-    if (!room) return;
-    console.log(room.users);
+  // Attempt to acquire the lock before proceeding
+  if (!(await acquireLock(roomId))) {
+     console.warn(`[changeDrawer] Could not acquire lock for room ${roomId}. Aborting operation.`);
+     // Optionally: Notify the room/user or implement retry logic.
+     return;
+  }
 
-    const oldWord = room.currentWord;
+  let room;
+  try {
+    room = await getRoom(roomId);
+    // If room doesn't exist (e.g., deleted between lock acquisition and getRoom), exit.
+    if (!room) {
+      console.log(`[changeDrawer] Room ${roomId} not found.`);
+      return; // Lock will be released in finally block
+    }
+
+    // Ensure there are users left in the room
+    if (room.users.length === 0) {
+        console.log(`[changeDrawer] Room ${roomId} is empty. Deleting room instead of changing drawer.`);
+        // Note: deleteRoom ideally should also acquire this lock if called elsewhere,
+        // or we assume changeDrawer is the only path that might delete an empty room this way.
+        await deleteRoom(roomId); // deleteRoom doesn't currently lock, potential minor race if called concurrently elsewhere.
+        return; // Lock will be released
+    }
+
+    const oldWord = room.currentWord; // Capture state BEFORE modification
+    const oldDrawerName = room.users[room.currentDrawerIndex]?.name;
+
+    // Modify room state
     room.handsPlayed++;
     room.currentRound = Math.floor(room.handsPlayed / room.users.length);
     room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
     room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
     room.currentWord = selectRandomWord();
+    room.users.forEach((user) => { user.hasGuessed = false; });
 
-    room.users.forEach((user) => {
-      user.hasGuessed = false;
-    });
+    // Save the updated state
     await saveRoom(roomId, room);
 
-    io.to(room.currentDrawer).emit("newWord", room.currentWord);
+    // Emit events AFTER state is saved
+    // Emit new word ONLY to the new drawer
+    if (room.currentDrawer) { // Check if drawer exists
+        io.to(room.currentDrawer).emit("newWord", room.currentWord);
+    }
+
     const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
+    // Emit handEnded to the whole room with the OLD drawer/word info
     io.to(roomId).emit("handEnded", {
-      currentDrawer: room.users[room.currentDrawerIndex]?.name,
+      currentDrawer: oldDrawerName || 'Someone', // Fallback name
       Word: oldWord,
     });
 
+    // Schedule the start of the next turn (using timeout from original code)
     setTimeout(async () => {
+      // We still hold the lock conceptually for this logical operation,
+      // although the Redis lock might expire if 5s is too short.
+      // startTurnTimer will need its own locking.
+      const newDrawerUser = room.users[room.currentDrawerIndex];
       io.to(roomId).emit("newDrawer", {
-        currentDrawer: room.users[room.currentDrawerIndex]?.name,
+        currentDrawer: newDrawerUser?.name, // Use updated index
         currentDrawerId: room.currentDrawer,
         secretWord: secretWord,
         time: room.time,
         currentRound: room.currentRound,
       });
+      // This function also modifies room state and needs locking.
       await startTurnTimer(roomId);
-    }, 5000);
+    }, 5000); // Original 5-second delay
+
   } catch (error) {
-    console.log("error changing drawer", error);
+    console.error(`[changeDrawer] Error processing room ${roomId}:`, error);
+    // Optionally emit an error to the room
+    // io.to(roomId).emit('gameError', { message: 'An internal error occurred.' });
+  } finally {
+    // ALWAYS release the lock, whether success or error
+    await releaseLock(roomId);
   }
 };
 const startGame = async (roomId) => {
@@ -711,30 +793,62 @@ io.on("connection", (socket) => {
       activeUsers--;
       io.emit("activeUsersUpdate", { activeUsers });
 
-      const allRoomsKeys = await redisClient.scan("room:*");
+      // TODO: Improve efficiency: Store socket.id -> roomId mapping instead of scanning all rooms.
+      const allRoomsKeys = await redisClient.client.keys("room:*"); // Note: KEYS can block Redis, consider SCAN for production
+      let roomFound = false; // Flag to track if we found and processed the user's room
+
       for (const roomKey of allRoomsKeys) {
         const roomId = roomKey.replace("room:", "");
         const room = await getRoom(roomId);
+
+        // Skip if room data couldn't be fetched (e.g., already deleted by another process)
+        if (!room) {
+           console.log(`Room ${roomId} not found during disconnect cleanup for socket ${socket.id}, possibly already deleted.`);
+           continue;
+        }
+
         const userIndex = room.users.findIndex((user) => user.id === socket.id);
 
         if (userIndex !== -1) {
-          const [userData] = room.users.splice(userIndex, 1);
-          await saveRoom(roomId, room);
+          roomFound = true; // Mark that we found the room for this socket
+          const wasDrawer = room.currentDrawer === socket.id; // Check if the disconnecting user was the drawer
+          const [userData] = room.users.splice(userIndex, 1); // Remove the user
 
-          io.to(roomId).emit("userDisconnected", userData);
-          io.to(roomId).emit("updateUserList", room.users);
-
+          // Now check if the room is empty *after* removing the user
           if (room.users.length === 0) {
-            await deleteRoom(roomId);
-          } else if (room.currentDrawer === socket.id) {
-            await changeDrawer(roomId);
+            console.log(`Room ${roomId} is empty after user ${socket.id} disconnected. Deleting room.`);
+            // Emit updates before deleting, so clients know the last user left
+            io.to(roomId).emit("userDisconnected", userData);
+            io.to(roomId).emit("updateUserList", room.users); // Send empty list
+            await deleteRoom(roomId); // Delete the empty room
+          } else {
+            // Room is not empty, save the state with the user removed
+            console.log(`User ${socket.id} disconnected from room ${roomId}. Saving updated room state.`);
+            await saveRoom(roomId, room);
+            io.to(roomId).emit("userDisconnected", userData); // Inform remaining users
+            io.to(roomId).emit("updateUserList", room.users); // Send updated list
+
+            // If the disconnected user was the drawer, change drawer *after* saving
+            if (wasDrawer && room.isGameStarted) { // Only change drawer if game was in progress
+              console.log(`User ${socket.id} was the drawer in room ${roomId}. Changing drawer.`);
+              await changeDrawer(roomId);
+            }
           }
+          // Found the user and handled their departure, no need to check other rooms
           break;
         }
       }
+
+      if (!roomFound) {
+        console.log(`Socket ${socket.id} disconnected but was not found in any active room.`);
+      }
+
+      // ensurePublicRoomAvailable might be better placed elsewhere or re-evaluated for purpose.
+      // Calling it here ensures one exists if the last public room was just deleted.
       await ensurePublicRoomAvailable();
     } catch (error) {
-      console.log("error while disconect");
+      // Log the specific error for better debugging
+      console.error(`Error during disconnect handler for socket ${socket.id}:`, error);
     }
   });
 });

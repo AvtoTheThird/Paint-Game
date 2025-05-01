@@ -75,29 +75,47 @@ redisClient.client.on("error", (err) => {
 });
 
 // --- BEGIN: Redis Lock Implementation ---
-const LOCK_TIMEOUT_SECONDS = 5; // Time in seconds before a lock automatically expires
+const LOCK_TIMEOUT_SECONDS = 10; // Time in seconds before a lock automatically expires
+const MAX_LOCK_RETRIES = 3; // Maximum number of times to retry acquiring a lock
+const LOCK_RETRY_DELAY = 1000; // Delay between lock retries in milliseconds
 
 /**
  * Attempts to acquire a lock for a specific room ID.
  * @param {string} roomId The ID of the room to lock.
  * @returns {Promise<boolean>} True if the lock was acquired, false otherwise.
  */
-const acquireLock = async (roomId) => {
+const acquireLock = async (roomId, retries = MAX_LOCK_RETRIES) => {
   const lockKey = `lock:room:${roomId}`;
-  try {
-    // SET key value NX EX seconds
-    // NX -- Only set the key if it does not already exist.
-    // EX seconds -- Set the specified expire time, in seconds.
-    const result = await redisClient.client.set(lockKey, 'locked', {
-      NX: true,       // Only set if the key doesn't exist
-      EX: LOCK_TIMEOUT_SECONDS // Set an automatic expiration
-    });
-    // SET with NX returns 'OK' on success, null if the key already exists
-    return result === 'OK';
-  } catch (error) {
-    console.error(`Error acquiring lock for room ${roomId}:`, error);
-    return false; // Assume lock acquisition failed on error
+  
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      // SET key value NX EX seconds
+      // NX -- Only set the key if it does not already exist.
+      // EX seconds -- Set the specified expire time, in seconds.
+      const result = await redisClient.client.set(lockKey, 'locked', {
+        NX: true,       // Only set if the key doesn't exist
+        EX: LOCK_TIMEOUT_SECONDS // Set an automatic expiration
+      });
+      
+      // SET with NX returns 'OK' on success, null if the key already exists
+      if (result === 'OK') {
+        return true;
+      }
+      
+      // If we didn't get the lock and have retries left, wait before trying again
+      if (attempt < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY));
+      }
+    } catch (error) {
+      console.error(`Error acquiring lock for room ${roomId} (attempt ${attempt + 1}):`, error);
+      // Only wait between retries if we have more attempts left
+      if (attempt < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY));
+      }
+    }
   }
+  
+  return false; // Lock acquisition failed after all retries
 };
 
 /**
@@ -315,14 +333,15 @@ const ensurePublicRoomAvailable = async () => {
   }
 };
 const changeDrawer = async (roomId) => {
-  // Attempt to acquire the lock before proceeding
+  // Attempt to acquire the lock before proceeding with retries
   if (!(await acquireLock(roomId))) {
-     console.warn(`[changeDrawer] Could not acquire lock for room ${roomId}. Aborting operation.`);
-     // Optionally: Notify the room/user or implement retry logic.
-     return;
+    console.warn(`[changeDrawer] Could not acquire lock for room ${roomId} after all retries. Aborting operation.`);
+    io.to(roomId).emit('gameError', { message: 'Failed to change drawer. Please try again.' });
+    return;
   }
 
   let room;
+  let nextTurnTimer;
   try {
     room = await getRoom(roomId);
     // If room doesn't exist (e.g., deleted between lock acquisition and getRoom), exit.
@@ -333,11 +352,9 @@ const changeDrawer = async (roomId) => {
 
     // Ensure there are users left in the room
     if (room.users.length === 0) {
-        console.log(`[changeDrawer] Room ${roomId} is empty. Deleting room instead of changing drawer.`);
-        // Note: deleteRoom ideally should also acquire this lock if called elsewhere,
-        // or we assume changeDrawer is the only path that might delete an empty room this way.
-        await deleteRoom(roomId); // deleteRoom doesn't currently lock, potential minor race if called concurrently elsewhere.
-        return; // Lock will be released
+      console.log(`[changeDrawer] Room ${roomId} is empty. Deleting room instead of changing drawer.`);
+      await deleteRoom(roomId);
+      return; // Lock will be released in finally block
     }
 
     const oldWord = room.currentWord; // Capture state BEFORE modification
@@ -354,44 +371,67 @@ const changeDrawer = async (roomId) => {
     // Save the updated state
     await saveRoom(roomId, room);
 
+    // Release the lock before the long delay operations
+    await releaseLock(roomId);
+
     // Emit events AFTER state is saved
     // Emit new word ONLY to the new drawer
-    if (room.currentDrawer) { // Check if drawer exists
-        io.to(room.currentDrawer).emit("newWord", room.currentWord);
+    if (room.currentDrawer) {
+      io.to(room.currentDrawer).emit("newWord", room.currentWord);
     }
 
     const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
     // Emit handEnded to the whole room with the OLD drawer/word info
     io.to(roomId).emit("handEnded", {
-      currentDrawer: oldDrawerName || 'Someone', // Fallback name
+      currentDrawer: oldDrawerName || 'Someone',
       Word: oldWord,
     });
 
-    // Schedule the start of the next turn (using timeout from original code)
-    setTimeout(async () => {
-      // We still hold the lock conceptually for this logical operation,
-      // although the Redis lock might expire if 5s is too short.
-      // startTurnTimer will need its own locking.
-      const newDrawerUser = room.users[room.currentDrawerIndex];
-      io.to(roomId).emit("newDrawer", {
-        currentDrawer: newDrawerUser?.name, // Use updated index
-        currentDrawerId: room.currentDrawer,
-        secretWord: secretWord,
-        time: room.time,
-        currentRound: room.currentRound,
-      });
-      // This function also modifies room state and needs locking.
-      await startTurnTimer(roomId);
-    }, 5000); // Original 5-second delay
+    // Schedule the start of the next turn
+    nextTurnTimer = setTimeout(async () => {
+      // Acquire a new lock for the delayed operations
+      if (!(await acquireLock(roomId))) {
+        console.error(`[changeDrawer] Failed to acquire lock for delayed operations in room ${roomId}`);
+        io.to(roomId).emit('gameError', { message: 'Failed to start next turn. Please try again.' });
+        return;
+      }
+
+      try {
+        // Re-fetch room state as it might have changed during the delay
+        const updatedRoom = await getRoom(roomId);
+        if (!updatedRoom) {
+          console.log(`[changeDrawer] Room ${roomId} not found during delayed operations`);
+          return;
+        }
+
+        const newDrawerUser = updatedRoom.users[updatedRoom.currentDrawerIndex];
+        io.to(roomId).emit("newDrawer", {
+          currentDrawer: newDrawerUser?.name,
+          currentDrawerId: updatedRoom.currentDrawer,
+          secretWord: secretWord,
+          time: updatedRoom.time,
+          currentRound: updatedRoom.currentRound,
+        });
+
+        await startTurnTimer(roomId);
+      } catch (error) {
+        console.error(`[changeDrawer] Error in delayed operations for room ${roomId}:`, error);
+        io.to(roomId).emit('gameError', { message: 'An error occurred while starting the next turn.' });
+      } finally {
+        await releaseLock(roomId);
+      }
+    }, 5000);
 
   } catch (error) {
     console.error(`[changeDrawer] Error processing room ${roomId}:`, error);
-    // Optionally emit an error to the room
-    // io.to(roomId).emit('gameError', { message: 'An internal error occurred.' });
+    io.to(roomId).emit('gameError', { message: 'An error occurred while changing drawer.' });
   } finally {
-    // ALWAYS release the lock, whether success or error
-    await releaseLock(roomId);
+    if (nextTurnTimer) {
+      // Store the timer reference somewhere if you need to clear it later
+      // e.g., when the game ends or room is deleted
+      room.nextTurnTimer = nextTurnTimer;
+    }
   }
 };
 const startGame = async (roomId) => {
@@ -439,30 +479,46 @@ const startGame = async (roomId) => {
 };
 
 const startTurnTimer = async (roomId, isPublic = false) => {
+  // Acquire lock for timer operations
+  if (!(await acquireLock(roomId))) {
+    console.error(`[startTurnTimer] Failed to acquire lock for room ${roomId}`);
+    io.to(roomId).emit('gameError', { message: 'Failed to start turn timer. Please try again.' });
+    return;
+  }
+
   try {
     const room = await getRoom(roomId);
-    if (!room) return;
-
-    if (room.currentRound >= room.maxRounds) {
-      room.isGameStarted = false;
-      await saveRoom(roomId, room);
-      io.to(roomId).emit("MaxRoundsReached");
-      room.users.forEach((user) => {
-        user.hasGuessed = false;
-        user.score = 0;
-      });
-      io.to(roomId).emit("updateUserList", room.users);
-      await saveRoom(roomId, room);
-      if (isPublic) setTimeout(() => startGame(roomId), 5000);
+    if (!room) {
+      console.log(`[startTurnTimer] Room ${roomId} not found`);
       return;
     }
 
-    // Clear existing timer and set new one in Redis
-    await redisClient.del(`timer:${roomId}`);
-    await redisClient.set(`timer:${roomId}`, "1", "EX", room.time);
+    // Clear any existing timers
+    if (room.timer) {
+      clearTimeout(room.timer);
+      room.timer = null;
+    }
+    if (room.nextTurnTimer) {
+      clearTimeout(room.nextTurnTimer);
+      room.nextTurnTimer = null;
+    }
 
-    room.turnTimer = true;
+    // Set timer for the room
+    room.timer = setTimeout(async () => {
+      try {
+        // Timer expiration will trigger changeDrawer which has its own locking
+        await changeDrawer(roomId);
+      } catch (error) {
+        console.error(`[startTurnTimer] Error in timer for room ${roomId}:`, error);
+        io.to(roomId).emit('gameError', { message: 'An error occurred during turn change.' });
+      }
+    }, room.time * 1000);
+
+    // Save room state with updated timer
     await saveRoom(roomId, room);
+
+    // Start countdown for clients
+    io.to(roomId).emit("startTimer", room.time);
   } catch (error) {
     console.error("startTurnTimer error:", error);
   }

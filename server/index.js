@@ -435,10 +435,36 @@ const changeDrawer = async (roomId) => {
   }
 };
 const startGame = async (roomId) => {
-  try {
-    const room = await getRoom(roomId);
-    if (!room) return;
+  // First acquire the lock
+  if (!(await acquireLock(roomId))) {
+    console.warn(`[startGame] Could not acquire lock for room ${roomId}`);
+    io.to(roomId).emit('gameError', { message: 'Failed to start game. Please try again.' });
+    return;
+  }
 
+  try {
+    // Get fresh room data after acquiring lock
+    const room = await getRoom(roomId);
+    if (!room) {
+      console.warn(`[startGame] Room ${roomId} not found after acquiring lock`);
+      io.to(roomId).emit('gameError', { message: 'Game room not found.' });
+      return;
+    }
+
+    // Validate room state
+    if (room.isGameStarted) {
+      console.warn(`[startGame] Room ${roomId} game already started`);
+      io.to(roomId).emit('gameError', { message: 'Game already in progress.' });
+      return;
+    }
+
+    if (!room.users || room.users.length < 2) {
+      console.warn(`[startGame] Room ${roomId} has insufficient players`);
+      io.to(roomId).emit('gameError', { message: 'Not enough players to start game.' });
+      return;
+    }
+
+    // Initialize game state
     room.currentRound = 0;
     room.handsPlayed = 0;
     room.isGameStarted = true;
@@ -446,35 +472,44 @@ const startGame = async (roomId) => {
     room.currentDrawer = room.users[0]?.id;
     room.currentWord = selectRandomWord();
 
+    // Save updated room state
     await saveRoom(roomId, room);
 
+    // Release lock before delayed operations
+    await releaseLock(roomId);
+
+    // Send initial game state to players
     io.to(room.currentDrawer).emit("newWord", room.currentWord);
     const secretWord = room.currentWord.replace(/[^-\s]/g, "_");
 
-    // io.to(roomId).emit("updateUserList", room.users);
-    // ================================NEEDS TO BE PROPERLY IMPLEMENTED, SETTIMEOUT IS A TEMPORARY SOLUTION================================
-    setTimeout(() => {
-      io.to(roomId).emit("gameStarted", {
-        currentDrawer: room.users[0]?.name,
-        currentDrawerId: room.currentDrawer,
-        maxRounds: room.maxRounds,
-        secretWord: secretWord,
-        time: room.time,
-        currentRound: room.currentRound,
-      });
-    }, 500);
-
-    io.to(roomId).emit("newDrawer", {
+    const gameState = {
       currentDrawer: room.users[0]?.name,
       currentDrawerId: room.currentDrawer,
+      maxRounds: room.maxRounds,
       secretWord: secretWord,
-
       time: room.time,
       currentRound: room.currentRound,
+    };
+
+    // Emit game started event with slight delay to ensure client is ready
+    setTimeout(() => {
+      io.to(roomId).emit("gameStarted", gameState);
+    }, 500);
+
+    // Emit new drawer event immediately
+    io.to(roomId).emit("newDrawer", {
+      ...gameState,
+      secretWord: secretWord,
     });
+
+    // Start the turn timer (it handles its own locking)
     await startTurnTimer(roomId);
   } catch (error) {
-    console.log("errr starting game", error);
+    console.error(`[startGame] Error starting game for room ${roomId}:`, error);
+    io.to(roomId).emit('gameError', { message: 'Failed to start game due to an error.' });
+  } finally {
+    // Ensure lock is released in case of error
+    await releaseLock(roomId);
   }
 };
 
@@ -493,19 +528,26 @@ const startTurnTimer = async (roomId, isPublic = false) => {
       return;
     }
 
-    // Clear any existing timers
-    if (room.timer) {
-      clearTimeout(room.timer);
-      room.timer = null;
-    }
-    if (room.nextTurnTimer) {
-      clearTimeout(room.nextTurnTimer);
-      room.nextTurnTimer = null;
-    }
+    // Clear any existing timers from Redis
+    await redisClient.client.del(`timer:${roomId}`);
+    await redisClient.client.del(`nextTurnTimer:${roomId}`);
+
+    // Calculate expiration time
+    const expirationTime = Date.now() + (room.time * 1000);
+    
+    // Store timer info in Redis
+    await redisClient.client.hset(`timer:${roomId}`, {
+      expirationTime: expirationTime,
+      roomId: roomId,
+      type: 'turn'
+    });
 
     // Set timer for the room
-    room.timer = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
+        // Remove timer key from Redis when it expires
+        await redisClient.client.del(`timer:${roomId}`);
+        
         // Timer expiration will trigger changeDrawer which has its own locking
         await changeDrawer(roomId);
       } catch (error) {
@@ -514,22 +556,80 @@ const startTurnTimer = async (roomId, isPublic = false) => {
       }
     }, room.time * 1000);
 
-    // Save room state with updated timer
+    // Keep timer reference in memory but don't save it to Redis
+    room.activeTimers = room.activeTimers || {};
+    room.activeTimers[`timer:${roomId}`] = timer;
+
+    // Save room state
     await saveRoom(roomId, room);
 
     // Start countdown for clients
     io.to(roomId).emit("startTimer", room.time);
+
+    // Set up timer recovery on server restart
+    await redisClient.client.set(
+      `timerRecovery:${roomId}`,
+      JSON.stringify({
+        expirationTime,
+        roomId,
+        timeRemaining: room.time * 1000
+      }),
+      'EX',
+      room.time + 5 // Add 5 seconds buffer
+    );
   } catch (error) {
-    console.error("startTurnTimer error:", error);
+    console.error(`[startTurnTimer] Error for room ${roomId}:`, error);
+    io.to(roomId).emit('gameError', { message: 'An error occurred while starting the timer.' });
+  } finally {
+    await releaseLock(roomId);
   }
 };
+
+// Timer recovery on server start
+const recoverTimers = async () => {
+  try {
+    const timerKeys = await redisClient.client.keys('timerRecovery:*');
+    
+    for (const key of timerKeys) {
+      const timerData = JSON.parse(await redisClient.client.get(key));
+      const timeLeft = timerData.expirationTime - Date.now();
+      
+      if (timeLeft > 0) {
+        const room = await getRoom(timerData.roomId);
+        if (room && room.isGameStarted) {
+          console.log(`[recoverTimers] Recovering timer for room ${timerData.roomId}, ${timeLeft}ms remaining`);
+          
+          // Update clients with new time
+          io.to(timerData.roomId).emit('startTimer', Math.ceil(timeLeft / 1000));
+          
+          // Set new timer with remaining time
+          const timer = setTimeout(async () => {
+            await changeDrawer(timerData.roomId);
+          }, timeLeft);
+          
+          // Store new timer reference
+          room.activeTimers = room.activeTimers || {};
+          room.activeTimers[`timer:${timerData.roomId}`] = timer;
+          await saveRoom(timerData.roomId, room);
+        }
+      }
+      // Clean up recovery data
+      await redisClient.client.del(key);
+    }
+  } catch (error) {
+    console.error('[recoverTimers] Error recovering timers:', error);
+  }
+};
+
+// Call timer recovery on server start
+recoverTimers();
 
 // Handle Redis timer expiration
 redisClient.on("timerExpired", async (roomId) => {
   try {
     await changeDrawer(roomId);
   } catch (error) {
-    console.log("error handling timerExpired", error);
+    console.error("[timerExpired] Error handling timer expiration:", error);
   }
 });
 

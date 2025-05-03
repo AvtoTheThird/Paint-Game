@@ -285,44 +285,61 @@ function GameRoom() {
 
   // const handleButtonClick = () => {};
   const EndOFGameScreenData = joinedUsers;
+console.log("--------------");
+console.log(currentDrawerId === userId);
+console.log(userId,currentDrawerId);
+console.log("--------------");
 
   return (
     <>
       {" "}
-      <header className={`font-ge-bold group fixed top-0 w-full z-50 h-[${currentDrawerId === userId ? "45px" : "80px"}] sm:h-[80px] bg-gradient-to-b from-black/50 to-transparent hover:h-[150px] hover:top-[-15px] text-xl transition-all duration-200 ease-in-out`}>
-      <div className="container mx-auto    h-full flex items-center justify-evenly">
-          <div className="lg:w-1/3 lg:block hidden"></div>
-          <Link
-            to="/rules"
-            className="block lg:hidden text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
-          >
-            წესები
-          </Link>
-          <div className="flex items-center">
-            <Link to="/">
-              <img
-                src="/xelovniki.png"
-                alt="Logo"
-                className={`w-[${currentDrawerId === userId ? "75px" : "110px"}] sm:w-[110px] group-hover:w-[200px] transition-all duration-200 ease-in-out`}
-                />
-            </Link>
-          </div>
-          <div className="lg:w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3 ">
-            <Link
-              to="/rules"
-              className="hidden lg:block text-white text-sm hover:text-pink group-hover:text-xl   transition-all duration-200 ease-in-out"
-            >
-              თამაშის წესები
-            </Link>
-            <Link
-              to="/contact"
-              className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
-            >
-              კონტაქტი
-            </Link>
-          </div>
-        </div>
-      </header>
+      <header
+  className={`font-ge-bold group fixed top-0 w-full z-50 
+    ${currentDrawerId === userId ? "h-[45px]" : "h-[80px]"} 
+    sm:h-[80px] 
+    sm:hover:h-[150px] sm:hover:top-[-15px] 
+    bg-gradient-to-b from-black/50 to-transparent 
+    text-xl transition-all duration-200 ease-in-out`}
+>
+  <div className="container mx-auto h-full flex items-center justify-evenly">
+    <div className="lg:w-1/3 lg:block hidden"></div>
+
+    <Link
+      to="/rules"
+      className="block lg:hidden text-white text-sm hover:text-pink group-hover:text-xl transition-all duration-200 ease-in-out"
+    >
+      წესები
+    </Link>
+
+    <div className="flex items-center">
+      <Link to="/">
+        <img
+          src="/xelovniki.png"
+          alt="Logo"
+          className={`${
+            currentDrawerId === userId ? "w-[75px]" : "w-[110px]"
+          } sm:w-[110px] sm:group-hover:w-[200px] sm:transition-all sm:duration-200 sm:ease-in-out`}
+        />
+      </Link>
+    </div>
+
+    <div className="lg:w-1/3 flex justify-end items-center space-x-4 gap-16 pt-3">
+      <Link
+        to="/rules"
+        className="hidden lg:block text-white text-sm hover:text-pink group-hover:text-xl transition-all duration-200 ease-in-out"
+      >
+        თამაშის წესები
+      </Link>
+      <Link
+        to="/contact"
+        className="text-white hover:text-pink lg:text-xl text-sm transition-all duration-200 ease-in-out"
+      >
+        კონტაქტი
+      </Link>
+    </div>
+  </div>
+</header>
+
       <main className="font-ge-bold flex flex-col justify-center items-center h-[calc(100svh-80px)] lg:h-screen pt-[80px] lg:pt-0 overflow-hidden relative touch-none overscroll-none will-change-transform">
         <div className="  lg:w-[100vw] 2xl:h-[760px] xl:h-[550px] flex lg:flex-row flex-col justify-center items-center lg:gap-1 lg:bg-bg-white lg:mt-16 xl:mt-16 mt-0 ">
         <div className="bg-light-pink border-gray border-[1px] rounded-[3px] ml-8 lg:block hidden 2xl:h-[679px] xl:h-[484px] lg:w-[300px] 2xl:w-[320px] text-center mb-auto mt-2 overflow-y-auto">

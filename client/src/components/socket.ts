@@ -36,7 +36,7 @@ socket.on("disconnect", (reason) => {
   // Note: The library handles most reconnection logic automatically based on config.
   // Explicitly calling connect() might interfere or be redundant depending on the reason.
   // if (reason === "io server disconnect") {
-  //   socket.connect(); 
+  //   socket.connect();
   // }
 });
 

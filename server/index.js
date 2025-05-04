@@ -5,13 +5,13 @@ const fs = require("fs");
 const cors = require("cors");
 const redisClient = require("./utils/redisClient");
 const words = require("./words");
-const adminRoutes = require('./admin/routes');
+const adminRoutes = require("./admin/routes");
 // const { getAvailablePublicRoom, calculateScore } = require("./utils/utils.js");
 const app = express();
 
 // Define paths for certificate files
-const keyPath = '/etc/letsencrypt/live/api.khelovniki.com/privkey.pem';
-const certPath = '/etc/letsencrypt/live/api.khelovniki.com/fullchain.pem';
+const keyPath = "/etc/letsencrypt/live/api.khelovniki.com/privkey.pem";
+const certPath = "/etc/letsencrypt/live/api.khelovniki.com/fullchain.pem";
 
 let server;
 
@@ -20,7 +20,7 @@ if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
   // Production environment (or local with certs): Use HTTPS
   const options = {
     key: fs.readFileSync(keyPath),
-    cert: fs.readFileSync(certPath)
+    cert: fs.readFileSync(certPath),
   };
   server = https.createServer(options, app);
   console.log("Starting server with HTTPS.");
@@ -58,10 +58,10 @@ app.use((req, res, next) => {
 });
 
 // Add io to app for admin routes
-app.set('io', io);
+app.set("io", io);
 
 // Mount admin routes
-app.use('/hospital', adminRoutes);
+app.use("/hospital", adminRoutes);
 
 let totalOutgoing = 0;
 let totalIncoming = 0;
@@ -92,29 +92,32 @@ const acquireLock = async (roomId, retries = MAX_LOCK_RETRIES) => {
       // SET key value NX EX seconds
       // NX -- Only set the key if it does not already exist.
       // EX seconds -- Set the specified expire time, in seconds.
-      const result = await redisClient.client.set(lockKey, 'locked', {
-        NX: true,       // Only set if the key doesn't exist
-        EX: LOCK_TIMEOUT_SECONDS // Set an automatic expiration
+      const result = await redisClient.client.set(lockKey, "locked", {
+        NX: true, // Only set if the key doesn't exist
+        EX: LOCK_TIMEOUT_SECONDS, // Set an automatic expiration
       });
-      
+
       // SET with NX returns 'OK' on success, null if the key already exists
-      if (result === 'OK') {
+      if (result === "OK") {
         return true;
       }
-      
+
       // If we didn't get the lock and have retries left, wait before trying again
       if (attempt < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_DELAY));
       }
     } catch (error) {
-      console.error(`Error acquiring lock for room ${roomId} (attempt ${attempt + 1}):`, error);
+      console.error(
+        `Error acquiring lock for room ${roomId} (attempt ${attempt + 1}):`,
+        error
+      );
       // Only wait between retries if we have more attempts left
       if (attempt < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, LOCK_RETRY_DELAY));
       }
     }
   }
-  
+
   return false; // Lock acquisition failed after all retries
 };
 
@@ -299,7 +302,7 @@ const createPublicRoom = async () => {
       maxPlayers: 8,
       maxRounds: 8,
       users: [],
-      time: 90,
+      time: 10,
       currentDrawerIndex: 0,
       currentRound: 0,
       handsPlayed: 0,
@@ -338,20 +341,24 @@ const changeDrawer = async (roomId) => {
     await redisClient.del(`timer:${roomId}`);
     await redisClient.del(`nextTurnTimer:${roomId}`);
   } catch (error) {
-    console.error(`[changeDrawer] Error clearing timers for room ${roomId}:`, error);
+    console.error(
+      `[changeDrawer] Error clearing timers for room ${roomId}:`,
+      error
+    );
   }
 
   // Add a small delay before attempting to acquire the lock
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   // Attempt to acquire the lock before proceeding with retries
-  console.log("---------------------------------");
-  console.log("called acquireLock 349" );
-  console.log("---------------------------------");
-  
+
   if (!(await acquireLock(roomId))) {
-    console.warn(`[changeDrawer] Could not acquire lock for room ${roomId} after all retries. Aborting operation.`);
-    io.to(roomId).emit('gameError', { message: 'Failed to change drawer. Please try again.' });
+    console.warn(
+      `[changeDrawer] Could not acquire lock for room ${roomId} after all retries. Aborting operation.`
+    );
+    io.to(roomId).emit("gameError", {
+      message: "Failed to change drawer. Please try again.",
+    });
     return;
   }
 
@@ -367,7 +374,9 @@ const changeDrawer = async (roomId) => {
 
     // Ensure there are users left in the room
     if (room.users.length === 0) {
-      console.log(`[changeDrawer] Room ${roomId} is empty. Deleting room instead of changing drawer.`);
+      console.log(
+        `[changeDrawer] Room ${roomId} is empty. Deleting room instead of changing drawer.`
+      );
       await deleteRoom(roomId);
       return; // Lock will be released in finally block
     }
@@ -381,7 +390,9 @@ const changeDrawer = async (roomId) => {
     room.currentDrawerIndex = (room.currentDrawerIndex + 1) % room.users.length;
     room.currentDrawer = room.users[room.currentDrawerIndex]?.id;
     room.currentWord = selectRandomWord();
-    room.users.forEach((user) => { user.hasGuessed = false; });
+    room.users.forEach((user) => {
+      user.hasGuessed = false;
+    });
 
     // Save the updated state
     await saveRoom(roomId, room);
@@ -399,20 +410,21 @@ const changeDrawer = async (roomId) => {
 
     // Emit handEnded to the whole room with the OLD drawer/word info
     io.to(roomId).emit("handEnded", {
-      currentDrawer: oldDrawerName || 'Someone',
+      currentDrawer: oldDrawerName || "Someone",
       Word: oldWord,
     });
 
     // Schedule the start of the next turn
     nextTurnTimer = setTimeout(async () => {
       // Acquire a new lock for the delayed operations
-      console.log("---------------------------------");
-      console.log("called acquireLock 410" );
-      console.log("---------------------------------");
-      
+
       if (!(await acquireLock(roomId))) {
-        console.error(`[changeDrawer] Failed to acquire lock for delayed operations in room ${roomId}`);
-        io.to(roomId).emit('gameError', { message: 'Failed to start next turn. Please try again.' });
+        console.error(
+          `[changeDrawer] Failed to acquire lock for delayed operations in room ${roomId}`
+        );
+        io.to(roomId).emit("gameError", {
+          message: "Failed to start next turn. Please try again.",
+        });
         return;
       }
 
@@ -420,7 +432,9 @@ const changeDrawer = async (roomId) => {
         // Re-fetch room state as it might have changed during the delay
         const updatedRoom = await getRoom(roomId);
         if (!updatedRoom) {
-          console.log(`[changeDrawer] Room ${roomId} not found during delayed operations`);
+          console.log(
+            `[changeDrawer] Room ${roomId} not found during delayed operations`
+          );
           return;
         }
 
@@ -436,16 +450,22 @@ const changeDrawer = async (roomId) => {
         // Pass skipLock=true since we already have the lock
         await startTurnTimer(roomId, false, true);
       } catch (error) {
-        console.error(`[changeDrawer] Error in delayed operations for room ${roomId}:`, error);
-        io.to(roomId).emit('gameError', { message: 'An error occurred while starting the next turn.' });
+        console.error(
+          `[changeDrawer] Error in delayed operations for room ${roomId}:`,
+          error
+        );
+        io.to(roomId).emit("gameError", {
+          message: "An error occurred while starting the next turn.",
+        });
       } finally {
         await releaseLock(roomId);
       }
     }, 5000);
-
   } catch (error) {
     console.error(`[changeDrawer] Error processing room ${roomId}:`, error);
-    io.to(roomId).emit('gameError', { message: 'An error occurred while changing drawer.' });
+    io.to(roomId).emit("gameError", {
+      message: "An error occurred while changing drawer.",
+    });
   } finally {
     if (nextTurnTimer) {
       // Store the timer reference somewhere if you need to clear it later
@@ -456,13 +476,12 @@ const changeDrawer = async (roomId) => {
 };
 const startGame = async (roomId) => {
   // First acquire the lock
-  console.log("---------------------------------");
-  console.log("called acquireLock 459" );
-  console.log("---------------------------------");
-  
+
   if (!(await acquireLock(roomId))) {
     console.warn(`[startGame] Could not acquire lock for room ${roomId}`);
-    io.to(roomId).emit('gameError', { message: 'Failed to start game. Please try again.' });
+    io.to(roomId).emit("gameError", {
+      message: "Failed to start game. Please try again.",
+    });
     return;
   }
 
@@ -471,20 +490,22 @@ const startGame = async (roomId) => {
     const room = await getRoom(roomId);
     if (!room) {
       console.warn(`[startGame] Room ${roomId} not found after acquiring lock`);
-      io.to(roomId).emit('gameError', { message: 'Game room not found.' });
+      io.to(roomId).emit("gameError", { message: "Game room not found." });
       return;
     }
 
     // Validate room state
     if (room.isGameStarted) {
       console.warn(`[startGame] Room ${roomId} game already started`);
-      io.to(roomId).emit('gameError', { message: 'Game already in progress.' });
+      io.to(roomId).emit("gameError", { message: "Game already in progress." });
       return;
     }
 
     if (!room.users || room.users.length < 2) {
       console.warn(`[startGame] Room ${roomId} has insufficient players`);
-      io.to(roomId).emit('gameError', { message: 'Not enough players to start game.' });
+      io.to(roomId).emit("gameError", {
+        message: "Not enough players to start game.",
+      });
       return;
     }
 
@@ -530,7 +551,9 @@ const startGame = async (roomId) => {
     await startTurnTimer(roomId, false);
   } catch (error) {
     console.error(`[startGame] Error starting game for room ${roomId}:`, error);
-    io.to(roomId).emit('gameError', { message: 'Failed to start game due to an error.' });
+    io.to(roomId).emit("gameError", {
+      message: "Failed to start game due to an error.",
+    });
   } finally {
     // Ensure lock is released in case of error
     await releaseLock(roomId);
@@ -540,16 +563,16 @@ const startGame = async (roomId) => {
 const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
   // Acquire lock for timer operations if not skipped
   let acquiredLock = skipLock; // If skipLock is true, we assume the lock is already acquired
-  
+
   if (!skipLock) {
-    console.log("---------------------------------");
-    console.log("called acquireLock 542" );
-    console.log("---------------------------------");
-    
     acquiredLock = await acquireLock(roomId);
     if (!acquiredLock) {
-      console.error(`[startTurnTimer] Failed to acquire lock for room ${roomId}`);
-      io.to(roomId).emit('gameError', { message: 'Failed to start turn timer. Please try again.' });
+      console.error(
+        `[startTurnTimer] Failed to acquire lock for room ${roomId}`
+      );
+      io.to(roomId).emit("gameError", {
+        message: "Failed to start turn timer. Please try again.",
+      });
       return;
     }
   }
@@ -566,14 +589,17 @@ const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
     await redisClient.del(`nextTurnTimer:${roomId}`);
 
     // Calculate expiration time
-    const expirationTime = Date.now() + (room.time * 1000);
-    
+    const expirationTime = Date.now() + room.time * 1000;
+
     // Store timer info in Redis
     await redisClient.hset(`timer:${roomId}`, [
-      'expirationTime', expirationTime,
-      'roomId', roomId,
-      'type', 'turn'
-    ]); 
+      "expirationTime",
+      expirationTime,
+      "roomId",
+      roomId,
+      "type",
+      "turn",
+    ]);
 
     // Set timer for the room
     const timer = setTimeout(async () => {
@@ -581,11 +607,16 @@ const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
         // Remove timer and recovery keys from Redis
         await redisClient.del(`timer:${roomId}`);
         await redisClient.del(`timerRecovery:${roomId}`); // Add this line
-        
+
         await changeDrawer(roomId);
       } catch (error) {
-        console.error(`[startTurnTimer] Error in timer for room ${roomId}:`, error);
-        io.to(roomId).emit('gameError', { message: 'An error occurred during turn change.' });
+        console.error(
+          `[startTurnTimer] Error in timer for room ${roomId}:`,
+          error
+        );
+        io.to(roomId).emit("gameError", {
+          message: "An error occurred during turn change.",
+        });
       }
     }, room.time * 1000);
 
@@ -605,14 +636,16 @@ const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
       JSON.stringify({
         expirationTime,
         roomId,
-        timeRemaining: room.time * 1000
+        timeRemaining: room.time * 1000,
       }),
-      'EX',
+      "EX",
       room.time + 5 // Add 5 seconds buffer
     );
   } catch (error) {
     console.error(`[startTurnTimer] Error for room ${roomId}:`, error);
-    io.to(roomId).emit('gameError', { message: 'An error occurred while starting the timer.' });
+    io.to(roomId).emit("gameError", {
+      message: "An error occurred while starting the timer.",
+    });
   } finally {
     // Only release the lock if we acquired it in this function
     if (!skipLock) {
@@ -624,25 +657,30 @@ const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
 // Timer recovery on server start
 const recoverTimers = async () => {
   try {
-    const timerKeys = await redisClient.client.keys('timerRecovery:*');
-    
+    const timerKeys = await redisClient.client.keys("timerRecovery:*");
+
     for (const key of timerKeys) {
       const timerData = JSON.parse(await redisClient.client.get(key));
       const timeLeft = timerData.expirationTime - Date.now();
-      
+
       if (timeLeft > 0) {
         const room = await getRoom(timerData.roomId);
         if (room && room.isGameStarted) {
-          console.log(`[recoverTimers] Recovering timer for room ${timerData.roomId}, ${timeLeft}ms remaining`);
-          
+          console.log(
+            `[recoverTimers] Recovering timer for room ${timerData.roomId}, ${timeLeft}ms remaining`
+          );
+
           // Update clients with new time
-          io.to(timerData.roomId).emit('startTimer', Math.ceil(timeLeft / 1000));
-          
+          io.to(timerData.roomId).emit(
+            "startTimer",
+            Math.ceil(timeLeft / 1000)
+          );
+
           // Set new timer with remaining time
           const timer = setTimeout(async () => {
             await changeDrawer(timerData.roomId);
           }, timeLeft);
-          
+
           // Store new timer reference
           room.activeTimers = room.activeTimers || {};
           room.activeTimers[`timer:${timerData.roomId}`] = timer;
@@ -653,7 +691,7 @@ const recoverTimers = async () => {
       await redisClient.client.del(key);
     }
   } catch (error) {
-    console.error('[recoverTimers] Error recovering timers:', error);
+    console.error("[recoverTimers] Error recovering timers:", error);
   }
 };
 
@@ -1008,8 +1046,10 @@ io.on("connection", (socket) => {
 
         // Skip if room data couldn't be fetched (e.g., already deleted by another process)
         if (!room) {
-           console.log(`Room ${roomId} not found during disconnect cleanup for socket ${socket.id}, possibly already deleted.`);
-           continue;
+          console.log(
+            `Room ${roomId} not found during disconnect cleanup for socket ${socket.id}, possibly already deleted.`
+          );
+          continue;
         }
 
         const userIndex = room.users.findIndex((user) => user.id === socket.id);
@@ -1021,21 +1061,28 @@ io.on("connection", (socket) => {
 
           // Now check if the room is empty *after* removing the user
           if (room.users.length === 0) {
-            console.log(`Room ${roomId} is empty after user ${socket.id} disconnected. Deleting room.`);
+            console.log(
+              `Room ${roomId} is empty after user ${socket.id} disconnected. Deleting room.`
+            );
             // Emit updates before deleting, so clients know the last user left
             io.to(roomId).emit("userDisconnected", userData);
             io.to(roomId).emit("updateUserList", room.users); // Send empty list
             await deleteRoom(roomId); // Delete the empty room
           } else {
             // Room is not empty, save the state with the user removed
-            console.log(`User ${socket.id} disconnected from room ${roomId}. Saving updated room state.`);
+            console.log(
+              `User ${socket.id} disconnected from room ${roomId}. Saving updated room state.`
+            );
             await saveRoom(roomId, room);
             io.to(roomId).emit("userDisconnected", userData); // Inform remaining users
             io.to(roomId).emit("updateUserList", room.users); // Send updated list
 
             // If the disconnected user was the drawer, change drawer *after* saving
-            if (wasDrawer && room.isGameStarted) { // Only change drawer if game was in progress
-              console.log(`User ${socket.id} was the drawer in room ${roomId}. Changing drawer.`);
+            if (wasDrawer && room.isGameStarted) {
+              // Only change drawer if game was in progress
+              console.log(
+                `User ${socket.id} was the drawer in room ${roomId}. Changing drawer.`
+              );
               await changeDrawer(roomId);
             }
           }
@@ -1045,7 +1092,9 @@ io.on("connection", (socket) => {
       }
 
       if (!roomFound) {
-        console.log(`Socket ${socket.id} disconnected but was not found in any active room.`);
+        console.log(
+          `Socket ${socket.id} disconnected but was not found in any active room.`
+        );
       }
 
       // ensurePublicRoomAvailable might be better placed elsewhere or re-evaluated for purpose.
@@ -1053,7 +1102,10 @@ io.on("connection", (socket) => {
       await ensurePublicRoomAvailable();
     } catch (error) {
       // Log the specific error for better debugging
-      console.error(`Error during disconnect handler for socket ${socket.id}:`, error);
+      console.error(
+        `Error during disconnect handler for socket ${socket.id}:`,
+        error
+      );
     }
   });
 });

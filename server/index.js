@@ -76,8 +76,8 @@ redisClient.client.on("error", (err) => {
 
 // --- BEGIN: Redis Lock Implementation ---
 const LOCK_TIMEOUT_SECONDS = 10; // Time in seconds before a lock automatically expires
-const MAX_LOCK_RETRIES = 3; // Maximum number of times to retry acquiring a lock
-const LOCK_RETRY_DELAY = 1000; // Delay between lock retries in milliseconds
+const MAX_LOCK_RETRIES = 5; // Maximum number of times to retry acquiring a lock
+const LOCK_RETRY_DELAY = 500; // Delay between lock retries in milliseconds
 
 /**
  * Attempts to acquire a lock for a specific room ID.
@@ -86,7 +86,7 @@ const LOCK_RETRY_DELAY = 1000; // Delay between lock retries in milliseconds
  */
 const acquireLock = async (roomId, retries = MAX_LOCK_RETRIES) => {
   const lockKey = `lock:room:${roomId}`;
-  
+  console.log(`Acquiring lock for room ${roomId}...`);
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       // SET key value NX EX seconds
@@ -333,7 +333,22 @@ const ensurePublicRoomAvailable = async () => {
   }
 };
 const changeDrawer = async (roomId) => {
+  // First clear any existing timers to prevent race conditions
+  try {
+    await redisClient.del(`timer:${roomId}`);
+    await redisClient.del(`nextTurnTimer:${roomId}`);
+  } catch (error) {
+    console.error(`[changeDrawer] Error clearing timers for room ${roomId}:`, error);
+  }
+
+  // Add a small delay before attempting to acquire the lock
+  await new Promise(resolve => setTimeout(resolve, 100));
+
   // Attempt to acquire the lock before proceeding with retries
+  console.log("---------------------------------");
+  console.log("called acquireLock 349" );
+  console.log("---------------------------------");
+  
   if (!(await acquireLock(roomId))) {
     console.warn(`[changeDrawer] Could not acquire lock for room ${roomId} after all retries. Aborting operation.`);
     io.to(roomId).emit('gameError', { message: 'Failed to change drawer. Please try again.' });
@@ -391,6 +406,10 @@ const changeDrawer = async (roomId) => {
     // Schedule the start of the next turn
     nextTurnTimer = setTimeout(async () => {
       // Acquire a new lock for the delayed operations
+      console.log("---------------------------------");
+      console.log("called acquireLock 410" );
+      console.log("---------------------------------");
+      
       if (!(await acquireLock(roomId))) {
         console.error(`[changeDrawer] Failed to acquire lock for delayed operations in room ${roomId}`);
         io.to(roomId).emit('gameError', { message: 'Failed to start next turn. Please try again.' });
@@ -414,7 +433,8 @@ const changeDrawer = async (roomId) => {
           currentRound: updatedRoom.currentRound,
         });
 
-        await startTurnTimer(roomId);
+        // Pass skipLock=true since we already have the lock
+        await startTurnTimer(roomId, false, true);
       } catch (error) {
         console.error(`[changeDrawer] Error in delayed operations for room ${roomId}:`, error);
         io.to(roomId).emit('gameError', { message: 'An error occurred while starting the next turn.' });
@@ -436,6 +456,10 @@ const changeDrawer = async (roomId) => {
 };
 const startGame = async (roomId) => {
   // First acquire the lock
+  console.log("---------------------------------");
+  console.log("called acquireLock 459" );
+  console.log("---------------------------------");
+  
   if (!(await acquireLock(roomId))) {
     console.warn(`[startGame] Could not acquire lock for room ${roomId}`);
     io.to(roomId).emit('gameError', { message: 'Failed to start game. Please try again.' });
@@ -503,7 +527,7 @@ const startGame = async (roomId) => {
     });
 
     // Start the turn timer (it handles its own locking)
-    await startTurnTimer(roomId);
+    await startTurnTimer(roomId, false);
   } catch (error) {
     console.error(`[startGame] Error starting game for room ${roomId}:`, error);
     io.to(roomId).emit('gameError', { message: 'Failed to start game due to an error.' });
@@ -513,12 +537,21 @@ const startGame = async (roomId) => {
   }
 };
 
-const startTurnTimer = async (roomId, isPublic = false) => {
-  // Acquire lock for timer operations
-  if (!(await acquireLock(roomId))) {
-    console.error(`[startTurnTimer] Failed to acquire lock for room ${roomId}`);
-    io.to(roomId).emit('gameError', { message: 'Failed to start turn timer. Please try again.' });
-    return;
+const startTurnTimer = async (roomId, isPublic = false, skipLock = false) => {
+  // Acquire lock for timer operations if not skipped
+  let acquiredLock = skipLock; // If skipLock is true, we assume the lock is already acquired
+  
+  if (!skipLock) {
+    console.log("---------------------------------");
+    console.log("called acquireLock 542" );
+    console.log("---------------------------------");
+    
+    acquiredLock = await acquireLock(roomId);
+    if (!acquiredLock) {
+      console.error(`[startTurnTimer] Failed to acquire lock for room ${roomId}`);
+      io.to(roomId).emit('gameError', { message: 'Failed to start turn timer. Please try again.' });
+      return;
+    }
   }
 
   try {
@@ -529,26 +562,26 @@ const startTurnTimer = async (roomId, isPublic = false) => {
     }
 
     // Clear any existing timers from Redis
-    await redisClient.client.del(`timer:${roomId}`);
-    await redisClient.client.del(`nextTurnTimer:${roomId}`);
+    await redisClient.del(`timer:${roomId}`);
+    await redisClient.del(`nextTurnTimer:${roomId}`);
 
     // Calculate expiration time
     const expirationTime = Date.now() + (room.time * 1000);
     
     // Store timer info in Redis
-    await redisClient.client.hset(`timer:${roomId}`, {
-      expirationTime: expirationTime,
-      roomId: roomId,
-      type: 'turn'
-    });
+    await redisClient.hset(`timer:${roomId}`, [
+      'expirationTime', expirationTime,
+      'roomId', roomId,
+      'type', 'turn'
+    ]); 
 
     // Set timer for the room
     const timer = setTimeout(async () => {
       try {
-        // Remove timer key from Redis when it expires
-        await redisClient.client.del(`timer:${roomId}`);
+        // Remove timer and recovery keys from Redis
+        await redisClient.del(`timer:${roomId}`);
+        await redisClient.del(`timerRecovery:${roomId}`); // Add this line
         
-        // Timer expiration will trigger changeDrawer which has its own locking
         await changeDrawer(roomId);
       } catch (error) {
         console.error(`[startTurnTimer] Error in timer for room ${roomId}:`, error);
@@ -567,7 +600,7 @@ const startTurnTimer = async (roomId, isPublic = false) => {
     io.to(roomId).emit("startTimer", room.time);
 
     // Set up timer recovery on server restart
-    await redisClient.client.set(
+    await redisClient.set(
       `timerRecovery:${roomId}`,
       JSON.stringify({
         expirationTime,
@@ -581,7 +614,10 @@ const startTurnTimer = async (roomId, isPublic = false) => {
     console.error(`[startTurnTimer] Error for room ${roomId}:`, error);
     io.to(roomId).emit('gameError', { message: 'An error occurred while starting the timer.' });
   } finally {
-    await releaseLock(roomId);
+    // Only release the lock if we acquired it in this function
+    if (!skipLock) {
+      await releaseLock(roomId);
+    }
   }
 };
 

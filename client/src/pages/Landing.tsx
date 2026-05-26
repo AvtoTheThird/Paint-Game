@@ -148,7 +148,7 @@ const LandingPage: React.FC = () => {
 
   return (
     <main className="font-ge-bold    flex flex-col justify-start items-center ">
-      {showBetaPopup && (
+      {/* {showBetaPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
           <div className="bg-dark-purupe border-4 border-black rounded-3xl p-8 max-w-[90%] text-center shadow-xl">
             <h2 className="text-4xl mb-4 text-white text-shadow">
@@ -172,10 +172,30 @@ const LandingPage: React.FC = () => {
             </button>
           </div>
         </div>
-      )}
+      )} */}
+      <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-[100] px-4">
+        <div className="bg-dark-purupe border-4 border-black rounded-3xl p-4 sm:p-6 lg:p-8 max-w-[90%] sm:max-w-[80%] lg:max-w-4xl text-center shadow-xl">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl mb-3 sm:mb-4 text-white text-shadow">
+            ხელოვნიკი მედიტირებს
+          </h2>
 
+          <p className="text-base sm:text-xl lg:text-2xl text-white max-w-3xl leading-relaxed">
+            მას შემდეგ რაც იუდამ ხელოვნიკი 13 ვერცხლად გაყიდა, ოსტატმა
+            გადაწყვიტა შურის ძიების ნაცვლად საკუთარ თავში პატიების ძალა ეპოვა.
+            <br /> <br />
+            ამიტომ მან დროებით დატოვა დოჯო, გამორთო AWS EC2 ინსტანსი და მთებში
+            განმარტოვდა პორტმანტოსა და ცხენჭექასთან ერთან.
+            <br /> <br /> მოწაფეები მის დაბრუნებას ელიან.
+            <br /> <br /> ლეგენდის თანახმად, როდესაც უკანასკნელი ბაგი
+            განიწმინდება, <br /> <br />
+            <span className="text-dark-pink text-2xl sm:text-3xl lg:text-4xl">
+              ხელოვნიკი კვლავ დაბრუნდება.
+            </span>{" "}
+          </p>
+        </div>
+      </div>
       <Header />
-      <div className="xl:scale-75   2xl:scale-90 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
+      {/* <div className="xl:scale-75   2xl:scale-90 my-4 lg:my-0 text-center lg:w-[90vw] lg:h-[95vh] flex flex-col  justify-center items-center ">
         <div className="flex flex-col   justify-between  border-2 border-black bg-bg-pink w-[95vw] lg:w-[750px] lg:h-[550px]  rounded-3xl lg:p-10 xl:mt-[40px]  p-5   shadow-lg ">
           <div className="flex lg:flex-row flex-col w-full lg:justify-between  items-center gap-16">
             <Carousel
@@ -256,7 +276,7 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
       <Links />
     </main>
   );
